@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Opera Radial</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            user-select: none;
+        }
+        .stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+        }
+        .center {
+            position: absolute; left: 50%; top: 50%; width: 68px; height: 68px;
+            margin: -34px 0 0 -34px;
+            border-radius: 50%; overflow: hidden; cursor: grab; z-index: 10;
+            box-shadow: 0 0 0 3px #7c3aed, 0 0 22px rgba(124, 58, 237, 0.9);
+            transition: transform .25s ease, box-shadow .25s ease;
+            will-change: transform;
+        }
+        .center.dragging {
+            cursor: grabbing;
+            transition: transform 0.06s linear;
+            box-shadow: 0 0 0 3px #a78bfa, 0 0 30px rgba(167, 139, 250, 1);
+        }
+        @keyframes jellyRebound {
+            0%   { transform: scale(1.18, 0.82) rotate(6deg); }
+            25%  { transform: scale(0.86, 1.14) rotate(-5deg); }
+            50%  { transform: scale(1.08, 0.92) rotate(3deg); }
+            75%  { transform: scale(0.96, 1.04) rotate(-1.5deg); }
+            100% { transform: scale(1, 1) rotate(0deg); }
+        }
+        .center.wobble-release {
+            animation: jellyRebound 0.52s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .center img { width: 100%; height: 100%; object-fit: cover; }
+        .stage.open .center:not(.dragging):not(.wobble-release) { transform: scale(1.08); }
+        .item {
+            position: absolute; left: 50%; top: 50%; width: 46px; height: 46px;
+            margin: -23px 0 0 -23px; border-radius: 50%;
+            background: #2c2c45; border: 2px solid #7c3aed;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; opacity: 0; pointer-events: none;
+            transition: all .35s cubic-bezier(.175, .885, .32, 1.275);
+            z-index: 5;
+        }
+        .item:hover { background: #3d3d5c; }
+        .item img { width: 22px; height: 22px; }
+        .stage.open .item { opacity: 1; pointer-events: auto; }
+        .stage.open .item:nth-child(2) { transform: translate(0px, -120px); }
+        .stage.open .item:nth-child(3) { transform: translate(-85px, -85px); }
+        .stage.open .item:nth-child(4) { transform: translate(-120px, 0px); }
+        .stage.open .item:nth-child(5) { transform: translate(-85px, 85px); }
+        .stage.open .item:nth-child(6) { transform: translate(0px, 120px); }
+        .stage.open .item:nth-child(7) { transform: translate(85px, 85px); }
+        .prompt-bar {
+            position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 20;
+            display: none; align-items: center; gap: 6px;
+            background: #2c2c45; border: 1px solid #7c3aed; border-radius: 999px;
+            padding: 4px 8px 4px 12px;
+        }
+        .prompt-bar.show { display: flex; }
+        .prompt-bar input {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: #fff; font-size: 12px; min-width: 0;
+        }
+        .prompt-bar button {
+            background: #7c3aed; border: none; border-radius: 999px;
+            color: #fff; font-size: 11px; padding: 4px 10px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="stage" id="stage">
+        <div class="center" id="center" title="TM Opera O"><img src="opera_crown.png" draggable="false"></div>
+        <div class="item" title="Mic"><img src="icons/icons8-mic-90.png" draggable="false"></div>
+        <div class="item" title="Lihat Layar"><img src="icons/icons8-picture-48.png" draggable="false"></div>
+        <div class="item" title="Tes Reminder"><img src="icons/icons8-notification-bell-96.png" draggable="false"></div>
+        <div class="item" title="Ingat sesuatu"><img src="icons/icons8-save-96.png" draggable="false"></div>
+        <div class="item" title="Buka Chat"><img src="icons/icons8-senta.png" draggable="false"></div>
+        <div class="item" title="Refresh / Update" style="color: #fff; font-size: 20px; font-weight: bold;">↻</div>
+        <div class="prompt-bar" id="prompt-bar">
+            <input type="text" id="prompt-input" placeholder="Ingat apa, Babe?">
+            <button id="prompt-ok">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const pyapi = new Promise((resolve) => {
+            if (window.pywebview && window.pywebview.api) resolve(window.pywebview.api);
+            else window.addEventListener('pywebviewready', () => resolve(window.pywebview.api));
+        });
+        async function callApi(name, ...args) {
+            const api = await pyapi;
+            return await api[name](...args);
+        }
+
+        const stage = document.getElementById('stage');
+        const center = document.getElementById('center');
+        const items = document.querySelectorAll('.item');
+        const promptBar = document.getElementById('prompt-bar');
+        const promptInput = document.getElementById('prompt-input');
+
+        let isPointerDown = false;
+        let dragStarted = false;
+        let startScreenX = 0;
+        let startScreenY = 0;
+        let prevScreenX = 0;
+        let prevScreenY = 0;
+        let wobblePhase = 0;
+        let wobbleInterval = null;
+
+        function startWobbleLoop() {
+            if (wobbleInterval) clearInterval(wobbleInterval);
+            wobblePhase = 0;
+            wobbleInterval = setInterval(() => {
+                if (!dragStarted) return;
+                wobblePhase += 0.45;
+                const sx = 1 + Math.sin(wobblePhase) * 0.08;
+                const sy = 1 - Math.sin(wobblePhase) * 0.08;
+                const rot = Math.cos(wobblePhase * 0.8) * 7;
+                center.style.transform = `scale(${sx.toFixed(3)}, ${sy.toFixed(3)}) rotate(${rot.toFixed(1)}deg)`;
+            }, 30);
+        }
+
+        function stopWobbleLoop() {
+            if (wobbleInterval) {
+                clearInterval(wobbleInterval);
+                wobbleInterval = null;
+            }
+            center.style.transform = '';
+            center.classList.remove('dragging');
+            center.classList.remove('wobble-release');
+            void center.offsetWidth;
+            center.classList.add('wobble-release');
+            setTimeout(() => center.classList.remove('wobble-release'), 550);
+        }
+
+        center.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            try { center.setPointerCapture(e.pointerId); } catch {}
+            isPointerDown = true;
+            dragStarted = false;
+            startScreenX = e.screenX;
+            startScreenY = e.screenY;
+            prevScreenX = e.screenX;
+            prevScreenY = e.screenY;
+            callApi('set_ignore_mouse', false);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (isPointerDown) {
+                if (!dragStarted) {
+                    const dist = Math.hypot(e.screenX - startScreenX, e.screenY - startScreenY);
+                    if (dist > 5) {
+                        dragStarted = true;
+                        center.classList.remove('wobble-release');
+                        center.classList.add('dragging');
+                        callApi('start_drag_radial');
+                        startWobbleLoop();
+                    }
+                } else {
+                    const vx = Math.max(-25, Math.min(25, e.screenX - prevScreenX));
+                    const vy = Math.max(-25, Math.min(25, e.screenY - prevScreenY));
+                    prevScreenX = e.screenX;
+                    prevScreenY = e.screenY;
+                    const speed = Math.min(1, Math.hypot(vx, vy) / 22);
+                    const stretch = 1 + speed * 0.16;
+                    const squash = 1 - speed * 0.12;
+                    const tilt = vx * 0.7;
+                    wobblePhase += 0.35;
+                    const jiggle = Math.sin(wobblePhase) * 0.05;
+                    center.style.transform = `scale(${(stretch + jiggle).toFixed(3)}, ${(squash - jiggle).toFixed(3)}) rotate(${tilt.toFixed(1)}deg)`;
+                }
+                return;
+            }
+            const hit = e.target && e.target.closest && e.target.closest('.center, .item, .prompt-bar');
+            callApi('set_ignore_mouse', !hit);
+        });
+
+        function endPointer(e) {
+            if (!isPointerDown) return;
+            isPointerDown = false;
+            try { center.releasePointerCapture(e.pointerId); } catch {}
+            if (dragStarted) {
+                dragStarted = false;
+                callApi('stop_drag_radial');
+                stopWobbleLoop();
+                return;
+            }
+            const isOpen = stage.classList.contains('open');
+            if (isOpen) {
+                stage.classList.remove('open');
+                promptBar.classList.remove('show');
+                callApi('tutup_radial');
+            } else {
+                stage.classList.add('open');
+                callApi('buka_radial');
+            }
+        }
+
+        window.addEventListener('pointerup', endPointer);
+        window.addEventListener('pointercancel', endPointer);
+
+        let rec = null;
+
+        items.forEach((el, i) => {
+            el.addEventListener('click', () => {
+                if (i === 3) {
+                    callApi('buka_radial_prompt');
+                    promptBar.classList.add('show');
+                    promptInput.value = '';
+                    promptInput.focus();
+                    return;
+                }
+                stage.classList.remove('open');
+                promptBar.classList.remove('show');
+                callApi('tutup_radial');
+                if (i === 0) {
+                    mulaiMic();
+                } else if (i === 1) {
+                    callApi('lihat_layar_radial');
+                } else if (i === 2) {
+                    callApi('tes_reminder');
+                } else if (i === 4) {
+                    callApi('buka_chat');
+                } else if (i === 5) {
+                    callApi('refresh_app');
+                }
+            });
+        });
+
+        function mulaiMic() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { callApi('ingat_radial', '(Mic tidak didukung)'); return; }
+            if (rec) { rec.stop(); rec = null; return; }
+            rec = new SR();
+            rec.lang = 'id-ID';
+            rec.interimResults = false;
+            rec.onresult = (e) => {
+                const teks = e.results[0][0].transcript.trim();
+                if (teks) callApi('tanya_dari_radial', teks);
+                rec = null;
+            };
+            rec.onerror = () => { rec = null; };
+            rec.onend = () => { rec = null; };
+            rec.start();
+        }
+
+        document.getElementById('prompt-ok').addEventListener('click', () => {
+            const v = promptInput.value.trim();
+            if (v) callApi('ingat_radial', v);
+            promptBar.classList.remove('show');
+        });
+        promptInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('prompt-ok').click();
+        });
+    </script>
+</body>
+</html>

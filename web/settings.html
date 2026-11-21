@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>TM Opera O — Pengaturan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0f0f10;
+            --bg-page: #141415;
+            --bg-card: #19191b;
+            --bg-raised: #232325;
+            --hairline: rgba(237, 237, 237, 0.08);
+            --text-primary: #ededed;
+            --text-secondary: #a1a1a6;
+            --text-muted: #85858b;
+            --accent: #e5a04b;
+            --positive: #4cc38a;
+            --negative: #e5484d;
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            user-select: none;
+            font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+        .font-mono-num {
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        @keyframes sheetEnter {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .settings-shell {
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-page);
+            border: 1px solid var(--hairline);
+            border-radius: 18px;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+            display: flex;
+            overflow: hidden;
+            animation: sheetEnter 280ms var(--ease) forwards;
+        }
+        .sidebar {
+            width: 224px;
+            height: 100%;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--hairline);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: background-color 150ms var(--ease), color 150ms var(--ease);
+        }
+        .nav-item svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            stroke-width: 1.5;
+            flex-shrink: 0;
+            transition: stroke 150ms var(--ease);
+        }
+        .nav-item:hover {
+            background: rgba(237, 237, 237, 0.04);
+            color: var(--text-primary);
+        }
+        .nav-item:hover svg {
+            stroke: var(--text-secondary);
+        }
+        .nav-item.active {
+            background: var(--bg-raised);
+            color: var(--text-primary);
+            font-weight: 500;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .nav-item.active svg {
+            stroke: var(--text-primary);
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .control-input, .control-select {
+            background: var(--bg-raised);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 8px 12px;
+            outline: none;
+            transition: border-color 150ms var(--ease);
+        }
+        .control-input:focus, .control-select:focus {
+            border-color: rgba(237, 237, 237, 0.24);
+        }
+        .btn-primary {
+            height: 36px;
+            padding: 0 16px;
+            border-radius: 8px;
+            background: var(--text-primary);
+            color: #141415;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 150ms var(--ease), transform 150ms var(--ease);
+        }
+        .btn-primary:hover { opacity: 0.92; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .btn-secondary {
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 8px;
+            background: var(--bg-raised);
+            border: 1px solid var(--hairline);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 150ms var(--ease), transform 150ms var(--ease);
+        }
+        .btn-secondary:hover { background: #2c2c2f; }
+        .btn-secondary:active { transform: scale(0.98); }
+
+        .btn-danger {
+            height: 40px;
+            width: 100%;
+            padding: 0 16px;
+            border-radius: 8px;
+            background: var(--negative);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 150ms var(--ease), transform 150ms var(--ease);
+        }
+        .btn-danger:hover { opacity: 0.9; }
+        .btn-danger:active { transform: scale(0.98); }
+
+        .toggle {
+            appearance: none;
+            width: 40px;
+            height: 24px;
+            background: var(--bg-raised);
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background-color 150ms var(--ease);
+        }
+        .toggle::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            transition: transform 180ms var(--ease), background-color 180ms var(--ease);
+        }
+        .toggle:checked {
+            background: var(--positive);
+            border-color: transparent;
+        }
+        .toggle:checked::after {
+            transform: translateX(16px);
+            background: #0f0f10;
+        }
+        .swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: transform 150ms var(--ease), border-color 150ms var(--ease);
+        }
+        .swatch:hover { transform: scale(1.06); }
+        .swatch.active { border-color: var(--text-primary); }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(237, 237, 237, 0.14); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="settings-shell">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar" style="-webkit-app-region: drag;">
+            <div>
+                <!-- Brand Header with Custom Flat Opera Crown Mark -->
+                <div class="flex items-center gap-3 px-2 pb-4 mb-3 border-b" style="border-color: var(--hairline);">
+                    <div class="relative w-9 h-9 rounded-[8px] overflow-hidden shrink-0 border" style="border-color: var(--hairline);">
+                        <img src="opera_profile.jpg?v=2" class="w-full h-full object-cover" alt="TM Opera O">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5">
+                            <!-- Flat Geometric Opera Crown Mark -->
+                            <svg class="w-3.5 h-3.5 shrink-0" style="color: var(--accent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 18h18M4 15l2-9 6 5 6-5 2 9H4z"/>
+                            </svg>
+                            <span class="text-[15px] font-medium truncate" style="color: var(--text-primary);">TM Opera O</span>
+                        </div>
+                        <div class="text-[12px] truncate" style="color: var(--text-muted);">Pengaturan sistem</div>
+                    </div>
+                </div>
+
+                <!-- Navigation List (36px row height, 4px gap, 16px Lucide 1.5 stroke icons) -->
+                <nav class="flex flex-col gap-1" style="-webkit-app-region: no-drag;">
+                    <div class="nav-item active" onclick="switchPanel('media', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                        </svg>
+                        <span>Media dan notch</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('opera', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18h18M4 15l2-9 6 5 6-5 2 9H4z"/>
+                        </svg>
+                        <span>TM Opera O</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('reminder', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/>
+                        </svg>
+                        <span>Pengingat dan fokus</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('turbo', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
+                        </svg>
+                        <span>Kontrol PC</span>
+                    </div>
+                </nav>
+            </div>
+
+            <div style="-webkit-app-region: no-drag;">
+                <button onclick="callApi('close_settings')" class="btn-secondary w-full">
+                    Tutup pengaturan
+                </button>
+            </div>
+        </aside>
+
+        <!-- RIGHT DETAIL AREA -->
+        <main class="flex-1 h-full flex flex-col overflow-hidden">
+            <!-- Header (56px tall, 1:1 36x36 close button) -->
+            <header class="h-14 px-6 flex items-center justify-between border-b shrink-0" style="border-color: var(--hairline); -webkit-app-region: drag;">
+                <h1 id="panel-title" class="text-[16px] font-medium" style="color: var(--text-primary);">Media dan notch</h1>
+                <button style="-webkit-app-region: no-drag;" onclick="callApi('close_settings')"
+                    class="w-9 h-9 rounded-[8px] flex items-center justify-center hover:bg-[#232325] transition-colors"
+                    title="Tutup">
+                    <svg class="w-4 h-4" style="stroke: var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Content Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <!-- PANEL 1: MEDIA & NOTCH -->
+                <div id="panel-media" class="space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Warna dan tampilan notch</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Ikuti warna sampul album</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Ambil warna aksen dari sampul lagu Spotify atau YouTube</div>
+                            </div>
+                            <input type="checkbox" id="cfg-color-album" class="toggle" checked onchange="saveCustomConfig()">
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Warna aksen manual</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Dipakai saat warna sampul album dinonaktifkan</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="swatch active" style="background: #e5a04b;" onclick="pickAccent('#e5a04b', this)" title="Stage Amber"></div>
+                                <div class="swatch" style="background: #d97757;" onclick="pickAccent('#d97757', this)" title="Coral"></div>
+                                <div class="swatch" style="background: #4cc38a;" onclick="pickAccent('#4cc38a', this)" title="Sage"></div>
+                                <div class="swatch" style="background: #5b9bd5;" onclick="pickAccent('#5b9bd5', this)" title="Cobalt"></div>
+                                <div class="swatch" style="background: #ededed;" onclick="pickAccent('#ededed', this)" title="Graphite White"></div>
+                                <input type="color" id="cfg-custom-color" value="#e5a04b" onchange="pickAccent(this.value)" class="w-6 h-6 rounded-[6px] cursor-pointer bg-transparent border-0">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card space-y-4">
+                        <div class="section-title">Sinkronisasi lirik dan pemutar</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Prioritas sumber media</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Pemutar utama yang dipantau oleh notch</div>
+                            </div>
+                            <select id="cfg-media-priority" onchange="saveCustomConfig()" class="control-select">
+                                <option value="spotify">Spotify</option>
+                                <option value="youtube">YouTube dan browser</option>
+                                <option value="any">Otomatis aktif</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Tampilkan lirik saat notch mengecil</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Ganti judul aplikasi dengan baris lirik aktif di kapsul atas</div>
+                            </div>
+                            <input type="checkbox" id="cfg-compact-lyric" class="toggle" checked onchange="saveCustomConfig()">
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Penyesuaian waktu lirik (<span id="lbl-lyric-offset" class="font-mono-num">0.0s</span>)</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Geser waktu tampil jika lirik terlalu cepat atau lambat</div>
+                            </div>
+                            <input type="range" id="cfg-lyric-offset" min="-2.5" max="2.5" step="0.1" value="0"
+                                oninput="document.getElementById('lbl-lyric-offset').textContent=Number(this.value).toFixed(1)+'s'; saveCustomConfig();"
+                                class="w-32 accent-[#ededed]">
+                        </div>
+                    </section>
+                </div>
+
+                <!-- PANEL 2: TM OPERA O -->
+                <div id="panel-opera" class="hidden space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Kepribadian dan model</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Karakter suara dan gaya bicara</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Nada bicara TM Opera O saat merespons</div>
+                            </div>
+                            <select id="cfg-persona-preset" onchange="applyPersonaPreset(this.value)" class="control-select">
+                                <option value="soft">Lembut dan menenangkan</option>
+                                <option value="hype">Ekspresif dan antusias</option>
+                                <option value="calm">Tenang dan dewasa</option>
+                                <option value="tsundere">Akrab dan menggoda</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-3 border-t" style="border-color: var(--hairline);">
+                            <div class="text-[13px] font-medium mb-2" style="color: var(--text-secondary);">Arahan kepribadian tambahan</div>
+                            <textarea id="cfg-custom-persona" rows="2" placeholder="Contoh: Panggil aku Sayang, gunakan kalimat pendek yang tenang"
+                                onchange="saveCustomConfig()"
+                                class="control-input w-full"></textarea>
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Model bahasa aktif</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Digunakan untuk percakapan utama</div>
+                            </div>
+                            <select id="cfg-ai-model" onchange="changeModelFromSettings(this.value)" class="control-select font-mono-num text-[12px]"></select>
+                        </div>
+                    </section>
+
+                    <section class="card space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Memori jangka panjang</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Tersimpan di memory.json dan folder Google Drive</div>
+                            </div>
+                            <button onclick="callApi('open_drive_folder')" class="btn-secondary">
+                                <svg class="w-4 h-4" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span>Buka Google Drive</span>
+                            </button>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <input type="text" id="new-mem-input" placeholder="Catat fakta atau preferensi baru"
+                                class="control-input flex-1">
+                            <button onclick="addMemoryFromSettings()" class="btn-primary">
+                                Simpan
+                            </button>
+                        </div>
+
+                        <div id="memory-list-box" class="max-h-36 overflow-y-auto space-y-1.5 pr-1"></div>
+
+                        <!-- Red Delete All Memory Button at Bottom of TM Opera O Panel -->
+                        <div class="pt-3 border-t" style="border-color: var(--hairline);">
+                            <button onclick="deleteAllMemories()" class="btn-danger">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                                <span>Hapus semua memori</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- PANEL 3: REMINDER & FOCUS -->
+                <div id="panel-reminder" class="hidden space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Pengingat kesehatan dan jeda layar</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Pengingat berkala</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Ingatkan minum air, peregangan, dan istirahat mata</div>
+                            </div>
+                            <input type="checkbox" id="cfg-reminder-on" class="toggle" checked onchange="saveCustomConfig()">
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Rentang waktu pengingat</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Jarak waktu antar notifikasi</div>
+                            </div>
+                            <select id="cfg-reminder-mins" onchange="saveCustomConfig()" class="control-select">
+                                <option value="30">30 menit</option>
+                                <option value="60">1 jam</option>
+                                <option value="120" selected>2 jam</option>
+                                <option value="180">3 jam</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Mode fokus otomatis</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Tunda pengingat saat membuka editor kode atau game</div>
+                            </div>
+                            <input type="checkbox" id="cfg-focus-on" class="toggle" checked onchange="saveCustomConfig()">
+                        </div>
+
+                        <div class="pt-3 border-t" style="border-color: var(--hairline);">
+                            <button onclick="callApi('tes_reminder')" class="btn-secondary w-full">
+                                <svg class="w-4 h-4" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                                </svg>
+                                <span>Uji pengingat sekarang</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- PANEL 4: PC TURBO & TOOLS -->
+                <div id="panel-turbo" class="hidden space-y-4">
+                    <section class="card space-y-3">
+                        <div class="section-title">Tindakan cepat sistem</div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="callApi('lihat_layar_radial')" class="p-4 rounded-[8px] text-left border transition-colors hover:bg-[#28282b]" style="background: var(--bg-raised); border-color: var(--hairline);">
+                                <svg class="w-4 h-4 mb-2" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                </svg>
+                                <div class="text-[14px] font-medium">Analisis layar aktif</div>
+                                <div class="text-[12px] mt-0.5" style="color: var(--text-muted);">Tangkap layar dan baca lewat Vision</div>
+                            </button>
+
+                            <button onclick="callApi('tanya_dari_radial', 'rapihkan folder downloads')" class="p-4 rounded-[8px] text-left border transition-colors hover:bg-[#28282b]" style="background: var(--bg-raised); border-color: var(--hairline);">
+                                <svg class="w-4 h-4 mb-2" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
+                                </svg>
+                                <div class="text-[14px] font-medium">Rapikan folder Downloads</div>
+                                <div class="text-[12px] mt-0.5" style="color: var(--text-muted);">Kelompokkan file berdasarkan jenis</div>
+                            </button>
+
+                            <button onclick="callApi('tanya_dari_radial', 'buka word')" class="p-4 rounded-[8px] text-left border transition-colors hover:bg-[#28282b]" style="background: var(--bg-raised); border-color: var(--hairline);">
+                                <svg class="w-4 h-4 mb-2" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <div class="text-[14px] font-medium">Buka Microsoft Word</div>
+                                <div class="text-[12px] mt-0.5" style="color: var(--text-muted);">Jalankan aplikasi Word di PC</div>
+                            </button>
+
+                            <button onclick="callApi('refresh_app')" class="p-4 rounded-[8px] text-left border transition-colors hover:bg-[#28282b]" style="background: var(--bg-raised); border-color: var(--hairline);">
+                                <svg class="w-4 h-4 mb-2" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                                </svg>
+                                <div class="text-[14px] font-medium">Muat ulang aplikasi</div>
+                                <div class="text-[12px] mt-0.5" style="color: var(--text-muted);">Segarkan jendela chat dan notch</div>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const pyapi = new Promise((resolve) => {
+            if (window.pywebview && window.pywebview.api) resolve(window.pywebview.api);
+            else window.addEventListener('pywebviewready', () => resolve(window.pywebview.api));
+        });
+        async function callApi(name, ...args) {
+            const api = await pyapi;
+            return await api[name](...args);
+        }
+
+        const TITLES = {
+            media: 'Media dan notch',
+            opera: 'TM Opera O',
+            reminder: 'Pengingat dan fokus',
+            turbo: 'Kontrol PC',
+        };
+
+        function switchPanel(id, el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+            ['media', 'opera', 'reminder', 'turbo'].forEach(p => {
+                document.getElementById('panel-' + p).classList.toggle('hidden', p !== id);
+            });
+            document.getElementById('panel-title').textContent = TITLES[id] || '';
+            if (id === 'opera') loadOperaPanelData();
+        }
+
+        let currentAccent = '#e5a04b';
+        function pickAccent(color, swatchEl) {
+            currentAccent = color;
+            document.getElementById('cfg-custom-color').value = color;
+            document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+            if (swatchEl) swatchEl.classList.add('active');
+            saveCustomConfig();
+        }
+
+        async function saveCustomConfig() {
+            const cfg = {
+                colorAlbumFocus: document.getElementById('cfg-color-album').checked,
+                customAccentColor: currentAccent,
+                mediaPriority: document.getElementById('cfg-media-priority').value,
+                compactLyric: document.getElementById('cfg-compact-lyric').checked,
+                lyricOffsetSec: parseFloat(document.getElementById('cfg-lyric-offset').value || '0'),
+                personaPreset: document.getElementById('cfg-persona-preset').value,
+                customPersona: document.getElementById('cfg-custom-persona').value,
+                reminderEnabled: document.getElementById('cfg-reminder-on').checked,
+                reminderMinutes: parseInt(document.getElementById('cfg-reminder-mins').value || '120', 10),
+                focusModeEnabled: document.getElementById('cfg-focus-on').checked,
+            };
+            await callApi('save_settings', cfg);
+        }
+
+        async function applyPersonaPreset() {
+            await saveCustomConfig();
+        }
+
+        async function changeModelFromSettings(m) {
+            await callApi('ganti_model', m);
+        }
+
+        async function loadOperaPanelData() {
+            const models = await callApi('get_models');
+            const current = await callApi('get_current_model');
+            const sel = document.getElementById('cfg-ai-model');
+            sel.innerHTML = '';
+            for (const m of models) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                if (m === current) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            await renderMemoryList();
+        }
+
+        async function renderMemoryList() {
+            const facts = (await callApi('get_memories')) || [];
+            const box = document.getElementById('memory-list-box');
+            box.innerHTML = '';
+            if (facts.length === 0) {
+                box.innerHTML = '<div class="text-[13px] py-2" style="color: var(--text-muted);">Belum ada memori tersimpan</div>';
+                return;
+            }
+            facts.forEach((f, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] text-[13px] border';
+                row.style.background = 'var(--bg-raised)';
+                row.style.borderColor = 'var(--hairline)';
+                row.innerHTML = `<span class="truncate flex-1" style="color: var(--text-primary);">${f}</span>`;
+                const delBtn = document.createElement('button');
+                delBtn.className = 'w-7 h-7 rounded-[6px] hover:bg-[#323236] flex items-center justify-center shrink-0 transition-colors';
+                delBtn.style.color = 'var(--text-muted)';
+                delBtn.title = 'Hapus memori ini';
+                delBtn.innerHTML = '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+                delBtn.onclick = async () => {
+                    await callApi('delete_memory_item', idx);
+                    await renderMemoryList();
+                };
+                row.appendChild(delBtn);
+                box.appendChild(row);
+            });
+        }
+
+        async function addMemoryFromSettings() {
+            const inp = document.getElementById('new-mem-input');
+            const v = inp.value.trim();
+            if (!v) return;
+            await callApi('ingat', v);
+            inp.value = '';
+            await renderMemoryList();
+        }
+
+        async function deleteAllMemories() {
+            await callApi('clear_all_memories');
+            await renderMemoryList();
+        }
+
+        (async () => {
+            try {
+                const cfg = await callApi('get_settings');
+                if (cfg) {
+                    document.getElementById('cfg-color-album').checked = cfg.colorAlbumFocus !== false;
+                    currentAccent = cfg.customAccentColor || '#e5a04b';
+                    document.getElementById('cfg-custom-color').value = currentAccent;
+                    document.getElementById('cfg-media-priority').value = cfg.mediaPriority || 'spotify';
+                    document.getElementById('cfg-compact-lyric').checked = cfg.compactLyric !== false;
+                    document.getElementById('cfg-lyric-offset').value = cfg.lyricOffsetSec || 0;
+                    document.getElementById('lbl-lyric-offset').textContent = Number(cfg.lyricOffsetSec || 0).toFixed(1) + 's';
+                    document.getElementById('cfg-persona-preset').value = cfg.personaPreset || 'soft';
+                    document.getElementById('cfg-custom-persona').value = cfg.customPersona || '';
+                    document.getElementById('cfg-reminder-on').checked = cfg.reminderEnabled !== false;
+                    document.getElementById('cfg-reminder-mins').value = String(cfg.reminderMinutes || 120);
+                    document.getElementById('cfg-focus-on').checked = cfg.focusModeEnabled !== false;
+                }
+                await loadOperaPanelData();
+            } catch {}
+        })();
+    </script>
+</body>
+</html>

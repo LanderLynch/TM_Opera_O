@@ -1,0 +1,54 @@
+import { contextBridge, ipcRenderer } from "electron";
+
+const METHODS = [
+  "sapaan_awal",
+  "tanya_opera_o",
+  "lihat_layar",
+  "ingat",
+  "get_pending_reminder",
+  "set_tts",
+  "tes_reminder",
+  "get_models",
+  "get_current_model",
+  "ganti_model",
+  "tanya_dari_radial",
+  "lihat_layar_radial",
+  "ingat_radial",
+  "get_pending_chat",
+  "minimalkan",
+  "tutup",
+  "buka_chat",
+  "buka_radial",
+  "buka_radial_prompt",
+  "tutup_radial",
+  "keluar",
+  "refresh_app",
+  "set_ignore_mouse",
+  "set_ignore_mouse_chat",
+  "move_radial",
+  "start_drag_radial",
+  "stop_drag_radial",
+  "notch_media",
+  "get_notch_status",
+  "get_task_progress",
+  "get_api_usage",
+  "set_pecut_quota",
+  "start_drag_chat",
+  "stop_drag_chat",
+  "seek_media",
+  "open_settings",
+  "close_settings",
+  "get_settings",
+  "save_settings",
+  "get_memories",
+  "delete_memory_item",
+  "clear_all_memories",
+  "open_drive_folder",
+];
+
+const api: Record<string, (...args: unknown[]) => Promise<unknown>> = {};
+for (const name of METHODS) {
+  api[name] = (...args: unknown[]) => ipcRenderer.invoke("api", name, ...args);
+}
+
+contextBridge.exposeInMainWorld("pywebview", { api });

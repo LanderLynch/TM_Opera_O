@@ -1,0 +1,18 @@
+{
+  "name": "tm_opera_o",
+  "version": "1.0.0",
+  "description": "TM Opera O — AI Talker (Electron + TypeScript)",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && electron ."
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "electron": "^41.2.1",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "msedge-tts": "^2.1.1"
+  }
+}

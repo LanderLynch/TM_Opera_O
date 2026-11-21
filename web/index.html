@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TM Opera O</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: transparent;
+            font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: translateY(15px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes stickerPop {
+            0% { opacity: 0; transform: scale(0.3) translateY(20px); }
+            60% { opacity: 1; transform: scale(1.08) translateY(-4px); }
+            80% { transform: scale(0.96) translateY(1px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-sticker-pop {
+            transform-origin: bottom right;
+            animation: stickerPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes trayPop {
+            0% { opacity: 0; transform: scale(0.6) translateY(24px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-tray-pop {
+            transform-origin: bottom right;
+            animation: trayPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .sticker-item {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .sticker-item:hover {
+            transform: scale(1.14) translateY(-3px);
+        }
+        .sticker-item:active {
+            transform: scale(0.92);
+        }
+        @keyframes toastIn {
+            0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+            10%, 85% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(10px) scale(0.95); }
+        }
+        .animate-toast { animation: toastIn 6s ease forwards; }
+        .bubble-lemon {
+            background: rgba(30, 31, 35, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        .bubble-opera {
+            background: rgba(14, 15, 19, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(6px);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+        }
+        /* ChatGPT-style Top Fade-Out Gradient Mask */
+        #chat-box {
+            -webkit-mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.12) 12%,
+                rgba(0, 0, 0, 0.55) 28%,
+                rgba(0, 0, 0, 0.9) 42%,
+                black 55%,
+                black 100%
+            );
+            mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.12) 12%,
+                rgba(0, 0, 0, 0.55) 28%,
+                rgba(0, 0, 0, 0.9) 42%,
+                black 55%,
+                black 100%
+            );
+        }
+        /* Corner Radial Profile Minimize Mode */
+        .radial-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 999px;
+            overflow: hidden;
+            cursor: grab;
+            box-shadow: 0 0 0 2.5px rgba(244, 114, 182, 0.85), 0 10px 28px rgba(0, 0, 0, 0.65);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            will-change: transform;
+        }
+        .radial-avatar:hover {
+            transform: scale(1.07);
+            box-shadow: 0 0 0 3px #f472b6, 0 0 24px rgba(244, 114, 182, 0.85);
+        }
+        .radial-sub-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            background: rgba(24, 25, 28, 0.95);
+            border: 1.5px solid rgba(244, 114, 182, 0.65);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(0, 0) scale(0.4);
+            transition: all 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+        }
+        .radial-sub-btn:hover {
+            background: rgba(45, 46, 54, 0.98);
+            border-color: #f472b6;
+        }
+        #corner-radial.open .radial-sub-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #corner-radial.open .radial-sub-btn:nth-child(1) { transform: translate(0px, -84px) scale(1); }
+        #corner-radial.open .radial-sub-btn:nth-child(2) { transform: translate(-62px, -62px) scale(1); }
+        #corner-radial.open .radial-sub-btn:nth-child(3) { transform: translate(-84px, 0px) scale(1); }
+        #corner-radial.open .radial-sub-btn:nth-child(4) { transform: translate(-122px, -48px) scale(1); }
+        @keyframes jellyRebound {
+            0%   { transform: scale(1.18, 0.82) rotate(6deg); }
+            25%  { transform: scale(0.86, 1.14) rotate(-5deg); }
+            50%  { transform: scale(1.08, 0.92) rotate(3deg); }
+            75%  { transform: scale(0.96, 1.04) rotate(-1.5deg); }
+            100% { transform: scale(1, 1) rotate(0deg); }
+        }
+        .wobble-release {
+            animation: jellyRebound 0.52s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .dot-bounce { animation: dotBounce 1.2s infinite; }
+        @keyframes dotBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+        .type-cursor::after {
+            content: '|';
+            color: rgba(255,255,255,0.85);
+            animation: blink 0.7s steps(1) infinite;
+            margin-left: 1px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="flex items-end justify-end h-screen m-0 font-sans select-none" style="background: transparent;">
+    <div id="chat-root" class="w-full h-full flex flex-col justify-end overflow-hidden relative" style="background: transparent;">
+        <!-- Mini Floating Control Bar (Unslop Graphite Ramp + Flat Opera Crown + 1:1 36x36 Hitboxes) -->
+        <div class="chat-interactive self-end mr-3 mt-2 px-3 py-1.5 rounded-[12px] flex items-center gap-2 z-10 shadow-lg"
+            style="background: #141415; border: 1px solid rgba(237,237,237,0.08); -webkit-app-region: drag;">
+            <img src="opera_profile.jpg?v=2" class="w-6 h-6 rounded-[6px] object-cover border" style="border-color: rgba(237,237,237,0.12);" alt="Opera O">
+            <svg class="w-3.5 h-3.5 text-[#e5a04b] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 18h18M4 15l2-9 6 5 6-5 2 9H4z"/>
+            </svg>
+            <span class="text-[13px] text-[#ededed] font-medium pr-1" id="status-teks">TM Opera O</span>
+            <button style="-webkit-app-region: no-drag;" onclick="callApi('open_settings')" class="w-9 h-9 rounded-[8px] flex items-center justify-center text-[#85858b] hover:text-[#ededed] hover:bg-[#232325] transition-colors shrink-0" title="Pengaturan">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
+            <button style="-webkit-app-region: no-drag;" onclick="lihatLayar()" class="w-9 h-9 rounded-[8px] flex items-center justify-center text-[#85858b] hover:text-[#ededed] hover:bg-[#232325] transition-colors shrink-0" title="Analisis layar">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                </svg>
+            </button>
+            <button style="-webkit-app-region: no-drag;" onclick="minimizeToRadial()" class="w-9 h-9 rounded-[8px] flex items-center justify-center text-[#85858b] hover:text-[#ededed] hover:bg-[#232325] transition-colors shrink-0" title="Perkecil ke profil">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </button>
+            <button style="-webkit-app-region: no-drag;" onclick="callApi('tutup')" class="w-9 h-9 rounded-[8px] flex items-center justify-center text-[#85858b] hover:text-[#e5484d] hover:bg-[#232325] transition-colors shrink-0" title="Sembunyikan">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Area Chat Transparan (Pesan Melayang dari Bawah dengan Top Fade-Out Gradient) -->
+        <div id="chat-box" class="flex-1 px-4 pt-12 pb-2 overflow-y-auto flex flex-col gap-3">
+            <div class="mt-auto"></div>
+        </div>
+
+        <!-- Toast Reminder -->
+        <div id="toast" class="chat-interactive hidden absolute bottom-20 left-1/2 -translate-x-1/2 w-[92%] px-4 py-2.5 rounded-2xl text-xs text-white z-20 shadow-xl" style="background: rgba(31, 32, 36, 0.92); backdrop-filter: blur(10px); border: 1px solid rgba(251,113,133,0.4);"></div>
+
+        <!-- Tombol Floating Simpan Highlight ke Memory (Unslop Graphite Surface) -->
+        <button id="btn-save-highlight" onclick="simpanHighlightMemory()"
+            class="chat-interactive hidden absolute bottom-20 left-1/2 -translate-x-1/2 h-9 px-3.5 rounded-[8px] text-[13px] font-medium text-[#ededed] shadow-lg z-30 flex items-center gap-2"
+            style="background: #232325; border: 1px solid rgba(237,237,237,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.45);">
+            <svg class="w-3.5 h-3.5 text-[#a1a1a6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+            </svg>
+            <span>Simpan ke memori</span>
+        </button>
+
+        <!-- Popup Sticker Tray (WhatsApp Pop-out Style) -->
+        <div id="sticker-popup" class="chat-interactive hidden absolute bottom-16 right-3 w-72 p-3 rounded-2xl shadow-2xl z-40 animate-tray-pop"
+            style="background: rgba(24, 25, 28, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.14);">
+            <div class="flex items-center justify-between px-1 pb-2 mb-2 border-b border-white/10">
+                <span class="text-xs font-medium text-gray-300">Stiker Emosi Kamu</span>
+                <span class="text-[11px] text-gray-500">Klik untuk kirim</span>
+            </div>
+            <div id="sticker-grid" class="grid grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-1"></div>
+        </div>
+
+        <!-- Minimalist Inline "Thinking / 1 task running" Indicator (Gaya Screenshot) -->
+        <div id="task-running-bar" class="chat-interactive hidden px-5 pb-1 flex flex-col gap-0.5 select-none">
+            <div onclick="toggleMinimalTaskDetail()" class="inline-flex items-center gap-2 text-[12.5px] text-[#8e9299] hover:text-gray-300 cursor-pointer transition-colors w-fit">
+                <span id="task-running-label">1 task running</span>
+                <span id="task-running-timer" class="tabular-nums text-[#737780]">0s</span>
+                <span id="task-running-chevron" class="text-[13px] text-[#737780] transition-transform">›</span>
+            </div>
+            <div id="task-running-detail" class="hidden text-[11.5px] text-[#6c7078] pl-2 border-l border-white/10 truncate"></div>
+        </div>
+
+        <!-- Area Input Transparan Pojok Kanan Bawah (Hanya Kolom Ketik + Stiker Emosi + Voice On/Off) -->
+        <div class="chat-interactive px-3 pb-2 pt-1 flex items-center gap-2" style="background: transparent;">
+            <div class="flex-1 flex items-center rounded-full pl-4 pr-1.5 py-1.5 shadow-2xl" style="background: rgba(24, 25, 28, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.14);">
+                <input type="text" id="message-input" placeholder="Pesan TM Opera O..."
+                    class="flex-1 bg-transparent text-white placeholder-gray-400 text-sm outline-none pr-2">
+                <button onclick="kirimPesan()" class="w-8 h-8 bg-white hover:bg-gray-200 transition-colors rounded-full flex items-center justify-center shrink-0" title="Kirim">
+                    <svg class="w-4 h-4 text-[#18191c]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Tombol Sticker Emosi -->
+            <button id="btn-sticker" onclick="toggleStickerPopup()" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors hover:bg-white/15 shadow-2xl" style="background: rgba(24, 25, 28, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.14);" title="Kirim Stiker Emosi">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                </svg>
+            </button>
+            <!-- Tombol On/Off Voice (Default: OFF) -->
+            <button id="btn-voice" onclick="toggleVoice()" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors hover:bg-white/15 shadow-2xl" style="background: rgba(24, 25, 28, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.14);" title="Voice: OFF (Klik untuk menyalakan)">
+                <svg id="icon-voice-off" class="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+                <svg id="icon-voice-on" class="w-5 h-5 text-emerald-400 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Menu + -->
+        <div id="menu-popup" class="chat-interactive hidden absolute bottom-16 right-14 w-48 rounded-2xl overflow-hidden z-30 text-sm shadow-2xl" style="background: rgba(24, 25, 28, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.14);">
+            <button onclick="lihatLayar()" class="w-full flex items-center gap-3 text-left px-4 py-3 text-white hover:bg-white/10"><img src="icons/icons8-picture-48.png" class="w-5 h-5"> Lihat Layar</button>
+            <button onclick="tesReminder()" class="w-full flex items-center gap-3 text-left px-4 py-3 text-white hover:bg-white/10"><img src="icons/icons8-notification-bell-96.png" class="w-5 h-5"> Tes Reminder</button>
+            <button onclick="perintahIngat()" class="w-full flex items-center gap-3 text-left px-4 py-3 text-white hover:bg-white/10"><img src="icons/icons8-save-96.png" class="w-5 h-5"> Ingat sesuatu</button>
+            <button onclick="bukaModelPopup()" class="w-full flex items-center gap-3 text-left px-4 py-3 text-white hover:bg-white/10 border-t border-white/10"><img src="icons/icons8-settings-100.png" class="w-5 h-5"> Ganti Model</button>
+        </div>
+
+        <!-- Popup Model -->
+        <div id="model-popup" class="chat-interactive hidden absolute bottom-16 right-14 w-56 rounded-2xl overflow-hidden z-40 text-sm shadow-2xl" style="background: rgba(24, 25, 28, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.14);">
+            <div class="px-4 py-2.5 text-xs text-gray-400 border-b border-white/10">Pilih Model AI</div>
+            <div id="model-list" class="max-h-56 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- MODE MINIMIZE: PROFIL BULAT OPERA DI POJOK KANAN BAWAH (Klik = Langsung Buka Chat, Tahan & Geser = Wobble Drag) -->
+    <div id="corner-radial" class="hidden fixed bottom-4 right-4 w-20 h-20 z-50 flex items-center justify-center">
+        <div id="radial-avatar-btn" class="radial-avatar chat-interactive pointer-events-auto" title="Klik: Buka Chat · Tahan & Geser: Pindahkan">
+            <img src="opera_profile.jpg?v=2" class="w-full h-full object-cover" draggable="false" alt="Opera O">
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const input = document.getElementById('message-input');
+        const status = document.getElementById('status-teks');
+        const toast = document.getElementById('toast');
+        const menuPopup = document.getElementById('menu-popup');
+        const modelPopup = document.getElementById('model-popup');
+        const modelList = document.getElementById('model-list');
+
+        const pyapi = new Promise((resolve) => {
+            if (window.pywebview && window.pywebview.api) {
+                resolve(window.pywebview.api);
+            } else {
+                window.addEventListener('pywebviewready', () => resolve(window.pywebview.api));
+            }
+        });
+
+        async function callApi(name, ...args) {
+            const api = await pyapi;
+            return await api[name](...args);
+        }
+
+        const STICKERS = [
+            { id: 1, label: 'Lelah', file: 'stickers/1_lelah.jpg', prompt: '[Lemon mengirim stiker ekspresi: Lelah dan capek banget]' },
+            { id: 2, label: 'Ketawa', file: 'stickers/2_ketawa.png', prompt: '[Lemon mengirim stiker ekspresi: Ketawa senang dan terhibur]' },
+            { id: 3, label: 'Jempol', file: 'stickers/3_jempol.png', prompt: '[Lemon mengirim stiker ekspresi: Jempol mantap dan setuju]' },
+            { id: 4, label: 'Ngambek', file: 'stickers/4_ngambek.png', prompt: '[Lemon mengirim stiker ekspresi: Ngambek dan cemberut]' },
+            { id: 5, label: 'Bingung', file: 'stickers/5_bingung.png', prompt: '[Lemon mengirim stiker ekspresi: Bingung dan melamun]' },
+            { id: 6, label: 'Sedih', file: 'stickers/6_sedih.jpg', prompt: '[Lemon mengirim stiker ekspresi: Sedih dan butuh ditenangkan]' },
+            { id: 7, label: 'Cinta', file: 'stickers/7_cinta.jpg', prompt: '[Lemon mengirim stiker ekspresi: Cinta, tersipu, dan sayang banget]' },
+            { id: 8, label: 'Tatap tenang dengan cinta', file: 'stickers/8_tatap_cinta.jpg', prompt: '[Lemon mengirim stiker ekspresi: Menatap tenang penuh cinta dan rasa nyaman]' },
+            { id: 9, label: 'Teasing', file: 'stickers/9_teasing.png', prompt: '[Lemon mengirim stiker ekspresi: Teasing, jahil, dan meledek manja]' },
+        ];
+
+        const stickerPopup = document.getElementById('sticker-popup');
+        const stickerGrid = document.getElementById('sticker-grid');
+        const btnSaveHighlight = document.getElementById('btn-save-highlight');
+        let lastHighlightedText = '';
+
+        function renderStickerGrid() {
+            stickerGrid.innerHTML = '';
+            for (const st of STICKERS) {
+                const btn = document.createElement('button');
+                btn.className = 'sticker-item flex flex-col items-center gap-1 p-1.5 rounded-xl hover:bg-white/10';
+                btn.title = `${st.id}. ${st.label}`;
+                btn.innerHTML = `
+                    <img src="${st.file}" class="w-16 h-16 rounded-xl object-cover shadow-md pointer-events-none" alt="${st.label}">
+                    <span class="text-[10px] text-gray-300 truncate w-full text-center">${st.id}. ${st.label}</span>
+                `;
+                btn.onclick = () => kirimSticker(st);
+                stickerGrid.appendChild(btn);
+            }
+        }
+        renderStickerGrid();
+
+        function toggleStickerPopup() {
+            menuPopup.classList.add('hidden');
+            modelPopup.classList.add('hidden');
+            if (stickerPopup.classList.contains('hidden')) {
+                stickerPopup.classList.remove('hidden');
+                stickerPopup.classList.remove('animate-tray-pop');
+                void stickerPopup.offsetWidth;
+                stickerPopup.classList.add('animate-tray-pop');
+            } else {
+                stickerPopup.classList.add('hidden');
+            }
+        }
+
+        function buatStickerBubble(st) {
+            const wrap = document.createElement('div');
+            wrap.className = 'chat-interactive self-end flex flex-col items-end gap-1 animate-sticker-pop';
+            wrap.innerHTML = `
+                <img src="${st.file}" class="w-32 h-32 rounded-2xl object-cover shadow-2xl border border-white/15" alt="${st.label}">
+                <span class="text-[11px] text-gray-300 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm">${st.label}</span>
+            `;
+            chatBox.appendChild(wrap);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function kirimSticker(st) {
+            stickerPopup.classList.add('hidden');
+            buatStickerBubble(st);
+            status.textContent = 'Menulis naskah...';
+            tampilkanMengetik();
+            let respon;
+            try {
+                respon = await callApi('tanya_opera_o', st.prompt);
+            } catch (err) {
+                respon = 'Panggung sedang terganggu, sayangku... coba lagi nanti.';
+            }
+            hapusMengetik();
+            status.textContent = 'Online';
+            await buatBubbleKetik(respon, 'opera');
+        }
+
+        async function simpanKeMemory(teks) {
+            const clean = (teks || '').trim();
+            if (!clean) return;
+            const balasan = await callApi('ingat', clean);
+            showReminder('💾 Memory disimpan: "' + (clean.length > 45 ? clean.slice(0, 45) + '...' : clean) + '"');
+            btnSaveHighlight.classList.add('hidden');
+            window.getSelection()?.removeAllRanges();
+        }
+
+        function simpanHighlightMemory() {
+            if (lastHighlightedText) {
+                simpanKeMemory(lastHighlightedText);
+                lastHighlightedText = '';
+            }
+        }
+
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            const txt = sel ? sel.toString().trim() : '';
+            if (txt && txt.length >= 4 && chatBox.contains(sel.anchorNode)) {
+                lastHighlightedText = txt;
+                btnSaveHighlight.classList.remove('hidden');
+            } else {
+                btnSaveHighlight.classList.add('hidden');
+            }
+        });
+
+        function buatBubble(teks, sender) {
+            const div = document.createElement('div');
+            if (sender === 'lemon') {
+                div.className = 'chat-interactive group relative max-w-[80%] self-end px-4 py-2.5 text-[14px] leading-relaxed bubble-lemon text-white rounded-2xl rounded-br-md animate-pop-in select-text';
+            } else {
+                div.className = 'chat-interactive group relative max-w-[80%] self-start px-4 py-2.5 text-[14px] leading-relaxed bubble-opera text-white rounded-2xl rounded-bl-md animate-pop-in select-text';
+            }
+            const span = document.createElement('span');
+            span.className = 'bubble-text';
+            span.innerHTML = teks.replace(/\n/g, '<br>');
+            div.appendChild(span);
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'opacity-0 group-hover:opacity-100 transition-opacity absolute -top-2.5 right-2 bg-[#232325] border border-white/10 text-[11px] text-[#a1a1a6] hover:text-[#ededed] px-2 py-0.5 rounded-[6px] shadow';
+            saveBtn.title = 'Simpan pesan ini ke memori';
+            saveBtn.textContent = 'Simpan';
+            saveBtn.onclick = (e) => {
+                e.stopPropagation();
+                const content = div.querySelector('.bubble-text')?.innerText || teks;
+                simpanKeMemory(content);
+            };
+            div.appendChild(saveBtn);
+
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div;
+        }
+
+        async function buatBubbleKetik(teks, sender) {
+            const div = buatBubble('', sender);
+            const span = div.querySelector('.bubble-text');
+            for (let i = 0; i <= teks.length; i++) {
+                span.innerHTML = teks.slice(0, i).replace(/\n/g, '<br>') + '<span class="type-cursor"></span>';
+                chatBox.scrollTop = chatBox.scrollHeight;
+                await new Promise(r => setTimeout(r, 16));
+            }
+            span.innerHTML = teks.replace(/\n/g, '<br>');
+            return div;
+        }
+
+        let progressPollTimer = null;
+        let thinkingStartMs = 0;
+
+        function fmtElapsed(ms) {
+            const totalSec = Math.max(0, Math.floor(ms / 1000));
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            return m > 0 ? `${m}m ${s}s` : `${s}s`;
+        }
+
+        function tampilkanMengetik() {
+            thinkingStartMs = Date.now();
+            const div = document.createElement('div');
+            div.id = 'typing-ind';
+            div.className = 'chat-interactive self-start px-1 py-1 text-[12.5px] text-[#8e9299] flex flex-col gap-1 select-none';
+            div.innerHTML = `
+                <div class="inline-flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors" onclick="const d=document.getElementById('typing-sub-detail'); if(d) d.classList.toggle('hidden');">
+                    <span id="typing-main-label">Thinking</span>
+                    <span id="typing-elapsed-time" class="tabular-nums text-[#737780]">0s</span>
+                    <span class="text-[13px] text-[#737780]">›</span>
+                </div>
+                <div id="typing-sub-detail" class="hidden text-[11.5px] text-[#6c7078] pl-2 border-l border-white/10">Memproses...</div>
+            `;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            if (progressPollTimer) clearInterval(progressPollTimer);
+            progressPollTimer = setInterval(async () => {
+                const elTime = document.getElementById('typing-elapsed-time');
+                if (elTime) elTime.textContent = fmtElapsed(Date.now() - thinkingStartMs);
+                try {
+                    const p = await callApi('get_task_progress');
+                    const mainLbl = document.getElementById('typing-main-label');
+                    const subLbl = document.getElementById('typing-sub-detail');
+                    if (p) {
+                        const cleanP = p.replace(/^⚡\s*1\s*Task\s*Running\s*·\s*/i, '').trim();
+                        if (mainLbl) mainLbl.textContent = '1 task running';
+                        if (subLbl) subLbl.textContent = cleanP;
+                    } else if (mainLbl) {
+                        mainLbl.textContent = 'Thinking';
+                    }
+                } catch {}
+            }, 250);
+            return div;
+        }
+
+        function hapusMengetik() {
+            if (progressPollTimer) {
+                clearInterval(progressPollTimer);
+                progressPollTimer = null;
+            }
+            const el = document.getElementById('typing-ind');
+            if (el) el.remove();
+        }
+
+        async function kirimPesan() {
+            const text = input.value.trim();
+            if (!text) return;
+            buatBubble(text, 'lemon');
+            input.value = '';
+            status.textContent = 'Menulis naskah...';
+            tampilkanMengetik();
+            let respon;
+            try {
+                respon = await callApi('tanya_opera_o', text);
+            } catch (err) {
+                respon = 'Panggung sedang terganggu, sayangku... coba lagi nanti.';
+            }
+            hapusMengetik();
+            status.textContent = 'Online';
+            await buatBubbleKetik(respon, 'opera');
+        }
+
+        async function lihatLayar() {
+            tutupMenu();
+            status.textContent = 'Mengintip layarmu...';
+            buatBubble('📸 (Lihat layarku)', 'lemon');
+            tampilkanMengetik();
+            let komentar;
+            try {
+                komentar = await callApi('lihat_layar');
+            } catch (err) {
+                komentar = 'Layar tak dapat kulihat saat ini, suamiku.';
+            }
+            hapusMengetik();
+            status.textContent = 'Online';
+            await buatBubbleKetik(komentar, 'opera');
+        }
+
+        let rec = null;
+        let voiceOn = false;
+
+        async function toggleVoice() {
+            voiceOn = !voiceOn;
+            await callApi('set_tts', voiceOn);
+            const btnVoice = document.getElementById('btn-voice');
+            const iconOff = document.getElementById('icon-voice-off');
+            const iconOn = document.getElementById('icon-voice-on');
+            if (voiceOn) {
+                iconOff.classList.add('hidden');
+                iconOn.classList.remove('hidden');
+                btnVoice.style.borderColor = 'rgba(52, 211, 153, 0.5)';
+                btnVoice.title = 'Voice: ON (Klik untuk mematikan)';
+            } else {
+                iconOn.classList.add('hidden');
+                iconOff.classList.remove('hidden');
+                btnVoice.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                btnVoice.title = 'Voice: OFF (Klik untuk menyalakan)';
+            }
+        }
+
+        function pakaiMic() {
+            tutupMenu();
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { buatBubble('Mic tidak didukung di sini, sayangku.', 'opera'); return; }
+            const btnCall = document.getElementById('btn-call');
+            if (rec) {
+                rec.stop();
+                rec = null;
+                status.textContent = 'Online';
+                if (btnCall) btnCall.style.borderColor = 'rgba(255,255,255,0.1)';
+                return;
+            }
+            rec = new SR();
+            rec.lang = 'id-ID';
+            rec.interimResults = false;
+            status.textContent = 'Mendengarkan...';
+            if (btnCall) btnCall.style.borderColor = 'rgba(251,113,133,0.7)';
+            rec.onresult = (e) => {
+                const teks = e.results[0][0].transcript.trim();
+                if (teks) { input.value = teks; kirimPesan(); }
+                rec = null;
+                status.textContent = 'Online';
+                if (btnCall) btnCall.style.borderColor = 'rgba(255,255,255,0.1)';
+            };
+            rec.onerror = () => {
+                status.textContent = 'Online';
+                rec = null;
+                if (btnCall) btnCall.style.borderColor = 'rgba(255,255,255,0.1)';
+            };
+            rec.onend = () => {
+                if (status.textContent === 'Mendengarkan...') status.textContent = 'Online';
+                if (btnCall) btnCall.style.borderColor = 'rgba(255,255,255,0.1)';
+            };
+            rec.start();
+        }
+
+        async function tesReminder() {
+            tutupMenu();
+            try {
+                const m = await callApi('tes_reminder');
+                showReminder('🔔 ' + m);
+            } catch (err) {}
+        }
+
+        function perintahIngat() {
+            tutupMenu();
+            const f = prompt('Hal apa yang ingin kau ingatkan untukku, Suamiku?');
+            if (f && f.trim()) {
+                callApi('ingat', f.trim()).then((balasan) => buatBubble(balasan, 'opera'));
+            }
+        }
+
+        function bukaMenu() {
+            menuPopup.classList.toggle('hidden');
+            modelPopup.classList.add('hidden');
+        }
+
+        function tutupMenu() {
+            menuPopup.classList.add('hidden');
+        }
+
+        async function bukaModelPopup() {
+            tutupMenu();
+            const models = await callApi('get_models');
+            const current = await callApi('get_current_model');
+            modelList.innerHTML = '';
+            for (const m of models) {
+                const b = document.createElement('button');
+                b.className = 'w-full flex items-center justify-between text-left px-4 py-2.5 text-white hover:bg-white/10';
+                b.innerHTML = '<span>' + m + '</span>' + (m === current ? '<span class="text-blue-400">✓</span>' : '');
+                b.onclick = () => gantiModel(m);
+                modelList.appendChild(b);
+            }
+            modelPopup.classList.remove('hidden');
+        }
+
+        async function gantiModel(m) {
+            modelPopup.classList.add('hidden');
+            const balasan = await callApi('ganti_model', m);
+            buatBubble(balasan, 'opera');
+            await muatStatusModel();
+        }
+
+        async function muatStatusModel() {
+            try {
+                const m = await callApi('get_current_model');
+                status.textContent = 'Online · ' + m;
+            } catch (err) {}
+        }
+
+        function showReminder(teks) {
+            toast.textContent = '🎭 ' + teks;
+            toast.classList.remove('hidden');
+            toast.classList.remove('animate-toast');
+            void toast.offsetWidth;
+            toast.classList.add('animate-toast');
+            setTimeout(() => { toast.classList.add('hidden'); }, 6000);
+        }
+
+        // ---- MODE MINIMIZE KE RADIAL PROFIL OPERA DI CORNER ----
+        const chatRoot = document.getElementById('chat-root');
+        const cornerRadial = document.getElementById('corner-radial');
+        const radialAvatarBtn = document.getElementById('radial-avatar-btn');
+
+        function minimizeToRadial() {
+            tutupMenu();
+            stickerPopup.classList.add('hidden');
+            modelPopup.classList.add('hidden');
+            chatRoot.classList.add('hidden');
+            cornerRadial.classList.remove('hidden');
+            cornerRadial.classList.remove('open');
+        }
+
+        function restoreFromRadial() {
+            cornerRadial.classList.remove('open');
+            cornerRadial.classList.add('hidden');
+            chatRoot.classList.remove('hidden');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        let rDown = false;
+        let rDrag = false;
+        let rStartX = 0;
+        let rStartY = 0;
+        let rPrevX = 0;
+        let rPrevY = 0;
+        let rPhase = 0;
+
+        radialAvatarBtn.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            try { radialAvatarBtn.setPointerCapture(e.pointerId); } catch {}
+            rDown = true;
+            rDrag = false;
+            rStartX = e.screenX;
+            rStartY = e.screenY;
+            rPrevX = e.screenX;
+            rPrevY = e.screenY;
+            callApi('set_ignore_mouse_chat', false);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!rDown) return;
+            if (!rDrag) {
+                if (Math.hypot(e.screenX - rStartX, e.screenY - rStartY) > 5) {
+                    rDrag = true;
+                    radialAvatarBtn.classList.remove('wobble-release');
+                    callApi('start_drag_chat');
+                }
+            } else {
+                const vx = Math.max(-24, Math.min(24, e.screenX - rPrevX));
+                const vy = Math.max(-24, Math.min(24, e.screenY - rPrevY));
+                rPrevX = e.screenX;
+                rPrevY = e.screenY;
+                const sp = Math.min(1, Math.hypot(vx, vy) / 22);
+                rPhase += 0.38;
+                const j = Math.sin(rPhase) * 0.06;
+                const sx = 1 + sp * 0.16 + j;
+                const sy = 1 - sp * 0.12 - j;
+                const rot = vx * 0.7;
+                radialAvatarBtn.style.transform = `scale(${sx.toFixed(3)}, ${sy.toFixed(3)}) rotate(${rot.toFixed(1)}deg)`;
+            }
+        });
+
+        function endRadialPointer(e) {
+            if (!rDown) return;
+            rDown = false;
+            try { radialAvatarBtn.releasePointerCapture(e.pointerId); } catch {}
+            if (rDrag) {
+                rDrag = false;
+                callApi('stop_drag_chat');
+                radialAvatarBtn.style.transform = '';
+                radialAvatarBtn.classList.remove('wobble-release');
+                void radialAvatarBtn.offsetWidth;
+                radialAvatarBtn.classList.add('wobble-release');
+                return;
+            }
+            // Klik biasa pada profil bulat -> langsung buka chat kembali!
+            restoreFromRadial();
+        }
+        window.addEventListener('pointerup', endRadialPointer);
+        window.addEventListener('pointercancel', endRadialPointer);
+
+        window.addEventListener('mousemove', (e) => {
+            if (rDown) return;
+            const hit = e.target && e.target.closest && e.target.closest('.chat-interactive');
+            callApi('set_ignore_mouse_chat', !hit);
+        });
+
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') kirimPesan(); });
+
+        const taskRunningBar = document.getElementById('task-running-bar');
+        const taskRunningDetail = document.getElementById('task-running-detail');
+        const taskRunningTimer = document.getElementById('task-running-timer');
+        let bgTaskStartMs = 0;
+
+        function toggleMinimalTaskDetail() {
+            if (taskRunningDetail) taskRunningDetail.classList.toggle('hidden');
+        }
+
+        setInterval(async () => {
+            try {
+                const p = await callApi('get_task_progress');
+                const typingOpen = Boolean(document.getElementById('typing-ind'));
+                if (p && !typingOpen) {
+                    if (!bgTaskStartMs) bgTaskStartMs = Date.now();
+                    const cleanP = p.replace(/^⚡\s*1\s*Task\s*Running\s*·\s*/i, '').trim();
+                    if (taskRunningDetail) taskRunningDetail.textContent = cleanP;
+                    if (taskRunningTimer) taskRunningTimer.textContent = fmtElapsed(Date.now() - bgTaskStartMs);
+                    taskRunningBar.classList.remove('hidden');
+                } else {
+                    if (!p) bgTaskStartMs = 0;
+                    taskRunningBar.classList.add('hidden');
+                }
+            } catch {}
+        }, 300);
+
+        setInterval(async () => {
+            try {
+                const m = await callApi('get_pending_reminder');
+                if (m) { showReminder(m); buatBubble(m, 'opera'); }
+            } catch (err) {}
+        }, 2000);
+
+        setInterval(async () => {
+            try {
+                const m = await callApi('get_pending_chat');
+                if (m) { await buatBubbleKetik(m, 'opera'); }
+            } catch (err) {}
+        }, 1500);
+
+        (async () => {
+            try {
+                await muatStatusModel();
+                const sapa = await callApi('sapaan_awal');
+                await buatBubbleKetik(sapa, 'opera');
+            } catch (err) {}
+        })();
+    </script>
+</body>
+</html>
