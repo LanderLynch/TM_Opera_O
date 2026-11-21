@@ -166,6 +166,9 @@
                 <path d="M3 18h18M4 15l2-9 6 5 6-5 2 9H4z"/>
             </svg>
             <span class="text-[13px] text-[#ededed] font-medium pr-1" id="status-teks">TM Opera O</span>
+            <button style="-webkit-app-region: no-drag;" id="btn-agent-mode" onclick="toggleAgentMode()" class="h-9 px-2.5 rounded-[8px] flex items-center justify-center text-[11.5px] font-medium text-[#85858b] hover:text-[#ededed] hover:bg-[#232325] border border-transparent transition-colors shrink-0" title="Mode Agent Otonom (Multi-step)">
+                Agent
+            </button>
             <button style="-webkit-app-region: no-drag;" onclick="callApi('open_settings')" class="w-9 h-9 rounded-[8px] flex items-center justify-center text-[#85858b] hover:text-[#ededed] hover:bg-[#232325] transition-colors shrink-0" title="Pengaturan">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -214,6 +217,38 @@
                 <span class="text-[11px] text-gray-500">Klik untuk kirim</span>
             </div>
             <div id="sticker-grid" class="grid grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-1"></div>
+        </div>
+
+        <!-- Agent Execution Monitor & Approval Card (Hidden unless task active or Agent Monitor toggled) -->
+        <div id="agent-monitor" class="chat-interactive hidden mx-3 mb-2 p-3 rounded-[12px] text-[12px] text-[#ededed] shadow-2xl space-y-2 z-30"
+            style="background: #141415; border: 1px solid rgba(237,237,237,0.12);">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span id="agent-status-badge" class="px-2 py-0.5 rounded-[6px] text-[10.5px] font-medium bg-[#232325] text-[#e5a04b]">IDLE</span>
+                    <span id="agent-app-label" class="text-[11.5px] text-[#a1a1a6] truncate"></span>
+                </div>
+                <span id="agent-step-counter" class="text-[11px] text-[#85858b] font-mono shrink-0">0 steps</span>
+            </div>
+            <div id="agent-goal-text" class="text-[12.5px] font-medium text-[#ededed] truncate"></div>
+            <div id="agent-steps-list" class="max-h-24 overflow-y-auto space-y-1 text-[11.5px] text-[#a1a1a6]"></div>
+
+            <!-- Approval Request Box -->
+            <div id="agent-approval-box" class="hidden p-2.5 rounded-[8px] space-y-2" style="background: #19191b; border: 1px solid rgba(229, 160, 75, 0.4);">
+                <div id="agent-approval-summary" class="text-[12px] font-medium text-[#ededed]"></div>
+                <div id="agent-approval-args" class="text-[11px] text-[#85858b] font-mono break-all"></div>
+                <div class="flex items-center gap-2">
+                    <button onclick="respondAgentApproval(true)" class="flex-1 h-8 rounded-[6px] bg-[#4cc38a] text-[#0f0f10] font-medium text-[12px]">Approve</button>
+                    <button onclick="respondAgentApproval(false)" class="flex-1 h-8 rounded-[6px] bg-[#e5484d] text-white font-medium text-[12px]">Reject</button>
+                </div>
+            </div>
+
+            <!-- Execution Controls -->
+            <div class="flex items-center gap-1.5 pt-1 border-t" style="border-color: rgba(237,237,237,0.08);">
+                <button onclick="agentControl('pause')" class="px-2.5 h-7 rounded-[6px] bg-[#232325] hover:bg-[#2c2c2f] text-[11px] text-[#ededed]">Pause</button>
+                <button onclick="agentControl('resume')" class="px-2.5 h-7 rounded-[6px] bg-[#232325] hover:bg-[#2c2c2f] text-[11px] text-[#ededed]">Resume</button>
+                <button onclick="agentControl('cancel')" class="px-2.5 h-7 rounded-[6px] bg-[#232325] hover:bg-[#2c2c2f] text-[11px] text-[#a1a1a6]">Cancel</button>
+                <button onclick="agentControl('emergencyStop')" class="ml-auto px-2.5 h-7 rounded-[6px] bg-[#e5484d] hover:opacity-90 text-[11px] font-medium text-white">Emergency Stop</button>
+            </div>
         </div>
 
         <!-- Minimalist Inline "Thinking / 1 task running" Indicator (Gaya Screenshot) -->
@@ -500,11 +535,101 @@
             if (el) el.remove();
         }
 
+        let agentModeEnabled = false;
+        let lastReportedTaskId = '';
+
+        function toggleAgentMode() {
+            agentModeEnabled = !agentModeEnabled;
+            const btn = document.getElementById('btn-agent-mode');
+            if (btn) {
+                btn.style.color = agentModeEnabled ? '#e5a04b' : '#85858b';
+                btn.style.borderColor = agentModeEnabled ? 'rgba(229,160,75,0.4)' : 'transparent';
+                btn.style.background = agentModeEnabled ? '#232325' : 'transparent';
+            }
+            input.placeholder = agentModeEnabled
+                ? 'Instruksi Agent Otonom (Discord, WA, Word, Chrome)...'
+                : 'Pesan TM Opera O...';
+        }
+
+        async function agentControl(action) {
+            if (!window.agent || !window.agent[action]) return;
+            await window.agent[action]();
+            await pollAgentMonitor();
+        }
+
+        async function respondAgentApproval(approved) {
+            if (!window.agent) return;
+            await window.agent.approvalResponse(approved);
+            await pollAgentMonitor();
+        }
+
+        async function pollAgentMonitor() {
+            if (!window.agent) return;
+            try {
+                const res = await window.agent.getStatus();
+                const mon = document.getElementById('agent-monitor');
+                const task = res?.activeTask || (res?.recentTasks && res.recentTasks[0]);
+                const isActive = Boolean(res?.activeTask);
+
+                if (!task || (!isActive && !agentModeEnabled && task.id === lastReportedTaskId)) {
+                    if (!isActive) mon.classList.add('hidden');
+                    return;
+                }
+
+                if (isActive || (task && task.id !== lastReportedTaskId && ['completed', 'failed', 'cancelled'].includes(task.status))) {
+                    mon.classList.remove('hidden');
+                    document.getElementById('agent-status-badge').textContent = task.status.toUpperCase();
+                    document.getElementById('agent-app-label').textContent = task.context?.activeWindow || '';
+                    document.getElementById('agent-step-counter').textContent = `${task.steps?.length || 0} steps`;
+                    document.getElementById('agent-goal-text').textContent = task.goal;
+
+                    const stepsBox = document.getElementById('agent-steps-list');
+                    stepsBox.innerHTML = '';
+                    (task.steps || []).slice(-5).forEach((s) => {
+                        const mark = s.status === 'completed' ? '✓' : s.status === 'failed' ? '✕' : s.status === 'running' ? '›' : '-';
+                        const row = document.createElement('div');
+                        row.className = 'truncate';
+                        row.textContent = `${mark} ${s.toolName}: ${s.verificationEvidence || s.description}`;
+                        stepsBox.appendChild(row);
+                    });
+
+                    const appBox = document.getElementById('agent-approval-box');
+                    if (res.pendingApproval) {
+                        appBox.classList.remove('hidden');
+                        document.getElementById('agent-approval-summary').textContent = res.pendingApproval.summary;
+                        document.getElementById('agent-approval-args').textContent = JSON.stringify(res.pendingApproval.arguments);
+                    } else {
+                        appBox.classList.add('hidden');
+                    }
+
+                    if (!isActive && task.id !== lastReportedTaskId) {
+                        lastReportedTaskId = task.id;
+                        const summary = task.finalReport || task.error || `Task ${task.status}.`;
+                        await buatBubbleKetik(summary, 'opera');
+                        setTimeout(() => mon.classList.add('hidden'), 4500);
+                    }
+                }
+            } catch {}
+        }
+        setInterval(pollAgentMonitor, 800);
+
         async function kirimPesan() {
             const text = input.value.trim();
             if (!text) return;
             buatBubble(text, 'lemon');
             input.value = '';
+
+            if ((agentModeEnabled || text.startsWith('/agent ')) && window.agent) {
+                const goal = text.replace(/^\/agent\s+/i, '').trim();
+                const started = await window.agent.start(goal);
+                if (!started?.ok) {
+                    buatBubble(started?.error || 'Agent gagal dimulai.', 'opera');
+                } else {
+                    await pollAgentMonitor();
+                }
+                return;
+            }
+
             status.textContent = 'Menulis naskah...';
             tampilkanMengetik();
             let respon;

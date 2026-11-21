@@ -20,6 +20,10 @@ import {
   triggerMediaKey,
   WordDocSpec,
 } from "./pcController";
+import { AgentRuntime } from "./agent/agentRuntime";
+import { AgentModelClient } from "./ai/toolCalling";
+import { eventBus } from "./core/eventBus";
+import { createDefaultToolRegistry } from "./tools/registry";
 
 const BASE = path.resolve(__dirname, "..");
 
@@ -1913,6 +1917,102 @@ ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
     default:
       return null;
   }
+});
+
+// ---------------------------------------------------------
+// 6. ISOLATED AGENT ENGINE IPC CHANNELS (MILESTONE 1)
+// ---------------------------------------------------------
+const agentModelClient: AgentModelClient = {
+  async complete(sysPrompt: string, userPrompt: string): Promise<string> {
+    const msgs: ChatMessage[] = [
+      { role: "system", content: sysPrompt },
+      { role: "user", content: userPrompt },
+    ];
+    if (currentIsLocal()) return await callOllama(msgs);
+    if (currentIsDeepSeek()) return await callDeepSeek(msgs);
+    return await callGemini(msgs);
+  },
+};
+
+const agentToolRegistry = createDefaultToolRegistry({
+  getActiveWindowTitle,
+  openExternalUrl: async (url: string) => {
+    await shell.openExternal(url);
+  },
+  searchWeb: searchOnlineContext,
+  captureScreenBase64: async () => {
+    try {
+      const display = screen.getPrimaryDisplay();
+      const { width: sw, height: sh } = display.size;
+      const sources = await desktopCapturer.getSources({
+        types: ["screen"],
+        thumbnailSize: { width: Math.min(1366, sw), height: Math.min(768, sh) },
+      });
+      return sources[0]?.thumbnail.toPNG().toString("base64") || null;
+    } catch {
+      return null;
+    }
+  },
+});
+
+const agentRuntime = new AgentRuntime(agentModelClient, agentToolRegistry, {
+  observeWindowFn: getActiveWindowTitle,
+  storageDir: BASE,
+});
+
+let pendingAgentApproval: {
+  taskId: string;
+  stepId: string;
+  toolName: string;
+  summary: string;
+  arguments: Record<string, unknown>;
+} | null = null;
+
+eventBus.on("task:approval-needed", (payload) => {
+  pendingAgentApproval = payload;
+});
+eventBus.on("task:completed", () => {
+  pendingAgentApproval = null;
+});
+eventBus.on("task:failed", () => {
+  pendingAgentApproval = null;
+});
+eventBus.on("task:cancelled", () => {
+  pendingAgentApproval = null;
+});
+
+ipcMain.handle("agent:start", async (_event, rawGoal: unknown) => {
+  const goal = typeof rawGoal === "string" ? rawGoal.trim() : "";
+  if (!goal) return { ok: false, error: "Goal must be a non-empty string." };
+  if (agentRuntime.taskManager.hasActiveTask()) {
+    return { ok: false, error: "Another agent task is already active." };
+  }
+  const runPromise = agentRuntime.runObjective(goal, BASE);
+  // Return initial task immediately; UI/pollers can inspect status via agent:get-status
+  const active = agentRuntime.taskManager.getActiveTask();
+  void runPromise;
+  return { ok: true, task: active };
+});
+
+ipcMain.handle("agent:pause", () => ({ ok: agentRuntime.taskManager.pause() }));
+ipcMain.handle("agent:resume", () => ({ ok: agentRuntime.taskManager.resume() }));
+ipcMain.handle("agent:cancel", () => {
+  pendingAgentApproval = null;
+  return { ok: agentRuntime.taskManager.cancel() };
+});
+ipcMain.handle("agent:emergency-stop", () => {
+  pendingAgentApproval = null;
+  return { ok: agentRuntime.taskManager.emergencyStop() };
+});
+ipcMain.handle("agent:get-status", () => ({
+  activeTask: agentRuntime.taskManager.getActiveTask(),
+  recentTasks: agentRuntime.taskManager.getAllTasks().slice(0, 5),
+  pendingApproval: pendingAgentApproval,
+}));
+ipcMain.handle("agent:approval-response", (_event, approved: unknown) => {
+  pendingAgentApproval = null;
+  agentRuntime.taskManager.resolveApproval(Boolean(approved));
+  return { ok: true };
 });
 
 app.whenReady().then(() => {

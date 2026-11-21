@@ -4,6 +4,8 @@ dist/
 usage.json
 settings.json
 memory.json
+agent_state.db*
+agent_tasks.json
 *.log
 .DS_Store
 Thumbs.db

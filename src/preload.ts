@@ -52,3 +52,13 @@ for (const name of METHODS) {
 }
 
 contextBridge.exposeInMainWorld("pywebview", { api });
+
+contextBridge.exposeInMainWorld("agent", {
+  start: (goal: string) => ipcRenderer.invoke("agent:start", goal),
+  pause: () => ipcRenderer.invoke("agent:pause"),
+  resume: () => ipcRenderer.invoke("agent:resume"),
+  cancel: () => ipcRenderer.invoke("agent:cancel"),
+  emergencyStop: () => ipcRenderer.invoke("agent:emergency-stop"),
+  getStatus: () => ipcRenderer.invoke("agent:get-status"),
+  approvalResponse: (approved: boolean) => ipcRenderer.invoke("agent:approval-response", approved),
+});
