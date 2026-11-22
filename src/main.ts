@@ -1321,6 +1321,7 @@ async function maybeExtractFact(userText: string, reply: string): Promise<void> 
 
 function getActiveWindowTitle(): Promise<string> {
   return new Promise((resolve) => {
+    const selfPid = process.pid;
     const ps = `
 Add-Type @"
 using System;
@@ -1331,24 +1332,30 @@ public class Win32Title {
   [DllImport("user32.dll")] public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
   [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
   [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
 }
 "@
-$blacklist = '^(TM Opera O|Opera iOS Notch|Opera Notch|Opera Radial|Program Manager|Settings|Microsoft Text Input Application|Windows Input Experience|Default IME|MSCTFIME UI|NVIDIA GeForce Overlay|NVIDIA Share|GeForce Experience|Xbox Game Bar|Windows Shell Experience Host|Task Switching)$'
+$selfPid = ${selfPid}
+$blacklist = '^(TM Opera O|Opera iOS Notch|Opera Notch|Opera Radial|Opera Settings|Program Manager|Settings|Microsoft Text Input Application|Windows Input Experience|Default IME|MSCTFIME UI|NVIDIA GeForce Overlay|NVIDIA Share|GeForce Experience|Xbox Game Bar|Windows Shell Experience Host|Task Switching)$'
 $h = [Win32Title]::GetForegroundWindow()
 $found = ""
 for ($i = 0; $i -lt 160 -and $h -ne [IntPtr]::Zero; $i++) {
   if ([Win32Title]::IsWindowVisible($h)) {
-    $ex = [Win32Title]::GetWindowLong($h, -20)
-    # Skip click-through overlay windows (WS_EX_TRANSPARENT = 0x20, WS_EX_TOOLWINDOW = 0x80)
-    $isOverlay = (($ex -band 0x20) -ne 0)
-    if (-not $isOverlay) {
-      $sb = New-Object System.Text.StringBuilder 256
-      [void][Win32Title]::GetWindowText($h, $sb, 256)
-      $t = $sb.ToString().Trim()
-      if ($t -and $t -notmatch $blacklist -and $t -notmatch 'NVIDIA|GeForce Overlay') {
-        $found = $t
-        break
+    [uint32]$winPid = 0
+    [void][Win32Title]::GetWindowThreadProcessId($h, [ref]$winPid)
+    if ($winPid -ne $selfPid) {
+      $ex = [Win32Title]::GetWindowLong($h, -20)
+      # Skip click-through overlay windows (WS_EX_TRANSPARENT = 0x20, WS_EX_TOOLWINDOW = 0x80)
+      $isOverlay = (($ex -band 0x20) -ne 0) -or (($ex -band 0x80) -ne 0)
+      if (-not $isOverlay) {
+        $sb = New-Object System.Text.StringBuilder 256
+        [void][Win32Title]::GetWindowText($h, $sb, 256)
+        $t = $sb.ToString().Trim()
+        if ($t -and $t -notmatch $blacklist -and $t -notmatch 'NVIDIA|GeForce Overlay') {
+          $found = $t
+          break
+        }
       }
     }
   }
@@ -1362,7 +1369,7 @@ $found
         return;
       }
       const title = (stdout || "").trim();
-      if (title && !title.includes("Opera")) {
+      if (title) {
         if (title !== currentActiveWindow) {
           currentActiveWindow = title;
           activeWindowSince = Date.now();
@@ -1510,7 +1517,7 @@ function startBackgroundLoops(): void {
 
   setInterval(async () => {
     const title = await getActiveWindowTitle();
-    if (!title || title.includes("Opera")) return;
+    if (!title) return;
     if (title !== currentActiveWindow) {
       currentActiveWindow = title;
       activeWindowSince = Date.now();
