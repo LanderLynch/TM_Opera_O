@@ -15,6 +15,7 @@ import { clickMouse, MouseButton, scrollMouse } from "../desktop/mouse";
 import { listOpenWindows } from "../desktop/windowManager";
 import { inspectWindowUITree, invokeUIElementByName } from "../desktop/windowsUIAutomation";
 import { guardScreenCoordinates, isProtectedPath } from "../safety/actionGuard";
+import { ShelfStore } from "../shelf/shelfStore";
 import { AgentTool, ToolContext, ToolResult } from "./toolTypes";
 import { validateToolArguments } from "./validation";
 
@@ -23,6 +24,8 @@ export interface ToolRuntimeDependencies {
   captureScreenBase64?: () => Promise<string | null>;
   openExternalUrl: (url: string) => Promise<void>;
   searchWeb?: (query: string) => Promise<string>;
+  shelfStore?: ShelfStore;
+  openFilePath?: (filePath: string) => Promise<void>;
 }
 
 export class ToolRegistry {
@@ -677,6 +680,110 @@ export function createDefaultToolRegistry(deps: ToolRuntimeDependencies): ToolRe
       };
     },
   });
+
+  // ---- SHELF INTEGRATION TOOLS ----
+  if (deps.shelfStore) {
+    const shelf = deps.shelfStore;
+
+    registry.register({
+      name: "shelf_save_text",
+      description: "Save a text note, snippet, or reference into the persistent local Shelf.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["text"],
+        properties: {
+          text: { type: "string", minLength: 1, maxLength: 50000, description: "Text content to save." },
+          name: { type: "string", maxLength: 80, description: "Optional short title." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const res = shelf.addText(String(args.text), args.name ? String(args.name) : undefined);
+        return {
+          success: res.ok,
+          output: res.item || null,
+          evidence: res.ok ? `Saved text item "${res.item?.name}" to Shelf.` : res.error || "Failed.",
+          error: res.error,
+        };
+      },
+    });
+
+    registry.register({
+      name: "shelf_search",
+      description: "Search items saved in the local Shelf by filename, content, or type.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query." },
+          type: { type: "string", enum: ["all", "image", "document", "text"], description: "Optional type filter." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const q = String(args.query || "");
+        const filter = (args.type as "all" | "image" | "document" | "text") || "all";
+        const items = shelf.search(q, filter);
+        return {
+          success: true,
+          output: items.map((i) => ({ id: i.id, name: i.name, type: i.type, size: i.size })),
+          evidence: `Found ${items.length} Shelf item(s) matching "${q}".`,
+        };
+      },
+    });
+
+    registry.register({
+      name: "shelf_open",
+      description: "Open a stored Shelf item using its default Windows application.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["id"],
+        properties: {
+          id: { type: "string", minLength: 3, description: "Shelf item ID." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const item = shelf.get(String(args.id));
+        if (!item || !item.filePath) {
+          return { success: false, output: null, evidence: "Shelf item not found.", error: "Item not found." };
+        }
+        if (deps.openFilePath) {
+          await deps.openFilePath(item.filePath);
+        }
+        return {
+          success: true,
+          output: { id: item.id, name: item.name, filePath: item.filePath },
+          evidence: `Opened Shelf item "${item.name}" (${item.type}).`,
+        };
+      },
+    });
+
+    registry.register({
+      name: "shelf_delete",
+      description: "Delete an item from Shelf (requires user approval).",
+      permissionLevel: "confirm",
+      parameterSchema: {
+        type: "object",
+        required: ["id"],
+        properties: {
+          id: { type: "string", minLength: 3, description: "Shelf item ID to delete." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const ok = shelf.delete(String(args.id));
+        return {
+          success: ok,
+          output: { deleted: ok, id: args.id },
+          evidence: ok ? `Deleted Shelf item ${String(args.id)}.` : "Shelf item not found.",
+          error: ok ? undefined : "Item not found.",
+        };
+      },
+    });
+  }
 
   return registry;
 }

@@ -32,21 +32,22 @@
         }
         .island {
             position: relative;
-            background: linear-gradient(180deg, #050608 0%, #0b101b 78%, #121b2d 100%);
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            border-top: none;
-            box-shadow:
-                0 18px 42px rgba(0, 0, 0, 0.72),
-                inset 0 -1px 0 rgba(255, 255, 255, 0.14);
+            background: rgba(10, 11, 15, 0.82);
+            backdrop-filter: blur(28px) saturate(130%);
+            -webkit-backdrop-filter: blur(28px) saturate(130%);
+            border: none;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
             color: #ffffff;
             cursor: pointer;
             width: 220px;
             height: 34px;
             border-radius: 0 0 20px 20px;
+            overflow: hidden;
             transition:
                 width 0.42s cubic-bezier(0.32, 0.72, 0, 1),
                 height 0.42s cubic-bezier(0.32, 0.72, 0, 1),
-                border-radius 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+                border-radius 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+                background 0.6s ease;
         }
         .island::before,
         .island::after {
@@ -56,14 +57,37 @@
             width: 14px;
             height: 14px;
             pointer-events: none;
+            z-index: 1;
         }
         .island::before {
             left: -14px;
-            background: radial-gradient(circle at 0 100%, transparent 14px, #050608 14.5px);
+            background: radial-gradient(circle at 0 100%, transparent 14px, rgba(10, 11, 15, 0.82) 14.5px);
         }
         .island::after {
             right: -14px;
-            background: radial-gradient(circle at 100% 100%, transparent 14px, #050608 14.5px);
+            background: radial-gradient(circle at 100% 100%, transparent 14px, rgba(10, 11, 15, 0.82) 14.5px);
+        }
+
+        /* Restrained Album-Art Ambient Wash (NO neon glow, NO sharp halos) */
+        .ambient-wash {
+            position: absolute;
+            inset: -12px;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.9;
+            filter: blur(22px);
+            background:
+                radial-gradient(ellipse 68% 95% at 18% 45%, rgba(229, 160, 75, 0.16) 0%, transparent 72%),
+                radial-gradient(ellipse 75% 90% at 78% 60%, rgba(120, 130, 155, 0.12) 0%, transparent 75%),
+                linear-gradient(180deg, rgba(10, 11, 15, 0.35) 0%, rgba(10, 11, 15, 0.75) 100%);
+            transition: opacity 0.75s ease, background 0.9s ease;
+        }
+        .ambient-wash.paused {
+            opacity: 0.38;
+        }
+        .compact-view,
+        .expanded-view {
+            z-index: 2;
         }
 
         .island.expanded {
@@ -198,11 +222,143 @@
             opacity: 1;
             pointer-events: auto;
         }
+
+        /* Horizontal Row for Island + Side Shelf */
+        .notch-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 8px;
+            max-width: 100%;
+        }
+
+        .shelf-toggle-pill {
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: #0a0b0f;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .shelf-toggle-pill:hover {
+            background: #131620;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        .shelf-toggle-pill.active {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+        }
+
+        /* Horizontal Slide-Out Shelf Panel */
+        .shelf-panel {
+            width: 0;
+            height: 176px;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            background: rgba(10, 11, 15, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 26px;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, padding 0.25s ease;
+            flex-shrink: 0;
+        }
+        .shelf-panel.open {
+            width: 420px;
+            opacity: 1;
+            pointer-events: auto;
+            padding: 10px 12px;
+        }
+        .shelf-panel.drag-over {
+            border-color: rgba(56, 189, 248, 0.75);
+            background: rgba(14, 22, 34, 0.98);
+        }
+
+        .shelf-track {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            gap: 8px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 4px 2px 6px 2px;
+            flex: 1;
+            min-height: 0;
+        }
+        .shelf-track::-webkit-scrollbar {
+            height: 4px;
+        }
+        .shelf-track::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+        }
+
+        .shelf-item {
+            flex: 0 0 112px;
+            width: 112px;
+            height: 108px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+            position: relative;
+        }
+        .shelf-item:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        .shelf-filter-btn {
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 9.5px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.58);
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.15s ease;
+        }
+        .shelf-filter-btn.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .notch-scroll-y {
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.18) transparent;
+        }
+        .notch-scroll-y::-webkit-scrollbar {
+            width: 4px;
+        }
+        .notch-scroll-y::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+        }
     </style>
 </head>
 <body>
     <div class="notch-wrapper">
-        <div id="island" class="island notch-interactive">
+        <div class="notch-row">
+            <div id="island" class="island notch-interactive">
+            <div id="ambient-wash" class="ambient-wash"></div>
             <!-- COMPACT PILL VIEW -->
             <div class="compact-view">
                 <div class="flex items-center gap-2">
@@ -358,12 +514,174 @@
                     <div id="footer-status" class="text-[11px] text-[#85858b] truncate">Standby</div>
                 </div>
 
+                <!-- SLIDE 3: AGENT STATUS & TASK PROGRESS -->
+                <div id="slide-3" class="w-full h-full hidden flex flex-col justify-between pb-3 pt-1">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span id="agent-state-dot" class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                            <span id="agent-state-badge" class="text-[11px] font-bold text-white uppercase tracking-wider">Idle</span>
+                            <span id="agent-active-app" class="text-[10px] text-white/50 truncate max-w-[170px]">Standby</span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="agentAction('pause', event)" class="px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-[10px] text-white/85 font-medium">Pause</button>
+                            <button onclick="agentAction('resume', event)" class="px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-[10px] text-white/85 font-medium">Resume</button>
+                            <button onclick="agentAction('stop', event)" class="px-2 py-0.5 rounded-md bg-red-500/20 hover:bg-red-500/35 text-[10px] text-red-300 font-medium">Stop</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span id="task-title" class="text-[12px] font-semibold text-white truncate">No active agent task</span>
+                            <span id="task-steps-count" class="text-[10px] text-white/60 shrink-0">0 / 0 steps</span>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                            <div id="task-progress-bar" class="h-full bg-sky-400 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-white/65 gap-2">
+                            <span id="task-current-step" class="truncate">Waiting for instruction</span>
+                            <span id="task-last-verified" class="text-emerald-300/80 truncate max-w-[140px]"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 4: APPROVAL CENTER -->
+                <div id="slide-4" class="w-full h-full hidden flex flex-col justify-between pb-3 pt-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-amber-300 uppercase tracking-wider">Approval Center</span>
+                        <span id="approval-target-app" class="text-[10px] text-white/55 truncate max-w-[190px]">No pending request</span>
+                    </div>
+                    <div id="approval-empty" class="flex-1 flex items-center justify-center text-[11px] text-white/45">
+                        All clear — no sensitive action waiting for approval.
+                    </div>
+                    <div id="approval-card" class="hidden flex-1 flex flex-col justify-between bg-amber-500/10 border border-amber-400/25 rounded-xl px-3 py-2 mt-1">
+                        <div class="flex flex-col gap-0.5 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <span id="approval-action-name" class="text-[11.5px] font-semibold text-white truncate">Action</span>
+                                <span id="approval-consequence" class="text-[9.5px] text-amber-200/80 truncate">Requires confirmation</span>
+                            </div>
+                            <div id="approval-detail-text" class="text-[10px] text-white/75 line-clamp-2 break-all"></div>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 pt-1">
+                            <button onclick="respondApproval(false, event)" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-red-500/30 text-[10.5px] font-semibold text-white">Reject</button>
+                            <button onclick="respondApproval(true, event)" class="px-3 py-1 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 text-[10.5px] font-semibold text-black">Approve</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 5: QUICK ACTIONS -->
+                <div id="slide-5" class="w-full h-full hidden flex flex-col justify-between pb-3 pt-1">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold text-white/85 uppercase tracking-wider">Quick Actions</span>
+                        <div class="flex items-center gap-1">
+                            <input id="quick-agent-goal" type="text" placeholder="Run agent task..." onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){startQuickAgentTask(event)}" class="bg-white/10 border border-white/15 rounded-lg px-2 py-0.5 text-[10.5px] text-white placeholder-white/40 w-[165px] focus:outline-none focus:border-white/35">
+                            <button onclick="startQuickAgentTask(event)" class="px-2 py-0.5 rounded-lg bg-white/15 hover:bg-white/25 text-[10px] font-semibold text-white">Go</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 mt-1">
+                        <button onclick="runQuickAction('open_discord', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Discord</button>
+                        <button onclick="runQuickAction('open_whatsapp', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">WhatsApp</button>
+                        <button onclick="runQuickAction('open_chrome', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Chrome</button>
+                        <button onclick="runQuickAction('open_word', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Word</button>
+                        <button onclick="runQuickAction('screenshot', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Screenshot</button>
+                        <button onclick="toggleShelf(event)" class="bg-sky-500/20 hover:bg-sky-500/35 border border-sky-400/25 rounded-xl py-1.5 px-2 text-[10.5px] font-semibold text-sky-200 truncate">Open Shelf</button>
+                    </div>
+                </div>
+
+                <!-- SLIDE 6: SYSTEM MONITOR -->
+                <div id="slide-6" class="w-full h-full hidden flex flex-col justify-between pb-3 pt-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-white/85 uppercase tracking-wider">System Monitor</span>
+                        <span id="sys-app-rss" class="text-[10px] text-white/55">App RSS: -- MB</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mt-1 flex-1 items-center">
+                        <div class="bg-white/[0.05] border border-white/10 rounded-xl px-2.5 py-2 flex flex-col justify-between h-[74px]">
+                            <span class="text-[10px] text-white/55">CPU Load</span>
+                            <span id="sys-cpu-pct" class="text-[18px] font-bold text-white leading-none">--%</span>
+                            <span class="text-[9.5px] text-white/45">Logical cores</span>
+                        </div>
+                        <div class="bg-white/[0.05] border border-white/10 rounded-xl px-2.5 py-2 flex flex-col justify-between h-[74px]">
+                            <span class="text-[10px] text-white/55">RAM Used</span>
+                            <span id="sys-ram-pct" class="text-[18px] font-bold text-white leading-none">--%</span>
+                            <span id="sys-ram-detail" class="text-[9.5px] text-white/45 truncate">-- / -- GB</span>
+                        </div>
+                        <div class="bg-white/[0.05] border border-white/10 rounded-xl px-2.5 py-2 flex flex-col justify-between h-[74px]">
+                            <span class="text-[10px] text-white/55">Available</span>
+                            <span id="sys-ram-avail" class="text-[18px] font-bold text-emerald-300 leading-none">-- GB</span>
+                            <span class="text-[9.5px] text-white/45">Free memory</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 7: NOTIFICATION HUB -->
+                <div id="slide-7" class="w-full h-full hidden flex flex-col justify-between pb-3 pt-1">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-bold text-white/85 uppercase tracking-wider">Notifications</span>
+                            <span id="notif-unread-badge" class="hidden px-1.5 py-0.2 rounded-full bg-sky-500/30 text-sky-200 text-[9.5px] font-semibold">0</span>
+                        </div>
+                        <button onclick="markAllNotifsRead(event)" class="text-[10px] text-white/55 hover:text-white">Mark all read</button>
+                    </div>
+                    <div id="notif-list" class="notch-scroll-y flex-1 flex flex-col gap-1 mt-1 pr-1">
+                        <div class="text-[11px] text-white/45 text-center py-4">No notifications</div>
+                    </div>
+                </div>
+
                 <!-- Bottom Center Slide Dots Indicator -->
                 <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
                     <span class="slide-dot active" onclick="goToSlide(0, event)" title="Slide 1: Musik & Lirik"></span>
                     <span class="slide-dot" onclick="goToSlide(1, event)" title="Slide 2: Usage & Kuota Token (%)"></span>
                     <span class="slide-dot" onclick="goToSlide(2, event)" title="Slide 3: Quick Control"></span>
+                    <span class="slide-dot" onclick="goToSlide(3, event)" title="Slide 4: Agent Status & Task Progress"></span>
+                    <span id="dot-approval" class="slide-dot" onclick="goToSlide(4, event)" title="Slide 5: Approval Center"></span>
+                    <span class="slide-dot" onclick="goToSlide(5, event)" title="Slide 6: Quick Actions"></span>
+                    <span class="slide-dot" onclick="goToSlide(6, event)" title="Slide 7: System Monitor"></span>
+                    <span id="dot-notif" class="slide-dot" onclick="goToSlide(7, event)" title="Slide 8: Notification Hub"></span>
                 </div>
+            </div>
+        </div>
+
+            <!-- HORIZONTAL SHELF TRIGGER PILL -->
+            <button id="shelf-toggle-btn" onclick="toggleShelf(event)" class="shelf-toggle-pill notch-interactive" title="Toggle Local Shelf">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>Shelf</span>
+                <span id="shelf-count-badge" class="px-1.5 py-0.2 rounded-full bg-white/15 text-[9.5px] text-white/90">0</span>
+            </button>
+
+            <!-- HORIZONTAL SLIDE-OUT SHELF PANEL -->
+            <div id="shelf-panel" class="shelf-panel notch-interactive" tabindex="0">
+                <div class="flex items-center justify-between gap-1.5 pb-1 border-b border-white/10">
+                    <div class="flex items-center gap-1">
+                        <input id="shelf-search" type="text" placeholder="Search shelf..." oninput="refreshShelf()" onclick="event.stopPropagation()" class="bg-white/10 border border-white/10 rounded-lg px-2 py-0.5 text-[10px] text-white placeholder-white/40 w-[108px] focus:outline-none focus:border-white/30">
+                        <button onclick="setShelfFilter('all', event)" data-filter="all" class="shelf-filter-btn active">All</button>
+                        <button onclick="setShelfFilter('image', event)" data-filter="image" class="shelf-filter-btn">Img</button>
+                        <button onclick="setShelfFilter('document', event)" data-filter="document" class="shelf-filter-btn">Doc</button>
+                        <button onclick="setShelfFilter('text', event)" data-filter="text" class="shelf-filter-btn">Txt</button>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="openShelfAddDialog(event)" title="Add files (or Ctrl+V / Drag & Drop)" class="w-5 h-5 rounded-md bg-white/10 hover:bg-white/25 text-white text-[12px] leading-none flex items-center justify-center">+</button>
+                        <button onclick="toggleShelf(event, false)" title="Collapse Shelf" class="w-5 h-5 rounded-md bg-white/5 hover:bg-white/20 text-white/70 text-[11px] leading-none flex items-center justify-center">×</button>
+                    </div>
+                </div>
+                <div id="shelf-track" class="shelf-track">
+                    <div class="text-[10.5px] text-white/40 px-3">Drop files, Ctrl+V, or click + to add</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INLINE SHELF PREVIEW / TEXT EDIT MODAL -->
+    <div id="shelf-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/55 notch-interactive" onclick="closeShelfModal(event)">
+        <div class="bg-[#0e1017] border border-white/15 rounded-2xl p-3 w-[360px] max-w-[92vw] shadow-2xl flex flex-col gap-2" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between gap-2">
+                <span id="shelf-modal-title" class="text-[12px] font-semibold text-white truncate">Shelf Item</span>
+                <button onclick="closeShelfModal(event)" class="text-white/60 hover:text-white text-[13px] px-1">×</button>
+            </div>
+            <img id="shelf-modal-img" class="hidden max-h-[120px] object-contain rounded-lg bg-black/40" />
+            <textarea id="shelf-modal-text" class="hidden w-full h-[96px] bg-white/5 border border-white/10 rounded-lg p-2 text-[11px] text-white focus:outline-none resize-none"></textarea>
+            <div class="flex items-center justify-end gap-1.5">
+                <button id="shelf-modal-save" onclick="saveShelfTextEdit(event)" class="hidden px-2.5 py-1 rounded-lg bg-sky-500/80 hover:bg-sky-500 text-[10.5px] font-semibold text-black">Save</button>
+                <button onclick="copyModalShelfItem(event)" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10.5px] text-white">Copy</button>
+                <button onclick="openModalShelfItem(event)" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10.5px] text-white">Open</button>
             </div>
         </div>
     </div>
@@ -382,13 +700,18 @@
         let pinned = false;
         let collapseTimer = null;
         let currentSlide = 0;
-        const TOTAL_SLIDES = 3;
+        const TOTAL_SLIDES = 8;
+        let userPinnedSlideUntil = 0;
 
-        function goToSlide(idx, e) {
+        function goToSlide(idx, e, isAuto = false) {
             if (e) e.stopPropagation();
+            if (!isAuto) {
+                userPinnedSlideUntil = Date.now() + 12000;
+            }
             currentSlide = (idx + TOTAL_SLIDES) % TOTAL_SLIDES;
             for (let i = 0; i < TOTAL_SLIDES; i++) {
-                document.getElementById(`slide-${i}`).classList.toggle('hidden', i !== currentSlide);
+                const el = document.getElementById(`slide-${i}`);
+                if (el) el.classList.toggle('hidden', i !== currentSlide);
             }
             const dots = document.querySelectorAll('.slide-dot');
             dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
@@ -550,32 +873,75 @@
             await callApi('seek_media', targetSec);
         }
 
-        function extractDominantColorFromImg(imgEl) {
+        function parseRgbComponents(colorStr) {
+            if (!colorStr) return [160, 165, 180];
+            if (colorStr.startsWith('#')) {
+                const hex = colorStr.slice(1);
+                const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+                const n = parseInt(full, 16);
+                if (!Number.isNaN(n)) return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+            }
+            const m = colorStr.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+            if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+            return [160, 165, 180];
+        }
+
+        function restrainTone(r, g, b) {
+            // Softly desaturate and cap brightness so ambient gradient never feels neon or garish
+            const avg = (r + g + b) / 3;
+            const mix = 0.28;
+            const sr = Math.round(r * (1 - mix) + avg * mix);
+            const sg = Math.round(g * (1 - mix) + avg * mix);
+            const sb = Math.round(b * (1 - mix) + avg * mix);
+            return [Math.min(215, Math.max(48, sr)), Math.min(215, Math.max(48, sg)), Math.min(215, Math.max(48, sb))];
+        }
+
+        function extractDominantColorsFromImg(imgEl) {
             try {
                 const c = document.createElement('canvas');
-                c.width = 16;
-                c.height = 16;
+                c.width = 24;
+                c.height = 24;
                 const ctx = c.getContext('2d');
-                ctx.drawImage(imgEl, 0, 0, 16, 16);
-                const d = ctx.getImageData(0, 0, 16, 16).data;
-                let r = 0, g = 0, b = 0, count = 0;
-                for (let i = 0; i < d.length; i += 4) {
-                    const br = (d[i] + d[i+1] + d[i+2]) / 3;
-                    if (br > 35 && br < 230) {
-                        r += d[i]; g += d[i+1]; b += d[i+2]; count++;
+                ctx.drawImage(imgEl, 0, 0, 24, 24);
+                const d = ctx.getImageData(0, 0, 24, 24).data;
+                let lr = 0, lg = 0, lb = 0, lc = 0;
+                let rr = 0, rg = 0, rb = 0, rc = 0;
+                for (let y = 0; y < 24; y++) {
+                    for (let x = 0; x < 24; x++) {
+                        const i = (y * 24 + x) * 4;
+                        const r = d[i], g = d[i+1], b = d[i+2];
+                        const br = (r + g + b) / 3;
+                        if (br > 30 && br < 228) {
+                            if (x < 12) { lr += r; lg += g; lb += b; lc++; }
+                            else { rr += r; rg += g; rb += b; rc++; }
+                        }
                     }
                 }
-                if (count > 0) {
-                    return `rgb(${Math.round(r/count)}, ${Math.round(g/count)}, ${Math.round(b/count)})`;
-                }
+                const c1 = lc > 0 ? restrainTone(lr / lc, lg / lc, lb / lc) : null;
+                const c2 = rc > 0 ? restrainTone(rr / rc, rg / rc, rb / rc) : c1;
+                if (c1) return { primary: c1, secondary: c2 || c1 };
             } catch {}
             return null;
         }
 
-        function applyNotchAccent(color) {
+        function applyNotchAmbient(primaryColor, secondaryColor, isPlaying = true) {
+            const [r1, g1, b1] = Array.isArray(primaryColor) ? primaryColor : restrainTone(...parseRgbComponents(primaryColor));
+            const [r2, g2, b2] = Array.isArray(secondaryColor) ? secondaryColor : [r1, g1, b1];
+
+            const wash = document.getElementById('ambient-wash');
+            if (wash) {
+                wash.classList.toggle('paused', !isPlaying);
+                wash.style.background = [
+                    `radial-gradient(ellipse 72% 100% at 16% 42%, rgba(${r1}, ${g1}, ${b1}, 0.28) 0%, transparent 72%)`,
+                    `radial-gradient(ellipse 78% 95% at 82% 62%, rgba(${r2}, ${g2}, ${b2}, 0.20) 0%, transparent 75%)`,
+                    `linear-gradient(180deg, rgba(10, 11, 15, 0.22) 0%, rgba(10, 11, 15, 0.62) 100%)`,
+                ].join(', ');
+            }
+
             const bar = document.getElementById('media-progress-bar');
-            if (bar) bar.style.background = color || '#ffffff';
-            island.style.boxShadow = `0 18px 42px rgba(0,0,0,0.75), 0 2px 18px ${color || 'rgba(255,255,255,0.12)'}, inset 0 -1px 0 rgba(255,255,255,0.18)`;
+            if (bar) {
+                bar.style.background = `linear-gradient(90deg, rgba(${r1}, ${g1}, ${b1}, 0.92), rgba(255, 255, 255, 0.95))`;
+            }
         }
 
         function renderLiveMediaTick() {
@@ -660,16 +1026,24 @@
                         imgEl.crossOrigin = 'Anonymous';
                         imgEl.onload = () => {
                             if (notchSettings.colorAlbumFocus !== false) {
-                                const dom = extractDominantColorFromImg(imgEl);
-                                applyNotchAccent(dom || notchSettings.customAccentColor);
+                                const palette = extractDominantColorsFromImg(imgEl);
+                                if (palette) {
+                                    applyNotchAmbient(palette.primary, palette.secondary, isPlaying);
+                                } else {
+                                    applyNotchAmbient(notchSettings.customAccentColor, notchSettings.customAccentColor, isPlaying);
+                                }
                             } else {
-                                applyNotchAccent(notchSettings.customAccentColor);
+                                applyNotchAmbient(notchSettings.customAccentColor, notchSettings.customAccentColor, isPlaying);
                             }
                         };
                         imgEl.src = cover;
                         document.getElementById('compact-cover').src = cover;
-                    } else if (!notchSettings.colorAlbumFocus) {
-                        applyNotchAccent(notchSettings.customAccentColor);
+                    } else {
+                        const wash = document.getElementById('ambient-wash');
+                        if (wash) wash.classList.toggle('paused', !isPlaying);
+                        if (!notchSettings.colorAlbumFocus) {
+                            applyNotchAmbient(notchSettings.customAccentColor, notchSettings.customAccentColor, isPlaying);
+                        }
                     }
                     renderLiveMediaTick();
                 } else if (st.activeWindow) {
@@ -680,6 +1054,434 @@
         pollNotchStatus();
         setInterval(pollNotchStatus, 600);
         refreshUsageData(true);
+
+        // ============================================================
+        // 6 NEW NOTCH MODULES & CONTEXT-AWARE POLLING
+        // ============================================================
+        let lastNotchAgentState = 'idle';
+        let hadPendingApproval = false;
+
+        const STATE_DOT_COLORS = {
+            idle: 'bg-slate-400',
+            thinking: 'bg-sky-400 animate-pulse',
+            planning: 'bg-indigo-400 animate-pulse',
+            running: 'bg-emerald-400 animate-pulse',
+            waiting_for_approval: 'bg-amber-400 animate-pulse',
+            recovering: 'bg-orange-400 animate-pulse',
+            completed: 'bg-emerald-400',
+            failed: 'bg-red-500',
+            paused: 'bg-yellow-400',
+        };
+
+        function formatRelativeTime(ts) {
+            const diff = Math.max(0, Math.floor((Date.now() - Number(ts || 0)) / 1000));
+            if (diff < 60) return `${diff}s`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+            return `${Math.floor(diff / 3600)}h`;
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, (c) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        async function pollNotchModules() {
+            if (!window.notch || !window.notch.getModulesState) return;
+            try {
+                const data = await window.notch.getModulesState();
+                if (!data) return;
+
+                // 1. Agent Status & Task Progress (slide-3)
+                const st = (data.agentState || 'idle').toLowerCase();
+                const dotEl = document.getElementById('agent-state-dot');
+                if (dotEl) dotEl.className = `w-2 h-2 rounded-full shrink-0 ${STATE_DOT_COLORS[st] || 'bg-slate-400'}`;
+                const badgeEl = document.getElementById('agent-state-badge');
+                if (badgeEl) badgeEl.textContent = st.replace(/_/g, ' ');
+
+                const task = data.activeTask || data.latestTask;
+                const appEl = document.getElementById('agent-active-app');
+                if (appEl) appEl.textContent = (task && task.activeApp) ? task.activeApp : 'Standby';
+
+                if (task) {
+                    document.getElementById('task-title').textContent = task.title || 'Agent Task';
+                    const totalSteps = Number(task.totalSteps || 0);
+                    const doneSteps = Number(task.completedSteps || 0);
+                    document.getElementById('task-steps-count').textContent = `${doneSteps} / ${totalSteps} steps`;
+                    const pct = totalSteps > 0 ? Math.min(100, Math.round((doneSteps / totalSteps) * 100)) : (st === 'completed' ? 100 : 12);
+                    document.getElementById('task-progress-bar').style.width = `${pct}%`;
+                    document.getElementById('task-current-step').textContent = task.currentStep || st;
+                    document.getElementById('task-last-verified').textContent = task.lastVerifiedAction ? `✓ ${task.lastVerifiedAction}` : '';
+                } else {
+                    document.getElementById('task-title').textContent = 'No active agent task';
+                    document.getElementById('task-steps-count').textContent = '0 / 0 steps';
+                    document.getElementById('task-progress-bar').style.width = '0%';
+                    document.getElementById('task-current-step').textContent = 'Waiting for instruction';
+                    document.getElementById('task-last-verified').textContent = '';
+                }
+
+                // 2. Approval Center (slide-4)
+                const pending = data.pendingApproval;
+                const dotApproval = document.getElementById('dot-approval');
+                if (pending) {
+                    document.getElementById('approval-empty').classList.add('hidden');
+                    document.getElementById('approval-card').classList.remove('hidden');
+                    document.getElementById('approval-target-app').textContent = pending.targetApp || 'Windows Desktop';
+                    document.getElementById('approval-action-name').textContent = pending.toolName || 'Sensitive Action';
+                    document.getElementById('approval-consequence').textContent = pending.consequence || 'Requires user confirmation';
+                    const detail = pending.preview || (pending.args ? JSON.stringify(pending.args) : '');
+                    document.getElementById('approval-detail-text').textContent = detail;
+                    if (dotApproval) dotApproval.style.background = '#fbbf24';
+                } else {
+                    document.getElementById('approval-empty').classList.remove('hidden');
+                    document.getElementById('approval-card').classList.add('hidden');
+                    document.getElementById('approval-target-app').textContent = 'No pending request';
+                    if (dotApproval) dotApproval.style.background = '';
+                }
+
+                // 3. System Monitor (slide-6)
+                if (data.system) {
+                    document.getElementById('sys-cpu-pct').textContent = `${data.system.cpuPercent}%`;
+                    document.getElementById('sys-ram-pct').textContent = `${data.system.ramPercent}%`;
+                    document.getElementById('sys-ram-detail').textContent = `${data.system.ramUsedGb} / ${data.system.ramTotalGb} GB`;
+                    document.getElementById('sys-ram-avail').textContent = `${data.system.ramAvailableGb} GB`;
+                    document.getElementById('sys-app-rss').textContent = `App RSS: ${data.system.appMemoryMb} MB`;
+                }
+
+                // 4. Notification Hub (slide-7)
+                const unread = Number(data.unreadCount || 0);
+                const unreadBadge = document.getElementById('notif-unread-badge');
+                const dotNotif = document.getElementById('dot-notif');
+                if (unreadBadge) {
+                    unreadBadge.textContent = String(unread);
+                    unreadBadge.classList.toggle('hidden', unread === 0);
+                }
+                if (dotNotif) {
+                    dotNotif.style.background = unread > 0 ? '#38bdf8' : '';
+                }
+                const notifList = document.getElementById('notif-list');
+                if (notifList) {
+                    const items = Array.isArray(data.notifications) ? data.notifications : [];
+                    if (items.length === 0) {
+                        notifList.innerHTML = '<div class="text-[11px] text-white/45 text-center py-4">No notifications</div>';
+                    } else {
+                        notifList.innerHTML = items.slice(0, 12).map((n) => `
+                            <div class="flex items-start justify-between gap-2 bg-white/[0.04] border ${n.read ? 'border-white/5 opacity-70' : 'border-sky-400/25'} rounded-lg px-2 py-1.5">
+                                <div class="min-w-0 flex-1" onclick="markNotifRead('${escapeHtml(n.id)}', event)">
+                                    <div class="flex items-center gap-1.5">
+                                        ${!n.read ? '<span class="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0"></span>' : ''}
+                                        <span class="text-[10.5px] font-semibold text-white truncate">${escapeHtml(n.title)}</span>
+                                        <span class="text-[9px] text-white/40 shrink-0">${formatRelativeTime(n.timestamp)}</span>
+                                    </div>
+                                    <div class="text-[9.5px] text-white/65 truncate">${escapeHtml(n.message)}</div>
+                                </div>
+                                <button onclick="dismissNotif('${escapeHtml(n.id)}', event)" class="text-white/40 hover:text-white text-[11px] px-1 shrink-0">×</button>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                // 5. Context-aware slide prioritization
+                const now = Date.now();
+                if (pending && !hadPendingApproval) {
+                    hadPendingApproval = true;
+                    island.classList.add('expanded');
+                    goToSlide(4, null, true);
+                } else if (!pending) {
+                    hadPendingApproval = false;
+                }
+
+                const isBusy = ['thinking', 'planning', 'running', 'recovering'].includes(st);
+                const wasBusy = ['thinking', 'planning', 'running', 'recovering'].includes(lastNotchAgentState);
+                if (isBusy && !wasBusy && !pending && now > userPinnedSlideUntil) {
+                    goToSlide(3, null, true);
+                }
+                lastNotchAgentState = st;
+            } catch {}
+        }
+        setInterval(pollNotchModules, 900);
+        pollNotchModules();
+
+        async function agentAction(action, e) {
+            if (e) e.stopPropagation();
+            if (!window.agent) return;
+            try {
+                if (action === 'pause') await window.agent.pause();
+                else if (action === 'resume') await window.agent.resume();
+                else if (action === 'stop') await window.agent.emergencyStop();
+                pollNotchModules();
+            } catch {}
+        }
+
+        async function respondApproval(approved, e) {
+            if (e) e.stopPropagation();
+            if (!window.agent) return;
+            try {
+                await window.agent.approvalResponse(Boolean(approved));
+                pollNotchModules();
+            } catch {}
+        }
+
+        async function startQuickAgentTask(e) {
+            if (e) e.stopPropagation();
+            const input = document.getElementById('quick-agent-goal');
+            const goal = input ? input.value.trim() : '';
+            if (!goal || !window.agent) return;
+            input.value = '';
+            try {
+                await window.agent.start(goal);
+                goToSlide(3, null, true);
+                pollNotchModules();
+            } catch {}
+        }
+
+        async function runQuickAction(action, e) {
+            if (e) e.stopPropagation();
+            if (action === 'screenshot') {
+                await callApi('capture_screen');
+                return;
+            }
+            const goalMap = {
+                open_discord: 'Open Discord application and focus it',
+                open_whatsapp: 'Open Chrome and navigate to WhatsApp Web',
+                open_chrome: 'Open Google Chrome',
+                open_word: 'Open Microsoft Word',
+            };
+            if (goalMap[action] && window.agent) {
+                await window.agent.start(goalMap[action]);
+                goToSlide(3, null, true);
+            }
+        }
+
+        async function markNotifRead(id, e) {
+            if (e) e.stopPropagation();
+            if (window.notch) await window.notch.markNotificationsRead(id);
+            pollNotchModules();
+        }
+
+        async function markAllNotifsRead(e) {
+            if (e) e.stopPropagation();
+            if (window.notch) await window.notch.markNotificationsRead();
+            pollNotchModules();
+        }
+
+        async function dismissNotif(id, e) {
+            if (e) e.stopPropagation();
+            if (window.notch) await window.notch.dismissNotification(id);
+            pollNotchModules();
+        }
+
+        // ============================================================
+        // HORIZONTAL SLIDE-OUT SHELF SYSTEM
+        // ============================================================
+        let shelfOpen = false;
+        let shelfFilter = 'all';
+        let shelfItems = [];
+        let activeModalItem = null;
+
+        async function toggleShelf(e, forceState) {
+            if (e) e.stopPropagation();
+            shelfOpen = typeof forceState === 'boolean' ? forceState : !shelfOpen;
+            const panel = document.getElementById('shelf-panel');
+            const btn = document.getElementById('shelf-toggle-btn');
+            if (panel) panel.classList.toggle('open', shelfOpen);
+            if (btn) btn.classList.toggle('active', shelfOpen);
+            if (window.notch && window.notch.setShelfOpen) {
+                await window.notch.setShelfOpen(shelfOpen);
+            }
+            if (shelfOpen) {
+                refreshShelf();
+                if (panel) panel.focus();
+            }
+        }
+
+        function setShelfFilter(filter, e) {
+            if (e) e.stopPropagation();
+            shelfFilter = filter;
+            document.querySelectorAll('.shelf-filter-btn').forEach((b) => {
+                b.classList.toggle('active', b.dataset.filter === filter);
+            });
+            refreshShelf();
+        }
+
+        function formatBytes(bytes) {
+            const n = Number(bytes || 0);
+            if (n < 1024) return `${n} B`;
+            if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+            return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        async function refreshShelf() {
+            if (!window.shelf) return;
+            try {
+                const query = (document.getElementById('shelf-search')?.value || '').trim();
+                const items = (query || shelfFilter !== 'all')
+                    ? await window.shelf.search(query, shelfFilter)
+                    : await window.shelf.list();
+                shelfItems = Array.isArray(items) ? items : [];
+                const badge = document.getElementById('shelf-count-badge');
+                if (badge) badge.textContent = String(shelfItems.length);
+                renderShelfItems();
+            } catch {}
+        }
+
+        function renderShelfItems() {
+            const track = document.getElementById('shelf-track');
+            if (!track) return;
+            if (shelfItems.length === 0) {
+                track.innerHTML = '<div class="text-[10.5px] text-white/40 px-3 whitespace-nowrap">Drop files, Ctrl+V, or click + to add</div>';
+                return;
+            }
+            track.innerHTML = shelfItems.map((item) => {
+                const isImg = item.type === 'image';
+                const icon = item.type === 'document' ? 'DOC' : (item.type === 'text' ? 'TXT' : 'FILE');
+                const previewHtml = isImg && item.filePath
+                    ? `<img src="file:///${encodeURI(item.filePath.replace(/\\\\/g, '/'))}" class="w-full h-[50px] object-cover rounded-lg bg-black/30" draggable="false" />`
+                    : `<div class="w-full h-[50px] rounded-lg bg-white/[0.06] flex items-center justify-center text-[11px] font-bold text-white/70">${icon}</div>`;
+                return `
+                    <div class="shelf-item" onclick="handleShelfItemClick('${escapeHtml(item.id)}', event)">
+                        ${previewHtml}
+                        <div class="min-w-0">
+                            <div class="text-[10px] font-medium text-white truncate">${escapeHtml(item.name)}</div>
+                            <div class="flex items-center justify-between text-[9px] text-white/45 mt-0.5">
+                                <span>${formatBytes(item.size)}</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="copyShelfItem('${escapeHtml(item.id)}', event)" title="Copy" class="hover:text-white">Copy</button>
+                                    <button onclick="deleteShelfItem('${escapeHtml(item.id)}', event)" title="Delete" class="hover:text-red-300">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openShelfAddDialog(e) {
+            if (e) e.stopPropagation();
+            if (!window.shelf) return;
+            await window.shelf.importDialog();
+            refreshShelf();
+        }
+
+        async function handleShelfItemClick(id, e) {
+            if (e) e.stopPropagation();
+            const item = shelfItems.find((x) => x.id === id) || (window.shelf ? await window.shelf.get(id) : null);
+            if (!item) return;
+            if (item.type === 'image' || item.type === 'text') {
+                openShelfModal(item);
+            } else {
+                await openShelfItem(id, e);
+            }
+        }
+
+        function openShelfModal(item) {
+            activeModalItem = item;
+            const modal = document.getElementById('shelf-modal');
+            const img = document.getElementById('shelf-modal-img');
+            const txt = document.getElementById('shelf-modal-text');
+            const saveBtn = document.getElementById('shelf-modal-save');
+            document.getElementById('shelf-modal-title').textContent = item.name;
+
+            if (item.type === 'image' && item.filePath) {
+                img.src = `file:///${encodeURI(item.filePath.replace(/\\\\/g, '/'))}`;
+                img.classList.remove('hidden');
+                txt.classList.add('hidden');
+                saveBtn.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                txt.value = item.textContent || '';
+                txt.classList.remove('hidden');
+                saveBtn.classList.remove('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeShelfModal(e) {
+            if (e) e.stopPropagation();
+            activeModalItem = null;
+            document.getElementById('shelf-modal').classList.add('hidden');
+        }
+
+        async function saveShelfTextEdit(e) {
+            if (e) e.stopPropagation();
+            if (!activeModalItem || !window.shelf) return;
+            const newText = document.getElementById('shelf-modal-text').value;
+            await window.shelf.add({ type: 'text', name: activeModalItem.name, text: newText });
+            await window.shelf.delete(activeModalItem.id);
+            closeShelfModal();
+            refreshShelf();
+        }
+
+        async function copyModalShelfItem(e) {
+            if (e) e.stopPropagation();
+            if (activeModalItem) await copyShelfItem(activeModalItem.id, e);
+        }
+
+        async function openModalShelfItem(e) {
+            if (e) e.stopPropagation();
+            if (activeModalItem) await openShelfItem(activeModalItem.id, e);
+        }
+
+        async function copyShelfItem(id, e) {
+            if (e) e.stopPropagation();
+            if (window.shelf) await window.shelf.copy(id);
+        }
+
+        async function openShelfItem(id, e) {
+            if (e) e.stopPropagation();
+            if (window.shelf) await window.shelf.open(id);
+        }
+
+        async function deleteShelfItem(id, e) {
+            if (e) e.stopPropagation();
+            if (window.shelf) await window.shelf.delete(id);
+            refreshShelf();
+        }
+
+        // Ctrl+V paste into Shelf when Shelf is open
+        window.addEventListener('keydown', async (e) => {
+            if (shelfOpen && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                const activeTag = document.activeElement?.tagName;
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+                e.preventDefault();
+                if (window.shelf) {
+                    await window.shelf.paste();
+                    refreshShelf();
+                }
+            }
+        });
+
+        // Drag & Drop multiple files onto Shelf panel
+        const shelfPanelEl = document.getElementById('shelf-panel');
+        if (shelfPanelEl) {
+            shelfPanelEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                shelfPanelEl.classList.add('drag-over');
+            });
+            shelfPanelEl.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                shelfPanelEl.classList.remove('drag-over');
+            });
+            shelfPanelEl.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                shelfPanelEl.classList.remove('drag-over');
+                if (!window.shelf || !e.dataTransfer?.files?.length) return;
+                const paths = [];
+                for (const file of e.dataTransfer.files) {
+                    const p = window.shelf.getPathForFile(file);
+                    if (p) paths.push(p);
+                }
+                if (paths.length > 0) {
+                    await window.shelf.importPaths(paths);
+                    refreshShelf();
+                }
+            });
+        }
+
+        // Initialize shelf count badge
+        refreshShelf();
     </script>
 </body>
 </html>

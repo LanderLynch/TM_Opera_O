@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webUtils } from "electron";
 
 const METHODS = [
   "sapaan_awal",
@@ -61,4 +61,33 @@ contextBridge.exposeInMainWorld("agent", {
   emergencyStop: () => ipcRenderer.invoke("agent:emergency-stop"),
   getStatus: () => ipcRenderer.invoke("agent:get-status"),
   approvalResponse: (approved: boolean) => ipcRenderer.invoke("agent:approval-response", approved),
+});
+
+contextBridge.exposeInMainWorld("shelf", {
+  add: (payload: { type: "text"; text: string; name?: string } | { type: "file"; path: string }) =>
+    ipcRenderer.invoke("shelf:add", payload),
+  paste: () => ipcRenderer.invoke("shelf:paste"),
+  importDialog: () => ipcRenderer.invoke("shelf:import"),
+  importPaths: (paths: string[]) => ipcRenderer.invoke("shelf:import-paths", paths),
+  list: () => ipcRenderer.invoke("shelf:list"),
+  get: (id: string) => ipcRenderer.invoke("shelf:get", id),
+  search: (query: string, filter?: string) => ipcRenderer.invoke("shelf:search", query, filter),
+  open: (id: string) => ipcRenderer.invoke("shelf:open", id),
+  copy: (id: string) => ipcRenderer.invoke("shelf:copy", id),
+  delete: (id: string) => ipcRenderer.invoke("shelf:delete", id),
+  getStorageInfo: () => ipcRenderer.invoke("shelf:get-storage-info"),
+  getPathForFile: (file: File) => {
+    try {
+      return webUtils.getPathForFile(file);
+    } catch {
+      return "";
+    }
+  },
+});
+
+contextBridge.exposeInMainWorld("notch", {
+  getModulesState: () => ipcRenderer.invoke("notch:get-modules-state"),
+  dismissNotification: (id: string) => ipcRenderer.invoke("notch:dismiss-notification", id),
+  markNotificationsRead: (id?: string) => ipcRenderer.invoke("notch:mark-read", id),
+  setShelfOpen: (open: boolean) => ipcRenderer.invoke("notch:set-shelf-open", open),
 });

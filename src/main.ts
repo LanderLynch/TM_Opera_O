@@ -1,4 +1,4 @@
-import { app, BrowserWindow, desktopCapturer, ipcMain, screen, shell } from "electron";
+import { app, BrowserWindow, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, screen, shell } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import { execFile, spawn } from "child_process";
@@ -23,6 +23,9 @@ import {
 import { AgentRuntime } from "./agent/agentRuntime";
 import { AgentModelClient } from "./ai/toolCalling";
 import { eventBus } from "./core/eventBus";
+import { NotificationHub } from "./notch/notificationHub";
+import { getSystemMetrics } from "./notch/systemMonitor";
+import { ShelfItemType, ShelfStore } from "./shelf/shelfStore";
 import { createDefaultToolRegistry } from "./tools/registry";
 
 const BASE = path.resolve(__dirname, "..");
@@ -1934,12 +1937,19 @@ const agentModelClient: AgentModelClient = {
   },
 };
 
+const shelfStore = new ShelfStore(app.getPath("userData"));
+const notificationHub = new NotificationHub();
+
 const agentToolRegistry = createDefaultToolRegistry({
   getActiveWindowTitle,
   openExternalUrl: async (url: string) => {
     await shell.openExternal(url);
   },
   searchWeb: searchOnlineContext,
+  shelfStore,
+  openFilePath: async (filePath: string) => {
+    await shell.openPath(filePath);
+  },
   captureScreenBase64: async () => {
     try {
       const display = screen.getPrimaryDisplay();
@@ -1970,15 +1980,19 @@ let pendingAgentApproval: {
 
 eventBus.on("task:approval-needed", (payload) => {
   pendingAgentApproval = payload;
+  notificationHub.push("approval", "Approval Required", `${payload.toolName}: ${payload.summary}`);
 });
-eventBus.on("task:completed", () => {
+eventBus.on("task:completed", (payload) => {
   pendingAgentApproval = null;
+  notificationHub.push("task_complete", "Task Completed", payload.summary);
 });
-eventBus.on("task:failed", () => {
+eventBus.on("task:failed", (payload) => {
   pendingAgentApproval = null;
+  notificationHub.push("task_fail", "Task Failed", payload.error);
 });
-eventBus.on("task:cancelled", () => {
+eventBus.on("task:cancelled", (payload) => {
   pendingAgentApproval = null;
+  notificationHub.push("agent", "Task Cancelled", payload.reason);
 });
 
 ipcMain.handle("agent:start", async (_event, rawGoal: unknown) => {
@@ -2012,6 +2026,210 @@ ipcMain.handle("agent:get-status", () => ({
 ipcMain.handle("agent:approval-response", (_event, approved: unknown) => {
   pendingAgentApproval = null;
   agentRuntime.taskManager.resolveApproval(Boolean(approved));
+  return { ok: true };
+});
+
+// ---------------------------------------------------------
+// 7. SHELF & NOTCH EXPANSION IPC CHANNELS
+// ---------------------------------------------------------
+function serializeShelfItem(item: import("./shelf/shelfStore").ShelfItem) {
+  let thumbnailDataUrl: string | undefined;
+  if (item.type === "image" && item.thumbnailPath && fs.existsSync(item.thumbnailPath)) {
+    try {
+      const img = nativeImage.createFromPath(item.thumbnailPath);
+      if (!img.isEmpty()) {
+        thumbnailDataUrl = img.resize({ width: 140 }).toDataURL();
+      }
+    } catch {}
+  }
+  return {
+    ...item,
+    thumbnailDataUrl,
+  };
+}
+
+ipcMain.handle("shelf:list", () => shelfStore.list().map(serializeShelfItem));
+
+ipcMain.handle("shelf:get", (_e, id: unknown) => {
+  const item = shelfStore.get(String(id || ""));
+  return item ? serializeShelfItem(item) : null;
+});
+
+ipcMain.handle("shelf:search", (_e, query: unknown, filter: unknown) => {
+  const f = (String(filter || "all") as ShelfItemType | "all");
+  return shelfStore.search(String(query || ""), f).map(serializeShelfItem);
+});
+
+ipcMain.handle("shelf:add", (_e, payload: unknown) => {
+  if (!payload || typeof payload !== "object") return { ok: false, error: "Invalid payload." };
+  const p = payload as { type?: string; text?: string; name?: string; path?: string };
+  if (p.type === "text") {
+    const res = shelfStore.addText(String(p.text || ""), p.name);
+    if (res.ok && res.item) {
+      notificationHub.push("shelf", "Saved to Shelf", res.item.name);
+      return { ok: true, item: serializeShelfItem(res.item) };
+    }
+    return res;
+  }
+  if (p.type === "file" && p.path) {
+    const res = shelfStore.importFile(String(p.path));
+    if (res.ok && res.item) {
+      notificationHub.push("shelf", "Imported to Shelf", res.item.name);
+      return { ok: true, item: serializeShelfItem(res.item) };
+    }
+    return res;
+  }
+  return { ok: false, error: "Unsupported shelf:add payload." };
+});
+
+ipcMain.handle("shelf:paste", () => {
+  const img = clipboard.readImage();
+  if (!img.isEmpty()) {
+    const pngBuf = img.toPNG();
+    const res = shelfStore.addImageBuffer(pngBuf, ".png", `Pasted_${Date.now()}.png`);
+    if (res.ok && res.item) {
+      notificationHub.push("shelf", "Pasted Image to Shelf", res.item.name);
+      return { ok: true, item: serializeShelfItem(res.item) };
+    }
+    return res;
+  }
+  const text = clipboard.readText();
+  if (text && text.trim()) {
+    const res = shelfStore.addText(text);
+    if (res.ok && res.item) {
+      notificationHub.push("shelf", "Pasted Text to Shelf", res.item.name);
+      return { ok: true, item: serializeShelfItem(res.item) };
+    }
+    return res;
+  }
+  return { ok: false, error: "Clipboard is empty (no image or text)." };
+});
+
+ipcMain.handle("shelf:import-paths", (_e, paths: unknown) => {
+  if (!Array.isArray(paths)) return { imported: [], errors: ["Invalid file list."] };
+  const imported: unknown[] = [];
+  const errors: string[] = [];
+  for (const p of paths) {
+    const res = shelfStore.importFile(String(p));
+    if (res.ok && res.item) imported.push(serializeShelfItem(res.item));
+    else if (res.error) errors.push(res.error);
+  }
+  if (imported.length > 0) {
+    notificationHub.push("shelf", "Shelf Import", `Imported ${imported.length} item(s).`);
+  }
+  return { imported, errors };
+});
+
+ipcMain.handle("shelf:import", async () => {
+  const win = radialWindow || chatWindow || undefined;
+  const result = await dialog.showOpenDialog(win as BrowserWindow, {
+    title: "Tambah ke Shelf (Maks 50 MB / file)",
+    properties: ["openFile", "multiSelections"],
+    filters: [
+      { name: "Supported Files", extensions: ["png", "jpg", "jpeg", "webp", "gif", "pdf", "docx", "doc", "txt", "md", "csv", "xlsx", "pptx"] },
+    ],
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    return { imported: [], errors: [] };
+  }
+  const imported: unknown[] = [];
+  const errors: string[] = [];
+  for (const fp of result.filePaths) {
+    const res = shelfStore.importFile(fp);
+    if (res.ok && res.item) imported.push(serializeShelfItem(res.item));
+    else if (res.error) errors.push(res.error);
+  }
+  if (imported.length > 0) {
+    notificationHub.push("shelf", "Shelf Import", `Imported ${imported.length} file(s).`);
+  }
+  return { imported, errors };
+});
+
+ipcMain.handle("shelf:open", async (_e, id: unknown) => {
+  const item = shelfStore.get(String(id || ""));
+  if (!item || !item.filePath) return { ok: false, error: "Item not found." };
+  const err = await shell.openPath(item.filePath);
+  return { ok: !err, error: err || undefined };
+});
+
+ipcMain.handle("shelf:copy", (_e, id: unknown) => {
+  const item = shelfStore.get(String(id || ""));
+  if (!item) return { ok: false, error: "Item not found." };
+  if (item.type === "text" && item.textContent) {
+    clipboard.writeText(item.textContent);
+    return { ok: true };
+  }
+  if (item.type === "image" && item.filePath && fs.existsSync(item.filePath)) {
+    const img = nativeImage.createFromPath(item.filePath);
+    if (!img.isEmpty()) {
+      clipboard.writeImage(img);
+      return { ok: true };
+    }
+  }
+  if (item.filePath) {
+    clipboard.writeText(item.filePath);
+    return { ok: true };
+  }
+  return { ok: false, error: "Nothing to copy." };
+});
+
+ipcMain.handle("shelf:delete", (_e, id: unknown) => {
+  const ok = shelfStore.delete(String(id || ""));
+  return { ok };
+});
+
+ipcMain.handle("shelf:get-storage-info", () => shelfStore.getStorageInfo());
+
+ipcMain.handle("notch:get-modules-state", () => {
+  const activeTask = agentRuntime.taskManager.getActiveTask();
+  const recentTasks = agentRuntime.taskManager.getAllTasks().slice(0, 3);
+  const task = activeTask || recentTasks[0] || null;
+
+  let agentState = "Idle";
+  if (agentRuntime.taskManager.isPaused()) agentState = "Paused";
+  else if (pendingAgentApproval) agentState = "Waiting for approval";
+  else if (task) {
+    const map: Record<string, string> = {
+      planning: "Planning",
+      running: "Running",
+      waiting: "Waiting for approval",
+      recovering: "Recovering",
+      completed: "Completed",
+      failed: "Failed",
+      cancelled: "Idle",
+    };
+    agentState = map[task.status] || "Idle";
+  }
+
+  return {
+    agentState,
+    activeTask,
+    latestTask: task,
+    pendingApproval: pendingAgentApproval,
+    system: getSystemMetrics(),
+    notifications: notificationHub.listActive(15),
+    unreadCount: notificationHub.unreadCount(),
+  };
+});
+
+ipcMain.handle("notch:dismiss-notification", (_e, id: unknown) => ({
+  ok: notificationHub.dismiss(String(id || "")),
+}));
+
+ipcMain.handle("notch:mark-read", (_e, id: unknown) => {
+  notificationHub.markRead(id ? String(id) : undefined);
+  return { ok: true };
+});
+
+ipcMain.handle("notch:set-shelf-open", (_e, open: unknown) => {
+  if (radialWindow && !radialWindow.isDestroyed()) {
+    const display = screen.getPrimaryDisplay();
+    const isOpen = Boolean(open);
+    const w = isOpen ? 920 : 560;
+    const h = isOpen ? 260 : 250;
+    const x = Math.max(0, Math.floor((display.bounds.width - w) / 2));
+    radialWindow.setBounds({ x, y: 0, width: w, height: h });
+  }
   return { ok: true };
 });
 
