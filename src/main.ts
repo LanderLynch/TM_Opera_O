@@ -317,7 +317,10 @@ function buildSystemInstruction(facts: string[], isLocal = false): string {
 
 const AVAILABLE_MODELS = [
   "pecut/deepseek-v4.1-flash-uncensored",
-  "pecut/claude-sonnet-4",
+  "pecut/claude-sonnet-4-6",
+  "pecut/claude-sonnet-5",
+  "pecut/claude-sonnet-5.5",
+  "pecut/claude-haiku-5.5",
   "pecut/qwen3.8-flash",
   "deepseek-chat",
   "deepseek-reasoner",
