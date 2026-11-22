@@ -541,7 +541,7 @@ export function createDefaultToolRegistry(deps: ToolRuntimeDependencies): ToolRe
 
   registry.register({
     name: "keyboard_shortcut",
-    description: "Send a safe keyboard shortcut (e.g. enter, tab, ctrl+c, ctrl+v, ctrl+l, ctrl+t, alt+tab).",
+    description: "Send an allowed keyboard shortcut fast (e.g. enter, tab, esc, ctrl+c, ctrl+v, ctrl+z, ctrl+l, ctrl+t, ctrl+w, alt+tab, alt+f4).",
     permissionLevel: "autonomous",
     parameterSchema: {
       type: "object",

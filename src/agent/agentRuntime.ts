@@ -50,9 +50,9 @@ export class AgentRuntime {
     this.memoryStore = config.storageDir ? new MemoryStore(config.storageDir) : null;
     this.taskMemory = new TaskMemory();
     this.auditLog = new AuditLog();
-    this.maxSteps = config.maxSteps ?? 10;
+    this.maxSteps = config.maxSteps ?? 16;
     this.maxRetriesPerStep = config.maxRetriesPerStep ?? 2;
-    this.maxDurationMs = config.maxDurationMs ?? 120_000;
+    this.maxDurationMs = config.maxDurationMs ?? 180_000;
     this.observeWindowFn = config.observeWindowFn;
   }
 

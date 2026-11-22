@@ -23,6 +23,7 @@ import {
   WordDocSpec,
 } from "./pcController";
 import { AgentRuntime } from "./agent/agentRuntime";
+import { stopKeyboardWorker } from "./desktop/keyboard";
 import { AgentModelClient } from "./ai/toolCalling";
 import { eventBus } from "./core/eventBus";
 import { NotificationHub } from "./notch/notificationHub";
@@ -2297,6 +2298,7 @@ function cleanupAndQuit(): void {
   }
   try {
     stopMediaWatcher();
+    stopKeyboardWorker();
   } catch {}
   try {
     agentRuntime?.taskManager.emergencyStop();
