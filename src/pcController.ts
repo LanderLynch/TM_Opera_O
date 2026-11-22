@@ -251,7 +251,8 @@ export async function seekMediaToSeconds(targetSec: number): Promise<boolean> {
     latestMedia.updatedAtMs = Date.now();
   }
   const ticks = Math.round(sec * 10_000_000);
-  const ps = `
+  const priority = currentMediaPriority;
+const ps = `
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation\`1' })[0]
 function Await($WinRtTask, $ResultType) {
@@ -264,27 +265,46 @@ function Await($WinRtTask, $ResultType) {
 $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
 $sessions = $mgr.GetSessions()
 $musicPattern = 'Spotify|AppleMusic|Tidal|Deezer|AmazonMusic|SoundCloud|MusicBee|foobar2000|AIMP|iTunes|YouTubeMusic'
-$browserPattern = 'chrome|msedge|firefox|brave|opera|vivaldi|arc'
+$browserPattern = 'chrome|msedge|firefox|brave|opera|vivaldi|arc|youtube'
+$prio = '${priority}'
 $chosen = $null
-foreach ($s in $sessions) {
-  if ($s.SourceAppUserModelId -match 'Spotify' -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
-}
-if (-not $chosen) {
-  foreach ($s in $sessions) {
-    if ($s.SourceAppUserModelId -match 'Spotify') { $chosen = $s; break }
-  }
-}
-if (-not $chosen) {
+if ($prio -eq 'youtube') {
   foreach ($s in $sessions) {
     $id = [string]$s.SourceAppUserModelId
-    if ($id -match $musicPattern -and $id -notmatch $browserPattern -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
+    if ($id -match $browserPattern -and $id -notmatch 'YouTubeMusic' -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
   }
-}
-if (-not $chosen) {
+  if (-not $chosen) {
+    foreach ($s in $sessions) {
+      $id = [string]$s.SourceAppUserModelId
+      if ($id -match $browserPattern -and $id -notmatch 'YouTubeMusic') { $chosen = $s; break }
+    }
+  }
+} elseif ($prio -eq 'spotify') {
   foreach ($s in $sessions) {
-    $id = [string]$s.SourceAppUserModelId
-    if ($id -match $musicPattern -and $id -notmatch $browserPattern) { $chosen = $s; break }
+    if ($s.SourceAppUserModelId -match 'Spotify' -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
   }
+  if (-not $chosen) {
+    foreach ($s in $sessions) {
+      if ($s.SourceAppUserModelId -match 'Spotify') { $chosen = $s; break }
+    }
+  }
+  if (-not $chosen) {
+    foreach ($s in $sessions) {
+      $id = [string]$s.SourceAppUserModelId
+      if ($id -match $musicPattern -and $id -notmatch $browserPattern -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
+    }
+  }
+  if (-not $chosen) {
+    foreach ($s in $sessions) {
+      $id = [string]$s.SourceAppUserModelId
+      if ($id -match $musicPattern -and $id -notmatch $browserPattern) { $chosen = $s; break }
+    }
+  }
+} else {
+  foreach ($s in $sessions) {
+    if ([string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
+  }
+  if (-not $chosen) { $chosen = $mgr.GetCurrentSession() }
 }
 if ($chosen) {
   [void](Await ($chosen.TryChangePlaybackPositionAsync([long]${ticks})) ([bool]))
@@ -376,8 +396,80 @@ export interface LyricLine {
   text: string;
 }
 
+export type MediaPriority = "spotify" | "youtube" | "any";
+
 let latestMedia: MediaSessionInfo | null = null;
+let latestSessions: MediaSessionInfo[] = [];
+let currentMediaPriority: MediaPriority = "spotify";
 let mediaWatcherStarted = false;
+
+const MUSIC_APP_RE = /Spotify|AppleMusic|Tidal|Deezer|AmazonMusic|SoundCloud|MusicBee|foobar2000|AIMP|iTunes|YouTubeMusic/i;
+const BROWSER_YT_RE = /chrome|msedge|firefox|brave|opera|vivaldi|arc|youtube/i;
+
+function isSpotifyApp(appId: string): boolean {
+  return /spotify/i.test(appId);
+}
+
+function isYouTubeOrBrowserApp(appId: string): boolean {
+  return BROWSER_YT_RE.test(appId) && !/youtubemusic/i.test(appId);
+}
+
+function isDedicatedMusicApp(appId: string): boolean {
+  return MUSIC_APP_RE.test(appId) && !isYouTubeOrBrowserApp(appId);
+}
+
+export function selectMediaSession(
+  sessions: MediaSessionInfo[],
+  priority: MediaPriority
+): MediaSessionInfo | null {
+  const valid = sessions.filter((s) => s && s.title);
+  if (valid.length === 0) return null;
+
+  if (priority === "spotify") {
+    return (
+      valid.find((s) => isSpotifyApp(s.app) && s.status === "Playing") ||
+      valid.find((s) => isSpotifyApp(s.app)) ||
+      valid.find((s) => isDedicatedMusicApp(s.app) && s.status === "Playing") ||
+      valid.find((s) => isDedicatedMusicApp(s.app)) ||
+      null
+    );
+  }
+
+  if (priority === "youtube") {
+    return (
+      valid.find((s) => isYouTubeOrBrowserApp(s.app) && s.status === "Playing") ||
+      valid.find((s) => isYouTubeOrBrowserApp(s.app)) ||
+      null
+    );
+  }
+
+  return (
+    valid.find((s) => isSpotifyApp(s.app) && s.status === "Playing") ||
+    valid.find((s) => s.status === "Playing") ||
+    valid.find((s) => isSpotifyApp(s.app)) ||
+    valid[0] ||
+    null
+  );
+}
+
+export function getMediaPriority(): MediaPriority {
+  return currentMediaPriority;
+}
+
+export function setMediaPriority(priority: MediaPriority): void {
+  if (priority !== "spotify" && priority !== "youtube" && priority !== "any") return;
+  currentMediaPriority = priority;
+  const selected = selectMediaSession(latestSessions, currentMediaPriority);
+  latestMedia = selected;
+  if (selected) {
+    ensureLyricsAndCoverLoaded(
+      selected.title,
+      selected.artist || "",
+      selected.album || "",
+      Number(selected.durationSec || 0)
+    );
+  }
+}
 let lastLyricsKey = "";
 let cachedLyrics: LyricLine[] = [];
 let cachedPlainLyrics: string[] = [];
@@ -403,63 +495,33 @@ $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMa
 while ($true) {
   try {
     $sessions = $mgr.GetSessions()
-    $musicPattern = 'Spotify|AppleMusic|Tidal|Deezer|AmazonMusic|SoundCloud|MusicBee|foobar2000|AIMP|iTunes|YouTubeMusic'
-    $browserPattern = 'chrome|msedge|firefox|brave|opera|vivaldi|arc'
-    $chosen = $null
-    # 1. Prioritaskan Spotify yang sedang Playing
+    $items = @()
     foreach ($s in $sessions) {
-      if ($s.SourceAppUserModelId -match 'Spotify' -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') {
-        $chosen = $s; break
-      }
-    }
-    # 2. Kalau tidak ada, prioritaskan aplikasi Spotify meskipun Paused
-    if (-not $chosen) {
-      foreach ($s in $sessions) {
-        if ($s.SourceAppUserModelId -match 'Spotify') {
-          $chosen = $s; break
+      try {
+        $info = Await ($s.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])
+        if (-not $info -or -not $info.Title) { continue }
+        $tl = $s.GetTimelineProperties()
+        $pb = $s.GetPlaybackInfo()
+        $livePos = $tl.Position.TotalSeconds
+        if ([string]$pb.PlaybackStatus -eq 'Playing' -and $tl.LastUpdatedTime.Year -gt 2000) {
+          $elapsed = ([DateTimeOffset]::UtcNow - $tl.LastUpdatedTime).TotalSeconds
+          if ($elapsed -ge 0 -and $elapsed -lt 3600) {
+            $livePos += $elapsed
+          }
         }
-      }
-    }
-    # 3. Kalau Spotify tidak buka, ambil aplikasi musik lain yang sedang Playing (abaikan browser/YouTube)
-    if (-not $chosen) {
-      foreach ($s in $sessions) {
-        $id = [string]$s.SourceAppUserModelId
-        if ($id -match $musicPattern -and $id -notmatch $browserPattern -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') {
-          $chosen = $s; break
+        $items += [PSCustomObject]@{
+          app = [string]$s.SourceAppUserModelId
+          title = [string]$info.Title
+          artist = [string]$info.Artist
+          album = [string]$info.AlbumTitle
+          status = [string]$pb.PlaybackStatus
+          positionSec = [double]$livePos
+          durationSec = [double]$tl.EndTime.TotalSeconds
         }
-      }
+      } catch {}
     }
-    # 4. Fallback hanya ke aplikasi musik lain (abaikan browser/YouTube)
-    if (-not $chosen) {
-      foreach ($s in $sessions) {
-        $id = [string]$s.SourceAppUserModelId
-        if ($id -match $musicPattern -and $id -notmatch $browserPattern) {
-          $chosen = $s; break
-        }
-      }
-    }
-
-    if ($chosen) {
-      $info = Await ($chosen.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])
-      $tl = $chosen.GetTimelineProperties()
-      $pb = $chosen.GetPlaybackInfo()
-      $livePos = $tl.Position.TotalSeconds
-      if ([string]$pb.PlaybackStatus -eq 'Playing' -and $tl.LastUpdatedTime.Year -gt 2000) {
-        $elapsed = ([DateTimeOffset]::UtcNow - $tl.LastUpdatedTime).TotalSeconds
-        if ($elapsed -ge 0 -and $elapsed -lt 3600) {
-          $livePos += $elapsed
-        }
-      }
-      $obj = [PSCustomObject]@{
-        app = [string]$chosen.SourceAppUserModelId
-        title = [string]$info.Title
-        artist = [string]$info.Artist
-        album = [string]$info.AlbumTitle
-        status = [string]$pb.PlaybackStatus
-        positionSec = [double]$livePos
-        durationSec = [double]$tl.EndTime.TotalSeconds
-      }
-      Write-Output ("MEDIA:" + ($obj | ConvertTo-Json -Compress))
+    if ($items.Count -gt 0) {
+      Write-Output ("MEDIA_LIST:" + (ConvertTo-Json -InputObject @($items) -Compress))
     } else {
       Write-Output "MEDIA:NONE"
     }
@@ -475,25 +537,33 @@ while ($true) {
     const lines = buffer.split(/\r?\n/);
     buffer = lines.pop() || "";
     for (const line of lines) {
-      if (!line.startsWith("MEDIA:")) continue;
-      const payload = line.slice(6).trim();
-      if (payload === "NONE" || !payload.startsWith("{")) {
+      if (line === "MEDIA:NONE") {
+        latestSessions = [];
+        latestMedia = null;
+        continue;
+      }
+      if (!line.startsWith("MEDIA_LIST:")) continue;
+      const payload = line.slice("MEDIA_LIST:".length).trim();
+      if (!payload.startsWith("[")) {
+        latestSessions = [];
         latestMedia = null;
         continue;
       }
       try {
-        const parsed = JSON.parse(payload);
-        if (parsed && parsed.title) {
-          latestMedia = {
-            ...parsed,
-            updatedAtMs: Date.now(),
-          };
-          ensureLyricsAndCoverLoaded(
-            parsed.title,
-            parsed.artist || "",
-            parsed.album || "",
-            Number(parsed.durationSec || 0)
-          );
+        const parsedList = JSON.parse(payload);
+        if (Array.isArray(parsedList)) {
+          const now = Date.now();
+          latestSessions = parsedList.map((p) => ({ ...p, updatedAtMs: now }));
+          const chosen = selectMediaSession(latestSessions, currentMediaPriority);
+          latestMedia = chosen;
+          if (chosen) {
+            ensureLyricsAndCoverLoaded(
+              chosen.title,
+              chosen.artist || "",
+              chosen.album || "",
+              Number(chosen.durationSec || 0)
+            );
+          }
         }
       } catch {}
     }

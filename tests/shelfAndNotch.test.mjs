@@ -10,6 +10,7 @@ const { ShelfStore, MAX_SHELF_FILE_BYTES } = require("../dist/shelf/shelfStore.j
 const { getSystemMetrics } = require("../dist/notch/systemMonitor.js");
 const { NotificationHub } = require("../dist/notch/notificationHub.js");
 const { createDefaultToolRegistry } = require("../dist/tools/registry.js");
+const { selectMediaSession } = require("../dist/pcController.js");
 
 function makeTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -159,4 +160,33 @@ test("ToolRegistry registers Shelf tools with confirm gate on shelf_delete", asy
     store.close();
     fs.rmSync(baseDir, { recursive: true, force: true });
   }
+});
+
+test("selectMediaSession filters strictly by spotify, youtube, or any focus mode", () => {
+  const spotifySession = {
+    app: "Spotify.exe",
+    title: "Song A",
+    artist: "Artist A",
+    album: "Album A",
+    status: "Paused",
+    positionSec: 10,
+    durationSec: 180,
+    updatedAtMs: Date.now(),
+  };
+  const youtubeSession = {
+    app: "chrome.exe",
+    title: "YouTube Video B",
+    artist: "Channel B",
+    album: "",
+    status: "Playing",
+    positionSec: 20,
+    durationSec: 600,
+    updatedAtMs: Date.now(),
+  };
+
+  assert.equal(selectMediaSession([youtubeSession], "spotify"), null);
+  assert.equal(selectMediaSession([spotifySession, youtubeSession], "spotify")?.app, "Spotify.exe");
+  assert.equal(selectMediaSession([spotifySession], "youtube"), null);
+  assert.equal(selectMediaSession([spotifySession, youtubeSession], "youtube")?.app, "chrome.exe");
+  assert.equal(selectMediaSession([spotifySession, youtubeSession], "any")?.app, "chrome.exe");
 });

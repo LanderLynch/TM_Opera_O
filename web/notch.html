@@ -352,6 +352,26 @@
             background: rgba(255, 255, 255, 0.18);
             border-radius: 999px;
         }
+        .media-focus-btn {
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 9.5px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .media-focus-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.14);
+        }
+        .media-focus-btn.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.34);
+        }
     </style>
 </head>
 <body>
@@ -431,11 +451,18 @@
                     <!-- VERTICAL DIVIDER -->
                     <div class="w-[1px] h-[84%] bg-white/10 shrink-0"></div>
 
-                    <!-- RIGHT COLUMN: 3-Line Synced Lyrics (Clickable to Forward/Seek to Lyric!) -->
-                    <div class="w-[53%] h-full flex flex-col justify-center pl-4 pr-1 gap-1 overflow-hidden">
-                        <p id="lyric-prev" onclick="seekToLyric(-1, event)" class="text-[12.5px] font-semibold text-white/35 hover:text-white/75 cursor-pointer truncate transition-all duration-200" title="Klik untuk lompat ke lirik ini"></p>
-                        <p id="lyric-current" onclick="seekToLyric(0, event)" class="text-[15.5px] font-bold text-white cursor-pointer leading-snug line-clamp-2 transition-all duration-200" title="Klik untuk ulang baris lirik ini">♪ Putar lagu di Spotify...</p>
-                        <p id="lyric-next" onclick="seekToLyric(1, event)" class="text-[12.5px] font-semibold text-white/35 hover:text-white/75 cursor-pointer truncate transition-all duration-200" title="Klik untuk forward ke lirik berikutnya"></p>
+                    <!-- RIGHT COLUMN: Focus Toggle + 3-Line Synced Lyrics (Clickable to Forward/Seek to Lyric!) -->
+                    <div class="w-[53%] h-full flex flex-col justify-between pl-4 pr-1 overflow-hidden">
+                        <div class="flex items-center justify-end gap-1 pt-0.5 shrink-0">
+                            <button onclick="setMediaFocus('spotify', event)" data-focus="spotify" class="media-focus-btn active" title="Fokus ke Spotify / Aplikasi Musik">Spotify</button>
+                            <button onclick="setMediaFocus('youtube', event)" data-focus="youtube" class="media-focus-btn" title="Fokus ke YouTube / Browser">YouTube</button>
+                            <button onclick="setMediaFocus('any', event)" data-focus="any" class="media-focus-btn" title="Otomatis pilih media yang aktif">Auto</button>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center gap-1 overflow-hidden">
+                            <p id="lyric-prev" onclick="seekToLyric(-1, event)" class="text-[12.5px] font-semibold text-white/35 hover:text-white/75 cursor-pointer truncate transition-all duration-200" title="Klik untuk lompat ke lirik ini"></p>
+                            <p id="lyric-current" onclick="seekToLyric(0, event)" class="text-[15.5px] font-bold text-white cursor-pointer leading-snug line-clamp-2 transition-all duration-200" title="Klik untuk ulang baris lirik ini">♪ Putar lagu di Spotify...</p>
+                            <p id="lyric-next" onclick="seekToLyric(1, event)" class="text-[12.5px] font-semibold text-white/35 hover:text-white/75 cursor-pointer truncate transition-all duration-200" title="Klik untuk forward ke lirik berikutnya"></p>
+                        </div>
                     </div>
                 </div>
 
@@ -1002,6 +1029,7 @@
 
                 if (st.settings) {
                     notchSettings = { ...notchSettings, ...st.settings };
+                    updateMediaFocusUI(notchSettings.mediaPriority || 'spotify');
                 }
 
                 const m = st.media;
@@ -1046,9 +1074,45 @@
                         }
                     }
                     renderLiveMediaTick();
-                } else if (st.activeWindow) {
-                    document.getElementById('compact-title').textContent = st.activeWindow;
+                } else {
+                    mediaState = { hasMedia: false, status: 'Stopped', positionSec: 0, durationSec: 0, syncedLines: [] };
+                    const mode = notchSettings.mediaPriority || 'spotify';
+                    const modeLabel = mode === 'youtube' ? 'YouTube' : (mode === 'any' ? 'Auto' : 'Spotify');
+                    document.getElementById('now-playing-title').textContent = 'Belum ada media';
+                    document.getElementById('now-playing-artist').textContent = `${modeLabel} · TM Opera O`;
+                    document.getElementById('media-progress-bar').style.width = '0%';
+                    document.getElementById('media-time-cur').textContent = '00:00';
+                    document.getElementById('media-time-rem').textContent = '-00:00';
+                    document.getElementById('lyric-prev').textContent = '';
+                    document.getElementById('lyric-current').textContent = mode === 'youtube' ? '♪ Putar video di YouTube...' : '♪ Putar lagu di Spotify...';
+                    document.getElementById('lyric-next').textContent = '';
+                    document.getElementById('icon-pause').classList.add('hidden');
+                    document.getElementById('icon-play').classList.remove('hidden');
+                    if (lastCoverUrl !== 'opera_profile.jpg?v=2') {
+                        lastCoverUrl = 'opera_profile.jpg?v=2';
+                        document.getElementById('album-cover').src = 'opera_profile.jpg?v=2';
+                        document.getElementById('compact-cover').src = 'opera_profile.jpg?v=2';
+                    }
+                    if (st.activeWindow) {
+                        document.getElementById('compact-title').textContent = st.activeWindow;
+                    }
                 }
+            } catch {}
+        }
+
+        function updateMediaFocusUI(mode) {
+            document.querySelectorAll('.media-focus-btn').forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.focus === mode);
+            });
+        }
+
+        async function setMediaFocus(mode, e) {
+            if (e) e.stopPropagation();
+            notchSettings.mediaPriority = mode;
+            updateMediaFocusUI(mode);
+            try {
+                await callApi('save_settings', { mediaPriority: mode });
+                await pollNotchStatus();
             } catch {}
         }
         pollNotchStatus();

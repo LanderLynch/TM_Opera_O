@@ -16,6 +16,7 @@ import {
   resolveUserFolder,
   scanInstalledApps,
   seekMediaToSeconds,
+  setMediaPriority,
   startMediaWatcher,
   triggerMediaKey,
   WordDocSpec,
@@ -131,9 +132,13 @@ function loadAppSettings(): AppSettings {
 }
 
 let appSettings: AppSettings = loadAppSettings();
+setMediaPriority(appSettings.mediaPriority);
 
 function saveAppSettings(s: Partial<AppSettings>): void {
   appSettings = { ...appSettings, ...s };
+  if (s.mediaPriority) {
+    setMediaPriority(appSettings.mediaPriority);
+  }
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2), "utf-8");
   } catch {}
