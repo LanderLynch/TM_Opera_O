@@ -123,7 +123,7 @@ export function createDefaultSettings(): SettingsV2 {
     opera: {
       personaPreset: "soft",
       customPersona: "",
-      ttsEnabled: true,
+      ttsEnabled: false,
       ttsVoice: "auto",
     },
     reminder: {

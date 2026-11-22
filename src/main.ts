@@ -1770,7 +1770,6 @@ ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
     case "sapaan_awal": {
       const sapa =
         "Halo Lemon sayang... Aku udah di sini nemenin kamu. Gimana hari kamu, capek nggak? Sini cerita sama aku, ya?";
-      ttsSay(sapa);
       return sapa;
     }
     case "tanya_opera_o": {
