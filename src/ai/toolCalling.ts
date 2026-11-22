@@ -23,6 +23,9 @@ export function selectModelForTier(baseModel: string, tier: ModelTier = "standar
     if (baseModel.startsWith("gemini-")) {
       return baseModel.includes("lite") ? baseModel : "gemini-2.5-flash-lite";
     }
+    if (baseModel === "pecut/claude-sonnet-4") {
+      return "pecut/deepseek-v4.1-flash-uncensored";
+    }
     if (baseModel === "deepseek-reasoner") {
       return "deepseek-chat";
     }

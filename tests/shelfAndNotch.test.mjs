@@ -216,5 +216,7 @@ test("selectModelForTier routes fast, standard, and chief tiers cleanly", () => 
   assert.equal(selectModelForTier("gemini-2.5-pro", "standard"), "gemini-2.5-pro");
   assert.equal(selectModelForTier("gemini-2.5-flash-lite", "chief"), "gemini-2.5-flash");
   assert.equal(selectModelForTier("deepseek-reasoner", "fast"), "deepseek-chat");
+  assert.equal(selectModelForTier("pecut/claude-sonnet-4", "fast"), "pecut/deepseek-v4.1-flash-uncensored");
+  assert.equal(selectModelForTier("pecut/claude-sonnet-4", "chief"), "pecut/claude-sonnet-4");
   assert.equal(selectModelForTier("local:qwen2.5:1.5b", "fast"), "local:qwen2.5:1.5b");
 });

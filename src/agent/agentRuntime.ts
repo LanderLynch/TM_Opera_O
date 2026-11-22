@@ -51,9 +51,9 @@ export class AgentRuntime {
     this.memoryStore = config.storageDir ? new MemoryStore(config.storageDir) : null;
     this.taskMemory = new TaskMemory();
     this.auditLog = new AuditLog();
-    this.maxSteps = config.maxSteps ?? 16;
+    this.maxSteps = config.maxSteps ?? Number.POSITIVE_INFINITY;
     this.maxRetriesPerStep = config.maxRetriesPerStep ?? 2;
-    this.maxDurationMs = config.maxDurationMs ?? 180_000;
+    this.maxDurationMs = config.maxDurationMs ?? Number.POSITIVE_INFINITY;
     this.observeWindowFn = config.observeWindowFn;
   }
 
@@ -67,17 +67,13 @@ export class AgentRuntime {
       return task;
     }
     const startMs = Date.now();
-    const isInfiniteStellaDaily =
-      /stella\s*sora/i.test(goal) && /\b(daily|harian|routine)\b/i.test(goal);
-    const effectiveMaxSteps = isInfiniteStellaDaily ? Number.POSITIVE_INFINITY : this.maxSteps;
-    const effectiveMaxDurationMs = isInfiniteStellaDaily ? Number.POSITIVE_INFINITY : this.maxDurationMs;
-    logger.info("runtime", "Starting agent objective", { taskId: task.id, goal, infinite: isInfiniteStellaDaily });
+    logger.info("runtime", "Starting agent objective", { taskId: task.id, goal });
 
     try {
       this.taskManager.setStatus(task.id, "running");
       let consecutiveErrors = 0;
 
-      for (let stepIdx = 0; stepIdx < effectiveMaxSteps; stepIdx++) {
+      for (let stepIdx = 0; stepIdx < this.maxSteps; stepIdx++) {
         // Respect pause
         while (this.taskManager.isPaused() && !signal.aborted) {
           await new Promise((r) => setTimeout(r, 200));
@@ -87,7 +83,7 @@ export class AgentRuntime {
           throw new ExecutionCancelledError();
         }
 
-        if (Date.now() - startMs > effectiveMaxDurationMs) {
+        if (Date.now() - startMs > this.maxDurationMs) {
           this.taskManager.setStatus(task.id, "failed", "Task exceeded maximum duration budget.");
           return task;
         }
