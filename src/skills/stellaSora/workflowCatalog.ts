@@ -1,3 +1,67 @@
+import * as fs from "fs";
+import * as path from "path";
+
+export const STELLA_PIPELINE_MAP = {
+  "login-check": "登录_登录",
+  "daily-missions": "任务_入口",
+  mailbox: "邮箱_入口",
+  "friend-gifts": "好友_入口",
+  shop: "采购_入口",
+  events: "活动快速战斗_入口",
+  tower: "星塔_入口_agent",
+} as const;
+
+export function collectUpstreamPipelineEntries(skillRootDir: string): Set<string> {
+  const entries = new Set<string>();
+  const overlays = ["base", "en", "windows"];
+  for (const ov of overlays) {
+    const dir = path.join(skillRootDir, "upstream", "assets", "resource", ov, "pipeline");
+    if (!fs.existsSync(dir)) continue;
+    const walk = (cur: string) => {
+      for (const ent of fs.readdirSync(cur, { withFileTypes: true })) {
+        const full = path.join(cur, ent.name);
+        if (ent.isDirectory()) walk(full);
+        else if (ent.isFile() && ent.name.endsWith(".json")) {
+          const raw = fs.readFileSync(full, "utf-8");
+          try {
+            const parsed = JSON.parse(raw) as Record<string, unknown>;
+            for (const key of Object.keys(parsed)) {
+              entries.add(key);
+            }
+          } catch {
+            // Fallback for JSONC files (comments / trailing commas used by MaaFramework)
+            for (const m of raw.matchAll(/^\s{0,4}"([^"]+)"\s*:\s*\{/gm)) {
+              entries.add(m[1]);
+            }
+          }
+        }
+      }
+    };
+    walk(dir);
+  }
+  return entries;
+}
+
+export function validatePipelineEntry(
+  skillRootDir: string,
+  entry: string
+): { valid: boolean; error?: string } {
+  if (!entry || !entry.trim()) {
+    return { valid: false, error: "Pipeline entry name is empty." };
+  }
+  const entries = collectUpstreamPipelineEntries(skillRootDir);
+  if (entries.size === 0) {
+    return { valid: false, error: `No upstream pipeline JSONs found under ${skillRootDir}.` };
+  }
+  if (!entries.has(entry)) {
+    return {
+      valid: false,
+      error: `Upstream pipeline entry "${entry}" does not exist in MaaStellaSora resources.`,
+    };
+  }
+  return { valid: true };
+}
+
 export interface StellaSoraWorkflowSpec {
   id: string;
   name: string;

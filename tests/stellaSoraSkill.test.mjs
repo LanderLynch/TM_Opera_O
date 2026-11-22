@@ -14,6 +14,9 @@ const { SkillStore } = require("../dist/learning/skillStore.js");
 const { LearningEngine } = require("../dist/learning/learningEngine.js");
 const { desktopExecutionLock } = require("../dist/agent/executionLock.js");
 const { createDefaultToolRegistry } = require("../dist/tools/registry.js");
+const { STELLA_PIPELINE_MAP, validatePipelineEntry } = require("../dist/skills/stellaSora/workflowCatalog.js");
+const { StellaSoraReportGenerator } = require("../dist/skills/stellaSora/reportGenerator.js");
+const { validatePecutModelId } = require("../dist/ai/toolCalling.js");
 
 const SKILL_ROOT = path.resolve("skills/games/stella-sora");
 
@@ -73,11 +76,17 @@ test("StellaSoraEngineManager activates without auto-executing, refuses blind ru
     if (!act.status.gameState?.isRunning) {
       const runRes = await manager.runWorkflows(["daily-missions"], { autoLaunch: false });
       assert.equal(runRes.ok, false);
-      assert.match(runRes.report, /not installed|did not appear|not currently running/i);
+      assert.equal(runRes.status.taskState, "failed");
+      assert.equal(runRes.status.progressPercent, 0);
+      assert.match(runRes.report, /belum terinstal|belum berjalan|belum muncul|tidak dapat mengakses/i);
     }
+
+    const paused = manager.pause();
+    assert.equal(paused.phase, "activated"); // only transitions to paused while running
 
     const stopped = await manager.stop();
     assert.equal(stopped.phase, "stopped");
+    assert.equal(stopped.taskState, "cancelled");
     assert.equal(desktopExecutionLock.isLocked(), false);
   } finally {
     await manager.shutdown();
@@ -96,4 +105,38 @@ test("ToolRegistry registers stella_sora_command and stella_sora_status", () => 
   });
   assert.ok(registry.get("stella_sora_command"));
   assert.ok(registry.get("stella_sora_status"));
+});
+
+test("validatePipelineEntry verifies upstream Chinese entries and rejects invalid English aliases", () => {
+  assert.equal(STELLA_PIPELINE_MAP.mailbox, "邮箱_入口");
+  assert.equal(STELLA_PIPELINE_MAP["daily-missions"], "任务_入口");
+  assert.equal(validatePipelineEntry(SKILL_ROOT, "邮箱_入口").valid, true);
+  assert.equal(validatePipelineEntry(SKILL_ROOT, "任务_入口").valid, true);
+  assert.equal(validatePipelineEntry(SKILL_ROOT, "好友_入口").valid, true);
+  assert.equal(validatePipelineEntry(SKILL_ROOT, "采购_入口").valid, true);
+
+  const bad = validatePipelineEntry(SKILL_ROOT, "Mail");
+  assert.equal(bad.valid, false);
+  assert.match(bad.error || "", /does not exist/i);
+});
+
+test("validatePecutModelId accepts verified Sonnet IDs and rejects invalid ID", () => {
+  const available = ["pecut/claude-sonnet-4-6", "pecut/claude-sonnet-5", "pecut/claude-sonnet-5.5"];
+  assert.equal(validatePecutModelId("pecut/claude-sonnet-4-6", available).valid, true);
+  const invalid = validatePecutModelId("pecut/claude-sonnet-4", available);
+  assert.equal(invalid.valid, false);
+  assert.match(invalid.error || "", /not listed/i);
+});
+
+test("StellaSoraReportGenerator outputs Bahasa Indonesia without Hindi/Devanagari drift", () => {
+  const reporter = new StellaSoraReportGenerator();
+  const emptyMsg = reporter.buildSessionSummary([]);
+  assert.match(emptyMsg, /Belum ada eksekusi/i);
+  assert.equal(/[\u0900-\u097F]/.test(emptyMsg), false);
+
+  const summary = reporter.buildSessionSummary([
+    { workflowId: "mailbox", verified: true, evidence: "Verified mailbox on Stella Sora", timestamp: Date.now() },
+  ]);
+  assert.match(summary, /Laporan Stella Sora: 1 terverifikasi/i);
+  assert.equal(/[\u0900-\u097F]/.test(summary), false);
 });

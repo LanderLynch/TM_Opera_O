@@ -303,6 +303,7 @@ function buildSystemInstruction(facts: string[], isLocal = false): string {
     text += `\nInstruksi Kustom Tambahan dari Lemon: ${appSettings.customPersona.trim()}\n`;
   }
   text += `\nInformasi Waktu Saat Ini: ${getWaktuSekarangText()}. Gunakan informasi waktu ini jika Lemon bertanya jam/hari/tanggal atau saat menyapanya sesuai waktu (pagi/siang/sore/malam/dini hari).\n`;
+  text += "Bahasa Jawaban: WAJIB selalu balas dalam Bahasa Indonesia yang lembut dan natural. Jangan pernah beralih ke bahasa Hindi, Mandarin, atau bahasa lain kecuali istilah teknis, nama file, atau ID sistem.\n";
   text += getLiveScreenContextText();
   text +=
     "Kemampuan Kontrol Browser & Pencarian:\n" +

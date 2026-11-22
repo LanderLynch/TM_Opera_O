@@ -7,7 +7,11 @@ import { LearningEngine } from "../../learning/learningEngine";
 import { SkillStore } from "../../learning/skillStore";
 import { StellaSoraReportGenerator } from "./reportGenerator";
 import { StellaSoraTaskVerifier, WorkflowVerificationResult } from "./taskVerifier";
-import { STELLA_SORA_WORKFLOWS, StellaSoraWorkflowSpec } from "./workflowCatalog";
+import {
+  STELLA_SORA_WORKFLOWS,
+  StellaSoraWorkflowSpec,
+  validatePipelineEntry,
+} from "./workflowCatalog";
 import { MaaBridge, MaaReadinessInfo } from "./maaBridge";
 import { StellaSoraProcessManager, StellaSoraProcessState } from "./processManager";
 
@@ -19,9 +23,20 @@ export type StellaSoraSkillPhase =
   | "stopped"
   | "error";
 
+export type StellaSoraTaskState =
+  | "queued"
+  | "initializing"
+  | "running"
+  | "verifying"
+  | "completed"
+  | "failed"
+  | "paused"
+  | "cancelled";
+
 export interface StellaSoraStatusSnapshot {
   skillName: string;
   phase: StellaSoraSkillPhase;
+  taskState: StellaSoraTaskState;
   engineReady: boolean;
   readiness: MaaReadinessInfo | null;
   compatibilityStatus: string;
@@ -48,6 +63,7 @@ export class StellaSoraEngineManager {
   public readonly reporter = new StellaSoraReportGenerator();
 
   private phase: StellaSoraSkillPhase = "uninitialized";
+  private taskState: StellaSoraTaskState = "queued";
   private readiness: MaaReadinessInfo | null = null;
   private gameState: StellaSoraProcessState | null = null;
   private compatibilityStatus = "unknown";
@@ -79,6 +95,7 @@ export class StellaSoraEngineManager {
     return {
       skillName: "Stella Sora Game Automation Skill",
       phase: this.phase,
+      taskState: this.taskState,
       engineReady: Boolean(this.readiness?.maafwInstalled && this.readiness?.resourcesPresent),
       readiness: this.readiness,
       compatibilityStatus: this.compatibilityStatus,
@@ -98,6 +115,7 @@ export class StellaSoraEngineManager {
    */
   public async activate(): Promise<StellaSoraStatusSnapshot> {
     this.lastError = null;
+    this.taskState = "initializing";
     this.currentStep = "1. Discovering skill manifest";
     const manifestPath = path.join(this.skillRootDir, "manifest.json");
     const compatPath = path.join(this.skillRootDir, "compatibility.json");
@@ -127,6 +145,7 @@ export class StellaSoraEngineManager {
 
     this.currentStep = "5-6. Skill initialized (standing by — no workflow executed)";
     this.phase = "activated";
+    this.taskState = "queued";
     this.progressPercent = 0;
     return this.getStatus();
   }
@@ -138,13 +157,19 @@ export class StellaSoraEngineManager {
 
   public pause(): StellaSoraStatusSnapshot {
     this.paused = true;
-    if (this.phase === "running") this.phase = "paused";
+    if (this.phase === "running") {
+      this.phase = "paused";
+      this.taskState = "paused";
+    }
     return this.getStatus();
   }
 
   public resume(): StellaSoraStatusSnapshot {
     this.paused = false;
-    if (this.phase === "paused") this.phase = "running";
+    if (this.phase === "paused") {
+      this.phase = "running";
+      this.taskState = "running";
+    }
     return this.getStatus();
   }
 
@@ -152,6 +177,7 @@ export class StellaSoraEngineManager {
     this.paused = false;
     this.stopRequested = true;
     this.phase = "stopped";
+    this.taskState = "cancelled";
     this.currentStep = "Emergency stop triggered";
     await this.bridge.emergencyStop();
     desktopExecutionLock.forceRelease();
@@ -199,6 +225,8 @@ export class StellaSoraEngineManager {
     try {
       this.stopRequested = false;
       this.phase = "running";
+      this.taskState = "initializing";
+      this.progressPercent = 0;
       this.lastError = null;
       this.gameState = await this.processManager.detect();
       const wasAlreadyRunning = this.gameState.isRunning;
@@ -215,10 +243,14 @@ export class StellaSoraEngineManager {
       }
 
       if (!this.gameState.isRunning) {
-        const msg = this.gameState.installedInSteam
-          ? "Stella Sora is installed in Steam, but did not appear on desktop yet."
-          : "Stella Sora is not installed or not running on this PC.";
+        const msg = !this.gameState.desktopAccessible
+          ? "Sesi background tidak dapat mengakses window desktop interaktif (visibleWindowCount=0). Jalankan melalui Electron Desktop Host."
+          : this.gameState.installedInSteam
+            ? "Stella Sora terinstal di Steam, tetapi window game belum muncul di desktop."
+            : "Stella Sora belum terinstal atau belum berjalan di PC ini.";
         this.phase = "activated";
+        this.taskState = "failed";
+        this.progressPercent = 0;
         this.lastError = msg;
         this.deps.knowledgeStore?.add({
           applicationId: "stella-sora",
@@ -291,11 +323,21 @@ export class StellaSoraEngineManager {
           continue;
         }
 
+        const entryCheck = validatePipelineEntry(this.skillRootDir, spec.pipelineEntry);
+        if (!entryCheck.valid) {
+          const v = this.verifier.verifyExecution(wfId, false, this.gameState.windowTitle, entryCheck.error);
+          results.push(v);
+          this.lastVerification = v;
+          this.lastError = entryCheck.error || "Invalid pipeline entry.";
+          continue;
+        }
+
+        this.taskState = "running";
         this.currentWorkflow = spec.name;
         this.currentStep = `Executing ${spec.pipelineEntry}`;
-        this.progressPercent = Math.round(((i + 0.5) / queueIds.length) * 100);
 
         const execRes = await this.bridge.runPipelineTask(spec.pipelineEntry, 0);
+        this.taskState = "verifying";
         const postState = await this.processManager.detect();
         this.lastRecognizedScreen = postState.windowTitle;
 
@@ -317,16 +359,20 @@ export class StellaSoraEngineManager {
         results.push(verified);
         this.sessionResults.push(verified);
         this.lastVerification = verified;
-        this.progressPercent = Math.round(((i + 1) / queueIds.length) * 100);
+        const verifiedCount = results.filter((r) => r.verified).length;
+        this.progressPercent = Math.round((verifiedCount / queueIds.length) * 100);
       }
-
-      if (!this.stopRequested) {
-        this.phase = "activated";
-      }
-      this.currentStep = "Completed";
 
       const completed = results.filter((r) => r.verified).map((r) => r.workflowId);
       const pending = results.filter((r) => !r.verified).map((r) => r.workflowId);
+
+      if (this.stopRequested) {
+        this.taskState = "cancelled";
+      } else {
+        this.phase = "activated";
+        this.taskState = pending.length === 0 && completed.length > 0 ? "completed" : "failed";
+      }
+      this.currentStep = this.taskState === "completed" ? "Completed" : "Incomplete / Failed";
       if (session) {
         this.deps.statisticsStore?.finishSession(session.id, {
           status: pending.length === 0 ? "completed" : completed.length > 0 ? "partial" : "failed",

@@ -8,15 +8,15 @@ export class StellaSoraReportGenerator {
   ): string {
     if (results.length === 0) {
       if (statsSummary && statsSummary.totalSessions > 0) {
-        return `Stella Sora recorded ${statsSummary.completedSessions}/${statsSummary.totalSessions} completed session(s). Recent verified: ${statsSummary.recentVerifiedResults.join("; ") || "none"}.`;
+        return `Ringkasan Stella Sora: ${statsSummary.completedSessions}/${statsSummary.totalSessions} sesi selesai. Hasil terverifikasi terakhir: ${statsSummary.recentVerifiedResults.join("; ") || "belum ada"}.`;
       }
-      return "No verified Stella Sora workflow executions recorded yet.";
+      return "Belum ada eksekusi workflow Stella Sora yang terverifikasi.";
     }
 
     const passed = results.filter((r) => r.verified);
     const failed = results.filter((r) => !r.verified);
     const lines = [
-      `Stella Sora report: ${passed.length} verified, ${failed.length} incomplete/failed.`,
+      `Laporan Stella Sora: ${passed.length} terverifikasi, ${failed.length} gagal/belum selesai.`,
       ...results.map((r) => `- [${r.verified ? "VERIFIED" : "UNVERIFIED"}] ${r.workflowId}: ${r.evidence}`),
     ];
     return lines.join("\n");

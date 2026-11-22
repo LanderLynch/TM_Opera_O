@@ -42,6 +42,39 @@ export function selectModelForTier(baseModel: string, tier: ModelTier = "standar
   return baseModel;
 }
 
+export function validatePecutModelId(
+  modelId: string,
+  availableIds: string[]
+): { valid: boolean; error?: string } {
+  if (!modelId || !modelId.trim()) {
+    return { valid: false, error: "Model ID is empty." };
+  }
+  if (availableIds.includes(modelId)) {
+    return { valid: true };
+  }
+  return {
+    valid: false,
+    error: `Model "${modelId}" is not listed by the Pecut Opus provider endpoint.`,
+  };
+}
+
+export async function fetchPecutModels(apiKey: string): Promise<{ ok: boolean; models: string[]; error?: string }> {
+  if (!apiKey) return { ok: false, models: [], error: "DEEPSEEK_API_KEY is empty." };
+  try {
+    const res = await fetch("https://api.pecutopus.web.id/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!res.ok) {
+      return { ok: false, models: [], error: `Provider HTTP ${res.status}` };
+    }
+    const json = (await res.json()) as { data?: Array<{ id?: string }> };
+    const models = (json.data || []).map((m) => String(m.id || "")).filter(Boolean);
+    return { ok: true, models };
+  } catch (err) {
+    return { ok: false, models: [], error: String(err) };
+  }
+}
+
 export interface ParsedAgentTurn {
   thought?: string;
   plan?: string[];

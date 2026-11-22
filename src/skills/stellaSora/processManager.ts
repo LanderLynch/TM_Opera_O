@@ -2,6 +2,8 @@ import { listOpenWindows } from "../../desktop/windowManager";
 import { findInstalledAppMatches, InstalledApp, scanInstalledApps } from "../../pcController";
 
 export interface StellaSoraProcessState {
+  desktopAccessible: boolean;
+  visibleWindowCount: number;
   installedInSteam: boolean;
   installedMatches: InstalledApp[];
   isRunning: boolean;
@@ -22,6 +24,8 @@ export class StellaSoraProcessManager {
     const runningWin = windows.find((w) => STELLA_SORA_TITLE_RE.test(w.title));
 
     return {
+      desktopAccessible: windows.length > 0,
+      visibleWindowCount: windows.length,
       installedInSteam: installedMatches.some((m) => m.source === "steam"),
       installedMatches,
       isRunning: Boolean(runningWin),
