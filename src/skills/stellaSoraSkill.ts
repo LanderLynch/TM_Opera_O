@@ -4,6 +4,7 @@ import { STELLA_SORA_DAILY_SEQUENCE } from "./stellaSora/workflowCatalog";
 export type StellaSoraIntent =
   | { type: "activate" }
   | { type: "open_and_check" }
+  | { type: "probe_click"; mode: "maa_win32" | "win32_sendinput" | "both" }
   | { type: "run_workflows"; workflowIds: string[] }
   | { type: "adaptive_mode"; enabled: boolean }
   | { type: "pause" }
@@ -14,6 +15,16 @@ export type StellaSoraIntent =
 export function parseStellaSoraCommand(input: string): StellaSoraIntent | null {
   const lower = (input || "").toLowerCase().trim();
   if (!lower.includes("stella sora")) return null;
+
+  if (/\b(test\s*a|maa_win32)\b/i.test(lower)) {
+    return { type: "probe_click", mode: "maa_win32" };
+  }
+  if (/\b(test\s*b|sendinput|win32_sendinput)\b/i.test(lower)) {
+    return { type: "probe_click", mode: "win32_sendinput" };
+  }
+  if (/\b(test\s*input|uji\s*klik|probe\s*click)\b/i.test(lower)) {
+    return { type: "probe_click", mode: "both" };
+  }
 
   if (/\b(stop|halt|emergency|hentikan|matikan)\b/i.test(lower)) {
     return { type: "stop" };
@@ -89,6 +100,20 @@ export async function handleStellaSoraCommand(
         summary: `${launchMsg}Stella Sora running: ${game.isRunning ? `Yes (${game.windowTitle})` : "No"}${game.installedInSteam ? "" : " (not installed in Steam yet)"}.`,
         status,
       };
+    }
+
+    case "probe_click": {
+      await manager.activate();
+      const reports: string[] = [];
+      if (intent.mode === "maa_win32" || intent.mode === "both") {
+        const rA = await manager.runControlledClickTest("maa_win32");
+        reports.push(rA.report);
+      }
+      if (intent.mode === "win32_sendinput" || intent.mode === "both") {
+        const rB = await manager.runControlledClickTest("win32_sendinput");
+        reports.push(rB.report);
+      }
+      return { summary: reports.join("\n\n"), status: manager.getStatus() };
     }
 
     case "run_workflows": {

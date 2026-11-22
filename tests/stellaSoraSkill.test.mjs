@@ -53,6 +53,9 @@ test("parseStellaSoraCommand routes all natural-language activation & control in
   assert.equal(parseStellaSoraCommand("Pause Stella Sora Automation.")?.type, "pause");
   assert.equal(parseStellaSoraCommand("Stop Stella Sora Automation.")?.type, "stop");
   assert.equal(parseStellaSoraCommand("Show Stella Sora Progress.")?.type, "progress");
+  assert.deepEqual(parseStellaSoraCommand("Test A Stella Sora"), { type: "probe_click", mode: "maa_win32" });
+  assert.deepEqual(parseStellaSoraCommand("Test B Stella Sora"), { type: "probe_click", mode: "win32_sendinput" });
+  assert.deepEqual(parseStellaSoraCommand("Test Input Stella Sora"), { type: "probe_click", mode: "both" });
 });
 
 test("StellaSoraEngineManager activates without auto-executing, refuses blind run when closed, and supports stop", async () => {

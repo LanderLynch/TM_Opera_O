@@ -163,6 +163,32 @@ export class MaaBridge {
     return await this.sendCommand("capture_screenshot", { outPath }, 15_000);
   }
 
+  public async probeClick(
+    mode: "maa_win32" | "win32_sendinput",
+    outDir?: string,
+    x?: number,
+    y?: number
+  ): Promise<
+    MaaBridgeResponse<{
+      mode: string;
+      hwnd: string;
+      windowTitle: string;
+      targetClientXY: { x: number; y: number };
+      foregroundBefore: boolean;
+      foregroundAfter: boolean;
+      cursorBefore: { x: number; y: number };
+      cursorAfter: { x: number; y: number };
+      dispatched: boolean;
+      sendInputCount: number;
+      pixelDiffPercent: number;
+      screenChanged: boolean;
+      beforePath: string;
+      afterPath: string;
+    }>
+  > {
+    return await this.sendCommand("probe_click", { mode, outDir, x, y }, 20_000);
+  }
+
   public async emergencyStop(): Promise<MaaBridgeResponse> {
     if (!this.isRunning()) return { ok: true, data: { stopped: true } };
     return await this.sendCommand("stop", {}, 5_000);

@@ -429,6 +429,39 @@ export class StellaSoraEngineManager {
     );
   }
 
+  public async runControlledClickTest(
+    mode: "maa_win32" | "win32_sendinput",
+    outDir?: string
+  ): Promise<{ ok: boolean; report: string; data?: unknown }> {
+    const lockTaskId = `stella_probe_${Date.now()}`;
+    const lock = desktopExecutionLock.acquire(lockTaskId);
+    if (!lock.ok) {
+      return { ok: false, report: `Desktop lock sedang dipakai oleh "${lock.holder}".` };
+    }
+    try {
+      const res = await this.bridge.probeClick(mode, outDir);
+      if (!res.ok || !res.data) {
+        return {
+          ok: false,
+          report: `Uji klik [${mode}] gagal: ${res.error || "Window Stella Sora tidak ditemukan."}`,
+        };
+      }
+      const d = res.data;
+      const report = [
+        `Hasil Uji Klik [${d.mode}] pada "${d.windowTitle}" (HWND ${d.hwnd}):`,
+        `- Target (client): (${d.targetClientXY.x}, ${d.targetClientXY.y})`,
+        `- Foreground: sebelum=${d.foregroundBefore}, sesudah=${d.foregroundAfter}`,
+        `- Posisi Cursor: (${d.cursorBefore.x},${d.cursorBefore.y}) -> (${d.cursorAfter.x},${d.cursorAfter.y})`,
+        `- Dispatch sukses: ${d.dispatched}${d.mode === "win32_sendinput" ? ` (SendInput=${d.sendInputCount}/2)` : ""}`,
+        `- Perubahan layar: ${d.pixelDiffPercent}% (berpindah=${d.screenChanged})`,
+        `- Screenshot: ${d.beforePath} -> ${d.afterPath}`,
+      ].join("\n");
+      return { ok: d.dispatched, report, data: d };
+    } finally {
+      desktopExecutionLock.release(lockTaskId);
+    }
+  }
+
   public async proposeAdaptiveWorkflowUpdate(
     skillId: string,
     observedDifference: string,
