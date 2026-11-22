@@ -1,4 +1,4 @@
-import { AgentModelClient } from "../ai/toolCalling";
+import { AgentModelClient, ModelTier } from "../ai/toolCalling";
 import { ExecutionCancelledError } from "../core/errors";
 import { eventBus } from "../core/eventBus";
 import { logger } from "../core/logger";
@@ -87,7 +87,8 @@ export class AgentRuntime {
           } catch {}
         }
 
-        const turn = await this.planner.nextTurn(task);
+        const tier: ModelTier = consecutiveErrors > 0 ? "chief" : stepIdx === 0 ? "standard" : "fast";
+        const turn = await this.planner.nextTurn(task, 2, tier);
         if (turn.plan && turn.plan.length > 0) {
           this.taskManager.setPlan(task.id, turn.plan);
         }

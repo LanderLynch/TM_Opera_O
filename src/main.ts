@@ -1,7 +1,7 @@
 import { app, BrowserWindow, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, screen, shell } from "electron";
 import * as fs from "fs";
 import * as path from "path";
-import { execFile, spawn } from "child_process";
+import { ChildProcessWithoutNullStreams, execFile, spawn } from "child_process";
 import {
   checkPendingAppChoice,
   createLiveWordDocument,
@@ -24,7 +24,7 @@ import {
 } from "./pcController";
 import { AgentRuntime } from "./agent/agentRuntime";
 import { stopKeyboardWorker } from "./desktop/keyboard";
-import { AgentModelClient } from "./ai/toolCalling";
+import { AgentModelClient, ModelTier, selectModelForTier } from "./ai/toolCalling";
 import { eventBus } from "./core/eventBus";
 import { NotificationHub } from "./notch/notificationHub";
 import { getSystemMetrics } from "./notch/systemMonitor";
@@ -366,7 +366,7 @@ async function callOllama(messages: ChatMessage[]): Promise<string> {
   }
 }
 
-async function callDeepSeek(messages: ChatMessage[]): Promise<string> {
+async function callDeepSeek(messages: ChatMessage[], modelOverride?: string): Promise<string> {
   if (!DEEPSEEK_API_KEY) {
     return "(DeepSeek error: DEEPSEEK_API_KEY belum diisi di .env)";
   }
@@ -378,7 +378,7 @@ async function callDeepSeek(messages: ChatMessage[]): Promise<string> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: currentModel,
+        model: modelOverride || currentModel,
         messages,
         temperature: 0.85,
         max_tokens: 1024,
@@ -403,13 +403,15 @@ async function callDeepSeek(messages: ChatMessage[]): Promise<string> {
 
 async function callGemini(
   messages: ChatMessage[],
-  imageBase64Png?: string
+  imageBase64Png?: string,
+  modelOverride?: string
 ): Promise<string> {
   if (!GEMINI_API_KEY) {
     return "(Gemini error: GEMINI_API_KEY belum diisi di .env)";
   }
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${GEMINI_API_KEY}`;
+    const model = modelOverride || currentModel;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
     const contents = messages
       .filter((m) => m.role !== "system")
       .map((m, idx, arr) => {
@@ -1319,10 +1321,16 @@ async function maybeExtractFact(userText: string, reply: string): Promise<void> 
   } catch {}
 }
 
-function getActiveWindowTitle(): Promise<string> {
-  return new Promise((resolve) => {
-    const selfPid = process.pid;
-    const ps = `
+let winTitleWorker: ChildProcessWithoutNullStreams | null = null;
+let winTitleStdoutBuf = "";
+const winTitleQueue: Array<(title: string) => void> = [];
+
+function ensureWinTitleWorker(): ChildProcessWithoutNullStreams {
+  if (winTitleWorker && !winTitleWorker.killed && winTitleWorker.exitCode === null) {
+    return winTitleWorker;
+  }
+  const selfPid = process.pid;
+  const psLoop = `
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -1336,51 +1344,106 @@ public class Win32Title {
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
 }
 "@
+[Console]::Out.AutoFlush = $true
 $selfPid = ${selfPid}
 $blacklist = '^(TM Opera O|Opera iOS Notch|Opera Notch|Opera Radial|Opera Settings|Program Manager|Settings|Microsoft Text Input Application|Windows Input Experience|Default IME|MSCTFIME UI|NVIDIA GeForce Overlay|NVIDIA Share|GeForce Experience|Xbox Game Bar|Windows Shell Experience Host|Task Switching)$'
-$h = [Win32Title]::GetForegroundWindow()
-$found = ""
-for ($i = 0; $i -lt 160 -and $h -ne [IntPtr]::Zero; $i++) {
-  if ([Win32Title]::IsWindowVisible($h)) {
-    [uint32]$winPid = 0
-    [void][Win32Title]::GetWindowThreadProcessId($h, [ref]$winPid)
-    if ($winPid -ne $selfPid) {
-      $ex = [Win32Title]::GetWindowLong($h, -20)
-      # Skip click-through overlay windows (WS_EX_TRANSPARENT = 0x20, WS_EX_TOOLWINDOW = 0x80)
-      $isOverlay = (($ex -band 0x20) -ne 0) -or (($ex -band 0x80) -ne 0)
-      if (-not $isOverlay) {
-        $sb = New-Object System.Text.StringBuilder 256
-        [void][Win32Title]::GetWindowText($h, $sb, 256)
-        $t = $sb.ToString().Trim()
-        if ($t -and $t -notmatch $blacklist -and $t -notmatch 'NVIDIA|GeForce Overlay') {
-          $found = $t
-          break
-        }
-      }
-    }
-  }
-  $h = [Win32Title]::GetWindow($h, 2)
-}
-$found
-`;
-    execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], (err, stdout) => {
-      if (err) {
-        resolve("");
-        return;
-      }
-      const title = (stdout || "").trim();
-      if (title) {
-        if (title !== currentActiveWindow) {
-          currentActiveWindow = title;
-          activeWindowSince = Date.now();
-          if (recentWindowsHistory[0] !== title) {
-            recentWindowsHistory.unshift(title);
-            if (recentWindowsHistory.length > 6) recentWindowsHistory.pop();
+while ($null -ne ([Console]::In.ReadLine())) {
+  try {
+    $h = [Win32Title]::GetForegroundWindow()
+    $found = ""
+    for ($i = 0; $i -lt 160 -and $h -ne [IntPtr]::Zero; $i++) {
+      if ([Win32Title]::IsWindowVisible($h)) {
+        [uint32]$winPid = 0
+        [void][Win32Title]::GetWindowThreadProcessId($h, [ref]$winPid)
+        if ($winPid -ne $selfPid) {
+          $ex = [Win32Title]::GetWindowLong($h, -20)
+          $isOverlay = (($ex -band 0x20) -ne 0) -or (($ex -band 0x80) -ne 0)
+          if (-not $isOverlay) {
+            $sb = New-Object System.Text.StringBuilder 256
+            [void][Win32Title]::GetWindowText($h, $sb, 256)
+            $t = $sb.ToString().Trim()
+            if ($t -and $t -notmatch $blacklist -and $t -notmatch 'NVIDIA|GeForce Overlay') {
+              $found = $t
+              break
+            }
           }
         }
       }
-      resolve(title || currentActiveWindow);
-    });
+      $h = [Win32Title]::GetWindow($h, 2)
+    }
+    $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($found))
+    [Console]::Out.WriteLine("TITLE:" + $b64)
+  } catch {
+    [Console]::Out.WriteLine("TITLE:")
+  }
+}
+`;
+  const proc = spawn(
+    "powershell.exe",
+    ["-NoProfile", "-WindowStyle", "Hidden", "-Command", psLoop],
+    { stdio: "pipe" }
+  );
+  proc.unref();
+  proc.stdout.on("data", (chunk: Buffer | string) => {
+    winTitleStdoutBuf += String(chunk);
+    const lines = winTitleStdoutBuf.split(/\r?\n/);
+    winTitleStdoutBuf = lines.pop() || "";
+    for (const ln of lines) {
+      if (!ln.startsWith("TITLE:")) continue;
+      const b64 = ln.slice(6).trim();
+      const decoded = b64 ? Buffer.from(b64, "base64").toString("utf-8").trim() : "";
+      const res = winTitleQueue.shift();
+      if (res) res(decoded);
+    }
+  });
+  proc.on("exit", () => {
+    winTitleWorker = null;
+    while (winTitleQueue.length > 0) {
+      const res = winTitleQueue.shift();
+      if (res) res("");
+    }
+  });
+  winTitleWorker = proc;
+  return proc;
+}
+
+function stopActiveWindowWorker(): void {
+  if (winTitleWorker && !winTitleWorker.killed) {
+    try {
+      winTitleWorker.kill("SIGTERM");
+    } catch {}
+    winTitleWorker = null;
+  }
+}
+
+function getActiveWindowTitle(): Promise<string> {
+  return new Promise((resolve) => {
+    try {
+      const proc = ensureWinTitleWorker();
+      const timer = setTimeout(() => {
+        const idx = winTitleQueue.indexOf(done);
+        if (idx >= 0) winTitleQueue.splice(idx, 1);
+        resolve(currentActiveWindow);
+      }, 4000);
+      const done = (title: string) => {
+        clearTimeout(timer);
+        if (title) {
+          if (title !== currentActiveWindow) {
+            currentActiveWindow = title;
+            activeWindowSince = Date.now();
+            if (recentWindowsHistory[0] !== title) {
+              recentWindowsHistory.unshift(title);
+              if (recentWindowsHistory.length > 6) recentWindowsHistory.pop();
+            }
+          }
+        }
+        resolve(title || currentActiveWindow);
+      };
+      winTitleQueue.push(done);
+      proc.stdin.write("GET\n");
+    } catch {
+      resolve(currentActiveWindow);
+    }
   });
 }
 
@@ -1975,14 +2038,17 @@ ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
 // 6. ISOLATED AGENT ENGINE IPC CHANNELS (MILESTONE 1)
 // ---------------------------------------------------------
 const agentModelClient: AgentModelClient = {
-  async complete(sysPrompt: string, userPrompt: string): Promise<string> {
+  async complete(sysPrompt: string, userPrompt: string, tier: ModelTier = "standard"): Promise<string> {
     const msgs: ChatMessage[] = [
       { role: "system", content: sysPrompt },
       { role: "user", content: userPrompt },
     ];
-    if (currentIsLocal()) return await callOllama(msgs);
-    if (currentIsDeepSeek()) return await callDeepSeek(msgs);
-    return await callGemini(msgs);
+    const tieredModel = selectModelForTier(currentModel, tier);
+    if (tieredModel.startsWith("local:")) return await callOllama(msgs);
+    if (tieredModel.startsWith("deepseek-") || tieredModel.startsWith("pecut/")) {
+      return await callDeepSeek(msgs, tieredModel);
+    }
+    return await callGemini(msgs, undefined, tieredModel);
   },
 };
 
@@ -2306,6 +2372,7 @@ function cleanupAndQuit(): void {
   try {
     stopMediaWatcher();
     stopKeyboardWorker();
+    stopActiveWindowWorker();
   } catch {}
   try {
     agentRuntime?.taskManager.emergencyStop();

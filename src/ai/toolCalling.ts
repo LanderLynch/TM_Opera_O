@@ -10,8 +10,33 @@ export interface ModelResponse {
   finishReason?: string;
 }
 
+export type ModelTier = "fast" | "standard" | "chief";
+
 export interface AgentModelClient {
-  complete(systemPrompt: string, userPrompt: string): Promise<string>;
+  complete(systemPrompt: string, userPrompt: string, tier?: ModelTier): Promise<string>;
+}
+
+export function selectModelForTier(baseModel: string, tier: ModelTier = "standard"): string {
+  if (!baseModel || baseModel.startsWith("local:")) return baseModel;
+
+  if (tier === "fast") {
+    if (baseModel.startsWith("gemini-")) {
+      return baseModel.includes("lite") ? baseModel : "gemini-2.5-flash-lite";
+    }
+    if (baseModel === "deepseek-reasoner") {
+      return "deepseek-chat";
+    }
+    return baseModel;
+  }
+
+  if (tier === "chief") {
+    if (baseModel.startsWith("gemini-") && baseModel.includes("lite")) {
+      return "gemini-2.5-flash";
+    }
+    return baseModel;
+  }
+
+  return baseModel;
 }
 
 export interface ParsedAgentTurn {

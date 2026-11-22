@@ -1,4 +1,4 @@
-import { AgentModelClient, ParsedAgentTurn, parseStructuredTurn } from "../ai/toolCalling";
+import { AgentModelClient, ModelTier, ParsedAgentTurn, parseStructuredTurn } from "../ai/toolCalling";
 import { logger } from "../core/logger";
 import { ToolRegistry } from "../tools/registry";
 import { AgentTask } from "./taskManager";
@@ -11,7 +11,8 @@ export class AgentPlanner {
 
   public async nextTurn(
     task: AgentTask,
-    maxParseRetries = 2
+    maxParseRetries = 2,
+    tier: ModelTier = "standard"
   ): Promise<ParsedAgentTurn> {
     const systemPrompt = [
       "You are the Autonomous Execution Planner for TM Opera O on Windows.",
@@ -43,7 +44,8 @@ export class AgentPlanner {
     ].join("\n\n");
 
     for (let attempt = 0; attempt <= maxParseRetries; attempt++) {
-      const raw = await this.modelClient.complete(systemPrompt, userPrompt);
+      const effectiveTier: ModelTier = attempt > 0 ? "chief" : tier;
+      const raw = await this.modelClient.complete(systemPrompt, userPrompt, effectiveTier);
       const parsed = parseStructuredTurn(raw);
       if (parsed && (parsed.action || parsed.finalAnswer !== undefined)) {
         return parsed;
