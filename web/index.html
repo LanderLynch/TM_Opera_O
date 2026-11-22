@@ -766,8 +766,8 @@
 
         async function muatStatusModel() {
             try {
-                const m = await callApi('get_current_model');
-                status.textContent = 'Online · ' + m;
+                await callApi('get_current_model');
+                status.textContent = 'Online';
             } catch (err) {}
         }
 

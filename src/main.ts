@@ -303,6 +303,7 @@ function buildSystemInstruction(facts: string[], isLocal = false): string {
 
 const AVAILABLE_MODELS = [
   "pecut/deepseek-v4.1-flash-uncensored",
+  "pecut/qwen3.8-flash",
   "deepseek-chat",
   "deepseek-reasoner",
   "gemini-3.6-flash",
@@ -310,10 +311,15 @@ const AVAILABLE_MODELS = [
   "gemini-3.5-flash-lite",
   "gemini-flash-latest",
   "gemini-flash-lite-latest",
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
   "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
   "gemini-3.8-flash",
   "gemini-3.7-flash",
   "local:qwen2.5:1.5b",
+  "local:qwen2.5:3b",
+  "local:llama3.2:3b",
 ];
 
 let currentModel = "pecut/deepseek-v4.1-flash-uncensored";
@@ -338,10 +344,13 @@ function currentIsDeepSeek(): boolean {
 
 async function callOllama(messages: ChatMessage[]): Promise<string> {
   try {
+    const localModelName = currentModel.startsWith("local:")
+      ? currentModel.slice("local:".length)
+      : LOCAL_MODEL;
     const res = await fetch(OLLAMA_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: LOCAL_MODEL, messages, stream: false }),
+      body: JSON.stringify({ model: localModelName, messages, stream: false }),
     });
     const data = (await res.json()) as { message?: { content?: string } };
     return (data.message?.content || "").trim();
