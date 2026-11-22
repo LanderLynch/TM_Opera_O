@@ -33,7 +33,7 @@ export class MaaBridge {
   private stdoutBuf = "";
   private pending = new Map<
     string,
-    { resolve: (res: MaaBridgeResponse) => void; timer: NodeJS.Timeout }
+    { resolve: (res: MaaBridgeResponse) => void; timer: NodeJS.Timeout | null }
   >();
 
   constructor(skillRootDir: string) {
@@ -78,7 +78,7 @@ export class MaaBridge {
               if (msg.id && this.pending.has(msg.id)) {
                 const entry = this.pending.get(msg.id)!;
                 this.pending.delete(msg.id);
-                clearTimeout(entry.timer);
+                if (entry.timer) clearTimeout(entry.timer);
                 entry.resolve(msg);
               }
             } catch {}
@@ -96,7 +96,7 @@ export class MaaBridge {
         proc.on("exit", () => {
           this.proc = null;
           for (const [, entry] of this.pending) {
-            clearTimeout(entry.timer);
+            if (entry.timer) clearTimeout(entry.timer);
             entry.resolve({ ok: false, error: "MaaBridge subprocess exited." });
           }
           this.pending.clear();
@@ -123,10 +123,13 @@ export class MaaBridge {
 
     const id = `maa_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        resolve({ id, ok: false, error: `MaaBridge command "${action}" timed out.` });
-      }, timeoutMs);
+      const timer =
+        timeoutMs > 0
+          ? setTimeout(() => {
+              this.pending.delete(id);
+              resolve({ id, ok: false, error: `MaaBridge command "${action}" timed out.` });
+            }, timeoutMs)
+          : null;
 
       this.pending.set(id, {
         resolve: resolve as (res: MaaBridgeResponse) => void,
@@ -136,7 +139,7 @@ export class MaaBridge {
         this.proc!.stdin.write(JSON.stringify({ id, action, ...params }) + "\n");
       } catch (err) {
         this.pending.delete(id);
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
         resolve({ id, ok: false, error: String(err) });
       }
     });
@@ -152,7 +155,7 @@ export class MaaBridge {
     return await this.sendCommand("detect_game", { windowRegex }, 10_000);
   }
 
-  public async runPipelineTask(entry: string, timeoutMs = 120_000): Promise<MaaBridgeResponse> {
+  public async runPipelineTask(entry: string, timeoutMs = 0): Promise<MaaBridgeResponse> {
     return await this.sendCommand("run_task", { entry }, timeoutMs);
   }
 

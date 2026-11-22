@@ -169,12 +169,18 @@ export class StellaSoraEngineManager {
     return STELLA_SORA_WORKFLOWS;
   }
 
-  public async runWorkflows(workflowIds: string[]): Promise<{
+  public async runWorkflows(
+    workflowIds: string[],
+    options: { autoLaunch?: boolean; skipCompletedToday?: boolean } = {}
+  ): Promise<{
     ok: boolean;
     report: string;
     results: WorkflowVerificationResult[];
     status: StellaSoraStatusSnapshot;
   }> {
+    const autoLaunch = options.autoLaunch !== false;
+    const skipCompletedToday = options.skipCompletedToday !== false;
+
     if (this.phase === "uninitialized") {
       await this.activate();
     }
@@ -195,12 +201,32 @@ export class StellaSoraEngineManager {
       this.phase = "running";
       this.lastError = null;
       this.gameState = await this.processManager.detect();
+      const wasAlreadyRunning = this.gameState.isRunning;
+
+      if (!this.gameState.isRunning && autoLaunch && this.gameState.installedInSteam) {
+        this.currentStep = "Launching Stella Sora via Steam...";
+        await this.processManager.launchViaSteam();
+        const deadline = Date.now() + 30_000;
+        while (Date.now() < deadline && !this.stopRequested) {
+          await new Promise((r) => setTimeout(r, 1500));
+          this.gameState = await this.processManager.detect();
+          if (this.gameState.isRunning) break;
+        }
+      }
+
       if (!this.gameState.isRunning) {
         const msg = this.gameState.installedInSteam
-          ? "Stella Sora is installed in Steam, but not currently running. Launch the game first."
+          ? "Stella Sora is installed in Steam, but did not appear on desktop yet."
           : "Stella Sora is not installed or not running on this PC.";
         this.phase = "activated";
         this.lastError = msg;
+        this.deps.knowledgeStore?.add({
+          applicationId: "stella-sora",
+          category: "personal-note",
+          title: "Launch/Window Detection Note",
+          content: msg,
+          source: "observed",
+        });
         if (session) {
           this.deps.statisticsStore?.finishSession(session.id, {
             status: "failed",
@@ -211,6 +237,38 @@ export class StellaSoraEngineManager {
         return { ok: false, report: msg, results, status: this.getStatus() };
       }
 
+      // Skip login-check if already open, and skip workflows already verified completed today
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const completedToday = new Set<string>();
+      if (skipCompletedToday && this.deps.statisticsStore) {
+        for (const s of this.deps.statisticsStore.listSessions("stella-sora", startOfToday.getTime())) {
+          for (const act of s.completedActivities || []) {
+            completedToday.add(act);
+          }
+        }
+      }
+      const queueIds = workflowIds.filter((id) => {
+        if (wasAlreadyRunning && id === "login-check") return false;
+        if (completedToday.has(id)) return false;
+        return true;
+      });
+
+      if (queueIds.length === 0) {
+        this.phase = "activated";
+        this.currentStep = "All requested workflows already completed today";
+        this.progressPercent = 100;
+        const msg = "All requested Stella Sora daily workflows were already verified completed today.";
+        if (session) {
+          this.deps.statisticsStore?.finishSession(session.id, {
+            status: "completed",
+            completedActivities: workflowIds,
+            verifiedResults: [msg],
+          });
+        }
+        return { ok: true, report: msg, results, status: this.getStatus() };
+      }
+
       // Check active knowledge notices before running workflows
       const activeNotices = this.deps.knowledgeStore?.getRelevant("stella-sora") || [];
       const maintNotice = activeNotices.find((k) => k.category === "maintenance");
@@ -219,13 +277,13 @@ export class StellaSoraEngineManager {
         this.lastError = msg;
       }
 
-      for (let i = 0; i < workflowIds.length; i++) {
+      for (let i = 0; i < queueIds.length; i++) {
         if (this.stopRequested) break;
         while (this.paused && !this.stopRequested) {
           await new Promise((r) => setTimeout(r, 200));
         }
 
-        const wfId = workflowIds[i];
+        const wfId = queueIds[i];
         const spec = STELLA_SORA_WORKFLOWS.find((w) => w.id === wfId);
         if (!spec) {
           const v = this.verifier.verifyExecution(wfId, false, null, `Unknown workflow "${wfId}".`);
@@ -235,9 +293,9 @@ export class StellaSoraEngineManager {
 
         this.currentWorkflow = spec.name;
         this.currentStep = `Executing ${spec.pipelineEntry}`;
-        this.progressPercent = Math.round(((i + 0.5) / workflowIds.length) * 100);
+        this.progressPercent = Math.round(((i + 0.5) / queueIds.length) * 100);
 
-        const execRes = await this.bridge.runPipelineTask(spec.pipelineEntry);
+        const execRes = await this.bridge.runPipelineTask(spec.pipelineEntry, 0);
         const postState = await this.processManager.detect();
         this.lastRecognizedScreen = postState.windowTitle;
 
@@ -247,10 +305,19 @@ export class StellaSoraEngineManager {
           postState.windowTitle,
           execRes.error
         );
+        if (!verified.verified) {
+          this.deps.knowledgeStore?.add({
+            applicationId: "stella-sora",
+            category: "application-update",
+            title: `Workflow issue: ${wfId}`,
+            content: verified.evidence,
+            source: "observed",
+          });
+        }
         results.push(verified);
         this.sessionResults.push(verified);
         this.lastVerification = verified;
-        this.progressPercent = Math.round(((i + 1) / workflowIds.length) * 100);
+        this.progressPercent = Math.round(((i + 1) / queueIds.length) * 100);
       }
 
       if (!this.stopRequested) {

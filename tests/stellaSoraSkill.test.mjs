@@ -69,11 +69,11 @@ test("StellaSoraEngineManager activates without auto-executing, refuses blind ru
     assert.equal(act.status.engineReady, true);
     assert.equal(act.status.currentWorkflow, null);
 
-    // If game is not running, runWorkflows must refuse safely rather than blind-clicking
+    // If game is not running, runWorkflows (with autoLaunch: false) must refuse safely rather than blind-clicking
     if (!act.status.gameState?.isRunning) {
-      const runRes = await manager.runWorkflows(["daily-missions"]);
+      const runRes = await manager.runWorkflows(["daily-missions"], { autoLaunch: false });
       assert.equal(runRes.ok, false);
-      assert.match(runRes.report, /not installed|not currently running/i);
+      assert.match(runRes.report, /not installed|did not appear|not currently running/i);
     }
 
     const stopped = await manager.stop();
