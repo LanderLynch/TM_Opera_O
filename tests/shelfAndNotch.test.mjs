@@ -10,7 +10,7 @@ const { ShelfStore, MAX_SHELF_FILE_BYTES } = require("../dist/shelf/shelfStore.j
 const { getSystemMetrics } = require("../dist/notch/systemMonitor.js");
 const { NotificationHub } = require("../dist/notch/notificationHub.js");
 const { createDefaultToolRegistry } = require("../dist/tools/registry.js");
-const { selectMediaSession } = require("../dist/pcController.js");
+const { selectMediaSession, resolveAppMatches } = require("../dist/pcController.js");
 
 function makeTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -189,4 +189,23 @@ test("selectMediaSession filters strictly by spotify, youtube, or any focus mode
   assert.equal(selectMediaSession([spotifySession], "youtube"), null);
   assert.equal(selectMediaSession([spotifySession, youtubeSession], "youtube")?.app, "chrome.exe");
   assert.equal(selectMediaSession([spotifySession, youtubeSession], "any")?.app, "chrome.exe");
+});
+
+test("resolveAppMatches keeps Steam and local launcher distinct for Strinova", () => {
+  const apps = [
+    { name: "Strinova", source: "app", target: "C:\\Strinova\\Strinova.exe", label: "Strinova (Launcher Lokal)" },
+    { name: "Strinova", source: "steam", target: "steam://rungameid/1282270", label: "Strinova (Steam)" },
+  ];
+
+  const askBoth = resolveAppMatches(apps, "strinova", "buka strinova");
+  assert.equal(askBoth.status, "multiple");
+  assert.equal(askBoth.options?.length, 2);
+
+  const pickSteam = resolveAppMatches(apps, "strinova", "buka strinova steam");
+  assert.equal(pickSteam.status, "launched");
+  assert.equal(pickSteam.chosen?.source, "steam");
+
+  const pickLauncher = resolveAppMatches(apps, "strinova", "buka strinova biasa");
+  assert.equal(pickLauncher.status, "launched");
+  assert.equal(pickLauncher.chosen?.source, "app");
 });

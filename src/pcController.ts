@@ -48,6 +48,16 @@ export async function scanInstalledApps(force = false): Promise<InstalledApp[]> 
     // Skip web help links or uninstallers
     if (/^https?:\/\//i.test(appId) || /uninstall/i.test(name)) continue;
 
+    if (/^steam:\/\//i.test(appId)) {
+      apps.push({
+        name,
+        source: "steam",
+        target: appId,
+        label: `${name} (Steam)`,
+      });
+      continue;
+    }
+
     const isExePath = /^[A-Za-z]:\\/.test(appId) && fs.existsSync(appId);
     apps.push({
       name,
@@ -152,11 +162,11 @@ export function checkPendingAppChoice(pesan: string): InstalledApp | null {
   return null;
 }
 
-export async function findInstalledAppMatches(
+export function resolveAppMatches(
+  apps: InstalledApp[],
   appQuery: string,
   fullUserMessage: string
-): Promise<{ status: "launched" | "multiple" | "not_found"; chosen?: InstalledApp; options?: InstalledApp[] }> {
-  const apps = await scanInstalledApps();
+): { status: "launched" | "multiple" | "not_found"; chosen?: InstalledApp; options?: InstalledApp[] } {
   const q = appQuery.toLowerCase().trim();
   const msgLower = fullUserMessage.toLowerCase();
 
@@ -170,7 +180,7 @@ export async function findInstalledAppMatches(
     return { status: "not_found" };
   }
 
-  // Deduplicate identical targets
+  // Deduplicate identical (source, name) pairs while keeping distinct sources (app vs steam)
   const seen = new Set<string>();
   matches = matches.filter((m) => {
     const key = `${m.source}:${m.name.toLowerCase()}`;
@@ -179,39 +189,60 @@ export async function findInstalledAppMatches(
     return true;
   });
 
-  // Prefer exact name matches if multiple unrelated apps matched (e.g. "Steam" vs "Steam Support")
+  // Prefer exact name matches if unrelated partial names matched (e.g. "Steam" vs "Steam Support")
   const exactMatches = matches.filter((m) => {
     const n = m.name.toLowerCase();
     return n === q || (q === "word" && n === "microsoft word") || (q === "microsoft word" && (n === "word" || n === "microsoft word"));
   });
   if (exactMatches.length > 0) {
-    // If both "Word" (StartApps) and "Microsoft Word" (Office16 exe) matched, deduplicate to the Office16 exe
-    const officeExe = exactMatches.find((m) => m.target.toLowerCase().endsWith(".exe"));
-    matches = officeExe ? [officeExe] : [exactMatches[0]];
+    const hasSteam = exactMatches.some((m) => m.source === "steam");
+    const hasApp = exactMatches.some((m) => m.source === "app");
+    if (hasSteam && hasApp) {
+      // Keep both Steam and local launcher variants so user or keyword can distinguish them
+      const steamPick = exactMatches.find((m) => m.source === "steam")!;
+      const appExe = exactMatches.find((m) => m.source === "app" && m.target.toLowerCase().endsWith(".exe"));
+      const appPick = appExe || exactMatches.find((m) => m.source === "app")!;
+      matches = [appPick, steamPick];
+    } else if (!hasSteam) {
+      const officeExe = exactMatches.find((m) => m.target.toLowerCase().endsWith(".exe"));
+      matches = officeExe ? [officeExe] : [exactMatches[0]];
+    } else {
+      matches = [exactMatches[0]];
+    }
   }
 
-  // Check if user already specified "steam" or "launcher" in the initial request
+  // Check if user already specified "steam" or "launcher"/"lokal"/"biasa" in the initial request
   if (matches.length > 1) {
     if (msgLower.includes("steam")) {
       const steamOnly = matches.filter((m) => m.source === "steam");
-      if (steamOnly.length === 1) {
-        launchTarget(steamOnly[0]);
+      if (steamOnly.length >= 1) {
         return { status: "launched", chosen: steamOnly[0] };
       }
     }
-    if (msgLower.includes("launcher") || msgLower.includes("lokal")) {
+    if (msgLower.includes("launcher") || msgLower.includes("lokal") || msgLower.includes("biasa")) {
       const launcherOnly = matches.filter((m) => m.source === "app");
-      if (launcherOnly.length === 1) {
-        launchTarget(launcherOnly[0]);
+      if (launcherOnly.length >= 1) {
         return { status: "launched", chosen: launcherOnly[0] };
       }
     }
-    pendingChoices = matches;
     return { status: "multiple", options: matches };
   }
 
-  launchTarget(matches[0]);
   return { status: "launched", chosen: matches[0] };
+}
+
+export async function findInstalledAppMatches(
+  appQuery: string,
+  fullUserMessage: string
+): Promise<{ status: "launched" | "multiple" | "not_found"; chosen?: InstalledApp; options?: InstalledApp[] }> {
+  const apps = await scanInstalledApps();
+  const res = resolveAppMatches(apps, appQuery, fullUserMessage);
+  if (res.status === "launched" && res.chosen) {
+    launchTarget(res.chosen);
+  } else if (res.status === "multiple" && res.options) {
+    pendingChoices = res.options;
+  }
+  return res;
 }
 
 // ---------------------------------------------------------
