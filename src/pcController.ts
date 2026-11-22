@@ -263,6 +263,8 @@ function Await($WinRtTask, $ResultType) {
 [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows.Media.Control,ContentType=WindowsRuntime] | Out-Null
 $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
 $sessions = $mgr.GetSessions()
+$musicPattern = 'Spotify|AppleMusic|Tidal|Deezer|AmazonMusic|SoundCloud|MusicBee|foobar2000|AIMP|iTunes|YouTubeMusic'
+$browserPattern = 'chrome|msedge|firefox|brave|opera|vivaldi|arc'
 $chosen = $null
 foreach ($s in $sessions) {
   if ($s.SourceAppUserModelId -match 'Spotify' -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
@@ -272,7 +274,18 @@ if (-not $chosen) {
     if ($s.SourceAppUserModelId -match 'Spotify') { $chosen = $s; break }
   }
 }
-if (-not $chosen) { $chosen = $mgr.GetCurrentSession() }
+if (-not $chosen) {
+  foreach ($s in $sessions) {
+    $id = [string]$s.SourceAppUserModelId
+    if ($id -match $musicPattern -and $id -notmatch $browserPattern -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $chosen = $s; break }
+  }
+}
+if (-not $chosen) {
+  foreach ($s in $sessions) {
+    $id = [string]$s.SourceAppUserModelId
+    if ($id -match $musicPattern -and $id -notmatch $browserPattern) { $chosen = $s; break }
+  }
+}
 if ($chosen) {
   [void](Await ($chosen.TryChangePlaybackPositionAsync([long]${ticks})) ([bool]))
 }
@@ -390,6 +403,8 @@ $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMa
 while ($true) {
   try {
     $sessions = $mgr.GetSessions()
+    $musicPattern = 'Spotify|AppleMusic|Tidal|Deezer|AmazonMusic|SoundCloud|MusicBee|foobar2000|AIMP|iTunes|YouTubeMusic'
+    $browserPattern = 'chrome|msedge|firefox|brave|opera|vivaldi|arc'
     $chosen = $null
     # 1. Prioritaskan Spotify yang sedang Playing
     foreach ($s in $sessions) {
@@ -405,16 +420,23 @@ while ($true) {
         }
       }
     }
-    # 3. Kalau Spotify tidak buka, ambil session apa pun yang sedang Playing
+    # 3. Kalau Spotify tidak buka, ambil aplikasi musik lain yang sedang Playing (abaikan browser/YouTube)
     if (-not $chosen) {
       foreach ($s in $sessions) {
-        if ([string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') {
+        $id = [string]$s.SourceAppUserModelId
+        if ($id -match $musicPattern -and $id -notmatch $browserPattern -and [string]$s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') {
           $chosen = $s; break
         }
       }
     }
+    # 4. Fallback hanya ke aplikasi musik lain (abaikan browser/YouTube)
     if (-not $chosen) {
-      $chosen = $mgr.GetCurrentSession()
+      foreach ($s in $sessions) {
+        $id = [string]$s.SourceAppUserModelId
+        if ($id -match $musicPattern -and $id -notmatch $browserPattern) {
+          $chosen = $s; break
+        }
+      }
     }
 
     if ($chosen) {
