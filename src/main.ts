@@ -32,7 +32,7 @@ import { LearningEngine } from "./learning/learningEngine";
 import { SkillStore } from "./learning/skillStore";
 import { SkillStatus } from "./learning/skillTypes";
 import { StellaSoraEngineManager } from "./skills/stellaSora/engineManager";
-import { handleStellaSoraCommand } from "./skills/stellaSoraSkill";
+import { handleStellaSoraCommand, parseStellaSoraCommand } from "./skills/stellaSoraSkill";
 import { NotificationHub } from "./notch/notificationHub";
 import { getSystemMetrics } from "./notch/systemMonitor";
 import { ShelfItemType, ShelfStore } from "./shelf/shelfStore";
@@ -977,6 +977,15 @@ async function askAi(pesan: string): Promise<string> {
     chatHistory.push({ role: "assistant", content: visionReply });
     chatHistory = chatHistory.slice(-20);
     return visionReply;
+  }
+
+  // 0C. Cek perintah skill Stella Sora (Activate, Open & Check, Run Daily, Pause/Stop, Progress)
+  const stellaIntent = parseStellaSoraCommand(pesan);
+  if (!systemActionNote && stellaIntent) {
+    setProgress("🎮 Menjalankan Stella Sora Skill...");
+    const stellaRes = await handleStellaSoraCommand(stellaSoraManager, pesan);
+    notificationHub.push("agent", "Stella Sora Skill", stellaRes.summary.slice(0, 120));
+    systemActionNote = `(Sistem Stella Sora Skill: ${stellaRes.summary} Sampaikan hasil yang terverifikasi ini kepada Lemon tanpa mengarang hasil tambahan.)`;
   }
 
   // 1. Cek apakah user sedang menjawab pilihan aplikasi (misalnya Strinova Steam vs Launcher)

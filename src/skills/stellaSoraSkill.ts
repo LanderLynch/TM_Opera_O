@@ -33,7 +33,7 @@ export function parseStellaSoraCommand(input: string): StellaSoraIntent | null {
   if (/\b(open|launch|buka)\b/i.test(lower) && /\b(check|running|cek)\b/i.test(lower)) {
     return { type: "open_and_check" };
   }
-  if (/\b(run|jalankan|start|mulai)\b/i.test(lower)) {
+  if (/\b(run|jalankan|start|mulai|daily|harian)\b/i.test(lower)) {
     const workflows = ["login-check", "mailbox", "friend-gifts", "daily-missions", "shop"];
     if (/\b(event|events|activity)\b/i.test(lower)) {
       workflows.push("events");
@@ -43,11 +43,11 @@ export function parseStellaSoraCommand(input: string): StellaSoraIntent | null {
     }
     return { type: "run_workflows", workflowIds: workflows };
   }
-  if (/\b(activate|aktifkan|init|enable)\b/i.test(lower)) {
+  if (/\b(activate|aktifkan|init|enable|skill)\b/i.test(lower)) {
     return { type: "activate" };
   }
 
-  return { type: "activate" };
+  return null;
 }
 
 export async function handleStellaSoraCommand(
