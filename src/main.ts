@@ -2270,6 +2270,12 @@ ipcMain.handle("notch:set-shelf-open", (_e, open: unknown) => {
     const h = isOpen ? 260 : 250;
     const x = Math.max(0, Math.floor((display.bounds.width - w) / 2));
     radialWindow.setBounds({ x, y: 0, width: w, height: h });
+    if (isOpen) {
+      radialWindow.setIgnoreMouseEvents(false);
+      radialWindow.focus();
+    } else {
+      radialWindow.setIgnoreMouseEvents(true, { forward: true });
+    }
   }
   return { ok: true };
 });

@@ -760,6 +760,7 @@
                         <button id="shelf-select-btn" onclick="toggleShelfSelectMode(event)" title="Pilih beberapa item untuk dihapus" class="px-1.5 h-5 rounded-md bg-white/10 hover:bg-white/20 text-[9.5px] font-semibold text-white/80">Select</button>
                         <button id="shelf-select-all-btn" onclick="toggleSelectAllShelf(event)" title="Pilih semua" class="hidden px-1.5 h-5 rounded-md bg-white/10 hover:bg-white/20 text-[9.5px] font-semibold text-white/80">All</button>
                         <button id="shelf-delete-selected-btn" onclick="deleteSelectedShelfItems(event)" title="Hapus item terpilih" class="hidden px-1.5 h-5 rounded-md bg-red-500/80 hover:bg-red-500 text-[9.5px] font-semibold text-white">Del (0)</button>
+                        <button onclick="pasteIntoShelf(event)" title="Paste gambar/teks dari Clipboard (Ctrl+V)" class="px-1.5 h-5 rounded-md bg-white/10 hover:bg-white/25 text-[9.5px] font-semibold text-white/90">Paste</button>
                         <button onclick="openShelfAddDialog(event)" title="Add files (or Ctrl+V / Drag & Drop)" class="w-5 h-5 rounded-md bg-white/10 hover:bg-white/25 text-white text-[12px] leading-none flex items-center justify-center">+</button>
                         <button onclick="toggleShelf(event, false)" title="Collapse Shelf" class="w-5 h-5 rounded-md bg-white/5 hover:bg-white/20 text-white/70 text-[11px] leading-none flex items-center justify-center">×</button>
                     </div>
@@ -877,6 +878,10 @@
         island.addEventListener('mouseleave', scheduleCollapse);
 
         window.addEventListener('mousemove', (e) => {
+            if (shelfOpen) {
+                callApi('set_ignore_mouse', false);
+                return;
+            }
             const hit = e.target && e.target.closest && e.target.closest('.notch-interactive');
             callApi('set_ignore_mouse', !hit);
         });
@@ -1558,19 +1563,33 @@
             } catch {}
         }
 
+        function toShelfImageSrc(item) {
+            if (item && item.thumbnailDataUrl) return item.thumbnailDataUrl;
+            if (!item || !item.filePath) return '';
+            return 'file:///' + encodeURI(String(item.filePath).replace(/\\/g, '/'));
+        }
+
+        function toShelfFullImageSrc(item) {
+            if (item && item.filePath) {
+                return 'file:///' + encodeURI(String(item.filePath).replace(/\\/g, '/'));
+            }
+            return (item && item.thumbnailDataUrl) || '';
+        }
+
         function renderShelfItems() {
             const track = document.getElementById('shelf-track');
             if (!track) return;
             if (shelfItems.length === 0) {
-                track.innerHTML = '<div class="text-[10.5px] text-white/40 px-3 whitespace-nowrap">Drop files, Ctrl+V, or click + to add</div>';
+                track.innerHTML = '<div class="text-[10.5px] text-white/40 px-3 whitespace-nowrap">Drop files, Ctrl+V, Paste, or click + to add</div>';
                 return;
             }
             track.innerHTML = shelfItems.map((item) => {
                 const isImg = item.type === 'image';
                 const isSelected = selectedShelfIds.has(item.id);
                 const icon = item.type === 'document' ? 'DOC' : (item.type === 'text' ? 'TXT' : 'FILE');
-                const previewHtml = isImg && item.filePath
-                    ? `<img src="file:///${encodeURI(item.filePath.replace(/\\\\/g, '/'))}" class="w-full h-[50px] object-cover rounded-lg bg-black/30" draggable="false" />`
+                const imgSrc = isImg ? toShelfImageSrc(item) : '';
+                const previewHtml = isImg && imgSrc
+                    ? `<img src="${imgSrc}" class="w-full h-[50px] object-cover rounded-lg bg-black/30" draggable="false" />`
                     : `<div class="w-full h-[50px] rounded-lg bg-white/[0.06] flex items-center justify-center text-[11px] font-bold text-white/70">${icon}</div>`;
                 const checkHtml = (shelfSelectMode || isSelected)
                     ? `<span onclick="toggleShelfItemSelection('${escapeHtml(item.id)}', event)" class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full border ${isSelected ? 'bg-red-500 border-red-300 text-white' : 'bg-black/60 border-white/40 text-transparent'} text-[9px] font-bold flex items-center justify-center">✓</span>`
@@ -1624,8 +1643,13 @@
             const saveBtn = document.getElementById('shelf-modal-save');
             document.getElementById('shelf-modal-title').textContent = item.name;
 
-            if (item.type === 'image' && item.filePath) {
-                img.src = `file:///${encodeURI(item.filePath.replace(/\\\\/g, '/'))}`;
+            if (item.type === 'image') {
+                img.onerror = () => {
+                    if (item.thumbnailDataUrl && img.src !== item.thumbnailDataUrl) {
+                        img.src = item.thumbnailDataUrl;
+                    }
+                };
+                img.src = toShelfFullImageSrc(item);
                 img.classList.remove('hidden');
                 txt.classList.add('hidden');
                 saveBtn.classList.add('hidden');
@@ -1680,17 +1704,29 @@
             refreshShelf();
         }
 
-        // Ctrl+V paste into Shelf when Shelf is open
+        async function pasteIntoShelf(e) {
+            if (e) e.stopPropagation();
+            if (!window.shelf) return;
+            await window.shelf.paste();
+            refreshShelf();
+        }
+
+        // Ctrl+V / native paste into Shelf when Shelf is open
         window.addEventListener('keydown', async (e) => {
             if (shelfOpen && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
                 const activeTag = document.activeElement?.tagName;
                 if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
                 e.preventDefault();
-                if (window.shelf) {
-                    await window.shelf.paste();
-                    refreshShelf();
-                }
+                await pasteIntoShelf();
             }
+        });
+
+        document.addEventListener('paste', async (e) => {
+            if (!shelfOpen) return;
+            const activeTag = document.activeElement?.tagName;
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+            e.preventDefault();
+            await pasteIntoShelf();
         });
 
         // Drag & Drop multiple files onto Shelf panel
