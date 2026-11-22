@@ -92,7 +92,7 @@
 
         .island.expanded {
             width: 530px;
-            height: 184px;
+            height: 174px;
             border-radius: 0 0 28px 28px;
             cursor: default;
         }
@@ -115,7 +115,7 @@
         .expanded-view {
             position: absolute;
             inset: 0;
-            padding: 12px 30px 32px 30px;
+            padding: 12px 30px 24px 30px;
             display: flex;
             align-items: center;
             opacity: 0;
@@ -180,47 +180,51 @@
         }
         .slide-dock {
             position: absolute;
-            bottom: 4px;
+            bottom: 2px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 3px;
-            padding: 3px 6px;
+            gap: 2px;
+            padding: 2px 6px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(8px);
             z-index: 25;
-            transition: background 0.2s ease, border-color 0.2s ease;
-        }
-        .slide-dock:hover {
-            background: rgba(18, 20, 28, 0.92);
-            border-color: rgba(255, 255, 255, 0.2);
         }
         .slide-dot {
-            height: 20px;
-            padding: 0 7px;
-            border-radius: 999px;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 9.5px;
-            font-weight: 600;
+            width: 24px;
+            height: 22px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.16s ease;
             cursor: pointer;
-            white-space: nowrap;
-            user-select: none;
+            position: relative;
         }
-        .slide-dot:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.14);
+        .slide-dot::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.28);
+            transition: all 0.2s ease;
+        }
+        .slide-dot:hover::before {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.72);
         }
         .slide-dot.active {
-            color: #0b0c10;
+            width: 34px;
+        }
+        .slide-dot.active::before {
+            width: 24px;
+            height: 9px;
             background: #ffffff;
+        }
+        .slide-dot.has-alert::before {
+            background: #fbbf24;
+        }
+        .slide-dot.has-unread::before {
+            background: #38bdf8;
         }
 
         /* Hover Tooltip Card inside Usage Slide */
@@ -685,16 +689,16 @@
                     </div>
                 </div>
 
-                <!-- Bottom Center Hover-to-Switch Slide Dock -->
+                <!-- Bottom Center Hover-to-Switch Slide Dots (Large Size + Hitbox) -->
                 <div class="slide-dock">
-                    <span class="slide-dot active" onmouseenter="hoverToSlide(0, event)" onclick="goToSlide(0, event)" title="Slide 1: Musik & Lirik">Media</span>
-                    <span class="slide-dot" onmouseenter="hoverToSlide(1, event)" onclick="goToSlide(1, event)" title="Slide 2: Usage & Kuota Token (%)">Usage</span>
-                    <span class="slide-dot" onmouseenter="hoverToSlide(2, event)" onclick="goToSlide(2, event)" title="Slide 3: Quick Control">Ctrl</span>
-                    <span class="slide-dot" onmouseenter="hoverToSlide(3, event)" onclick="goToSlide(3, event)" title="Slide 4: Agent Status & Task Progress">Agent</span>
-                    <span id="dot-approval" class="slide-dot" onmouseenter="hoverToSlide(4, event)" onclick="goToSlide(4, event)" title="Slide 5: Approval Center">Appr</span>
-                    <span class="slide-dot" onmouseenter="hoverToSlide(5, event)" onclick="goToSlide(5, event)" title="Slide 6: Quick Actions">Quick</span>
-                    <span class="slide-dot" onmouseenter="hoverToSlide(6, event)" onclick="goToSlide(6, event)" title="Slide 7: System Monitor">Sys</span>
-                    <span id="dot-notif" class="slide-dot" onmouseenter="hoverToSlide(7, event)" onclick="goToSlide(7, event)" title="Slide 8: Notification Hub">Notif</span>
+                    <span class="slide-dot active" onmouseenter="hoverToSlide(0, event)" onclick="goToSlide(0, event)" title="Slide 1: Musik & Lirik"></span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(1, event)" onclick="goToSlide(1, event)" title="Slide 2: Usage & Kuota Token (%)"></span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(2, event)" onclick="goToSlide(2, event)" title="Slide 3: Quick Control"></span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(3, event)" onclick="goToSlide(3, event)" title="Slide 4: Agent Status & Task Progress"></span>
+                    <span id="dot-approval" class="slide-dot" onmouseenter="hoverToSlide(4, event)" onclick="goToSlide(4, event)" title="Slide 5: Approval Center"></span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(5, event)" onclick="goToSlide(5, event)" title="Slide 6: Quick Actions"></span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(6, event)" onclick="goToSlide(6, event)" title="Slide 7: System Monitor"></span>
+                    <span id="dot-notif" class="slide-dot" onmouseenter="hoverToSlide(7, event)" onclick="goToSlide(7, event)" title="Slide 8: Notification Hub"></span>
                 </div>
             </div>
         </div>
@@ -1235,12 +1239,12 @@
                     document.getElementById('approval-consequence').textContent = pending.consequence || 'Requires user confirmation';
                     const detail = pending.preview || (pending.args ? JSON.stringify(pending.args) : '');
                     document.getElementById('approval-detail-text').textContent = detail;
-                    if (dotApproval) dotApproval.style.background = '#fbbf24';
+                    if (dotApproval) dotApproval.classList.add('has-alert');
                 } else {
                     document.getElementById('approval-empty').classList.remove('hidden');
                     document.getElementById('approval-card').classList.add('hidden');
                     document.getElementById('approval-target-app').textContent = 'No pending request';
-                    if (dotApproval) dotApproval.style.background = '';
+                    if (dotApproval) dotApproval.classList.remove('has-alert');
                 }
 
                 // 3. System Monitor (slide-6)
@@ -1261,7 +1265,7 @@
                     unreadBadge.classList.toggle('hidden', unread === 0);
                 }
                 if (dotNotif) {
-                    dotNotif.style.background = unread > 0 ? '#38bdf8' : '';
+                    dotNotif.classList.toggle('has-unread', unread > 0);
                 }
                 const notifList = document.getElementById('notif-list');
                 if (notifList) {
