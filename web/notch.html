@@ -92,7 +92,7 @@
 
         .island.expanded {
             width: 530px;
-            height: 174px;
+            height: 184px;
             border-radius: 0 0 28px 28px;
             cursor: default;
         }
@@ -115,7 +115,7 @@
         .expanded-view {
             position: absolute;
             inset: 0;
-            padding: 14px 26px 20px 26px;
+            padding: 12px 30px 32px 30px;
             display: flex;
             align-items: center;
             opacity: 0;
@@ -156,38 +156,70 @@
             transform: scale(0.92);
         }
 
-        /* Slide arrow buttons & dots */
+        /* Slide arrow buttons & hover tab dock */
         .slide-arrow {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            width: 20px;
-            height: 44px;
+            width: 32px;
+            height: 68px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.35);
-            font-size: 18px;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 22px;
             font-weight: bold;
-            transition: all 0.2s ease;
+            transition: all 0.18s ease;
             z-index: 20;
             cursor: pointer;
+            border-radius: 12px;
         }
         .slide-arrow:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .slide-dock {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            z-index: 25;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .slide-dock:hover {
+            background: rgba(18, 20, 28, 0.92);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .slide-dot {
-            width: 6px;
-            height: 6px;
+            height: 20px;
+            padding: 0 7px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.25);
-            transition: all 0.25s ease;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 9.5px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.16s ease;
             cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .slide-dot:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.14);
         }
         .slide-dot.active {
-            width: 18px;
+            color: #0b0c10;
             background: #ffffff;
         }
 
@@ -653,16 +685,16 @@
                     </div>
                 </div>
 
-                <!-- Bottom Center Slide Dots Indicator -->
-                <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
-                    <span class="slide-dot active" onclick="goToSlide(0, event)" title="Slide 1: Musik & Lirik"></span>
-                    <span class="slide-dot" onclick="goToSlide(1, event)" title="Slide 2: Usage & Kuota Token (%)"></span>
-                    <span class="slide-dot" onclick="goToSlide(2, event)" title="Slide 3: Quick Control"></span>
-                    <span class="slide-dot" onclick="goToSlide(3, event)" title="Slide 4: Agent Status & Task Progress"></span>
-                    <span id="dot-approval" class="slide-dot" onclick="goToSlide(4, event)" title="Slide 5: Approval Center"></span>
-                    <span class="slide-dot" onclick="goToSlide(5, event)" title="Slide 6: Quick Actions"></span>
-                    <span class="slide-dot" onclick="goToSlide(6, event)" title="Slide 7: System Monitor"></span>
-                    <span id="dot-notif" class="slide-dot" onclick="goToSlide(7, event)" title="Slide 8: Notification Hub"></span>
+                <!-- Bottom Center Hover-to-Switch Slide Dock -->
+                <div class="slide-dock">
+                    <span class="slide-dot active" onmouseenter="hoverToSlide(0, event)" onclick="goToSlide(0, event)" title="Slide 1: Musik & Lirik">Media</span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(1, event)" onclick="goToSlide(1, event)" title="Slide 2: Usage & Kuota Token (%)">Usage</span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(2, event)" onclick="goToSlide(2, event)" title="Slide 3: Quick Control">Ctrl</span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(3, event)" onclick="goToSlide(3, event)" title="Slide 4: Agent Status & Task Progress">Agent</span>
+                    <span id="dot-approval" class="slide-dot" onmouseenter="hoverToSlide(4, event)" onclick="goToSlide(4, event)" title="Slide 5: Approval Center">Appr</span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(5, event)" onclick="goToSlide(5, event)" title="Slide 6: Quick Actions">Quick</span>
+                    <span class="slide-dot" onmouseenter="hoverToSlide(6, event)" onclick="goToSlide(6, event)" title="Slide 7: System Monitor">Sys</span>
+                    <span id="dot-notif" class="slide-dot" onmouseenter="hoverToSlide(7, event)" onclick="goToSlide(7, event)" title="Slide 8: Notification Hub">Notif</span>
                 </div>
             </div>
         </div>
@@ -749,6 +781,14 @@
 
         function nextSlide(e) { goToSlide(currentSlide + 1, e); }
         function prevSlide(e) { goToSlide(currentSlide - 1, e); }
+
+        let hoverSlideTimer = null;
+        function hoverToSlide(idx, e) {
+            if (hoverSlideTimer) clearTimeout(hoverSlideTimer);
+            hoverSlideTimer = setTimeout(() => {
+                goToSlide(idx, e);
+            }, 65);
+        }
 
         // Allow horizontal wheel / scroll to switch slides smoothly
         let wheelCooldown = 0;
