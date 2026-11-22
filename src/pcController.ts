@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { execFile } from "child_process";
+import { ChildProcess, execFile } from "child_process";
 
 export interface InstalledApp {
   name: string;
@@ -402,6 +402,19 @@ let latestMedia: MediaSessionInfo | null = null;
 let latestSessions: MediaSessionInfo[] = [];
 let currentMediaPriority: MediaPriority = "spotify";
 let mediaWatcherStarted = false;
+let mediaWatcherStopped = false;
+let mediaWatcherChild: ChildProcess | null = null;
+
+export function stopMediaWatcher(): void {
+  mediaWatcherStopped = true;
+  if (mediaWatcherChild && !mediaWatcherChild.killed) {
+    try {
+      mediaWatcherChild.kill("SIGTERM");
+    } catch {}
+    mediaWatcherChild = null;
+  }
+  mediaWatcherStarted = false;
+}
 
 const MUSIC_APP_RE = /Spotify|AppleMusic|Tidal|Deezer|AmazonMusic|SoundCloud|MusicBee|foobar2000|AIMP|iTunes|YouTubeMusic/i;
 const BROWSER_YT_RE = /chrome|msedge|firefox|brave|opera|vivaldi|arc|youtube/i;
@@ -530,7 +543,9 @@ while ($true) {
 }
 `;
 
+  mediaWatcherStopped = false;
   const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+  mediaWatcherChild = child;
   let buffer = "";
   child.stdout?.on("data", (chunk: Buffer | string) => {
     buffer += String(chunk);
@@ -570,7 +585,10 @@ while ($true) {
   });
   child.on("exit", () => {
     mediaWatcherStarted = false;
-    setTimeout(() => startMediaWatcher(), 2000);
+    mediaWatcherChild = null;
+    if (!mediaWatcherStopped) {
+      setTimeout(() => startMediaWatcher(), 2000);
+    }
   });
 }
 
@@ -873,7 +891,9 @@ foreach ($p in $data.isi) {
 Write-Output "STEP:DONE"
 `;
   return new Promise((resolve) => {
-    const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+    mediaWatcherStopped = false;
+  const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+  mediaWatcherChild = child;
     child.stdout?.on("data", (chunk: Buffer | string) => {
       const lines = String(chunk).split(/\r?\n/);
       for (const l of lines) {
@@ -1126,7 +1146,9 @@ Write-Output "STEP:DONE"
 `;
 
   return new Promise((resolve) => {
-    const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+    mediaWatcherStopped = false;
+  const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+  mediaWatcherChild = child;
     child.stdout?.on("data", (chunk: Buffer | string) => {
       const lines = String(chunk).split(/\r?\n/);
       for (const l of lines) {

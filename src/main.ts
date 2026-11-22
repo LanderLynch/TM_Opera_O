@@ -18,6 +18,7 @@ import {
   seekMediaToSeconds,
   setMediaPriority,
   startMediaWatcher,
+  stopMediaWatcher,
   triggerMediaKey,
   WordDocSpec,
 } from "./pcController";
@@ -1925,7 +1926,7 @@ ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
       return true;
     }
     case "keluar":
-      app.quit();
+      cleanupAndQuit();
       return true;
     case "refresh_app":
       app.relaunch();
@@ -2254,6 +2255,35 @@ app.whenReady().then(() => {
   scanInstalledApps().catch(() => {});
 });
 
-app.on("window-all-closed", () => {
+let isQuittingAll = false;
+function cleanupAndQuit(): void {
+  if (isQuittingAll) return;
+  isQuittingAll = true;
+  try {
+    stopMediaWatcher();
+  } catch {}
+  try {
+    agentRuntime?.taskManager.emergencyStop();
+  } catch {}
+  try {
+    shelfStore?.close();
+  } catch {}
+  for (const win of BrowserWindow.getAllWindows()) {
+    try {
+      if (!win.isDestroyed()) win.destroy();
+    } catch {}
+  }
   app.quit();
+  setTimeout(() => app.exit(0), 200);
+}
+
+app.on("before-quit", () => {
+  try {
+    stopMediaWatcher();
+    shelfStore?.close();
+  } catch {}
+});
+
+app.on("window-all-closed", () => {
+  cleanupAndQuit();
 });

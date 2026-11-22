@@ -672,13 +672,14 @@
                             <button onclick="startQuickAgentTask(event)" class="px-2 py-0.5 rounded-lg bg-white/15 hover:bg-white/25 text-[10px] font-semibold text-white">Go</button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-1.5 mt-1">
+                    <div class="grid grid-cols-4 gap-1.5 mt-1">
                         <button onclick="runQuickAction('open_discord', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Discord</button>
                         <button onclick="runQuickAction('open_whatsapp', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">WhatsApp</button>
                         <button onclick="runQuickAction('open_chrome', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Chrome</button>
                         <button onclick="runQuickAction('open_word', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Word</button>
                         <button onclick="runQuickAction('screenshot', event)" class="bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 rounded-xl py-1.5 px-2 text-[10.5px] font-medium text-white truncate">Screenshot</button>
                         <button onclick="toggleShelf(event)" class="bg-sky-500/20 hover:bg-sky-500/35 border border-sky-400/25 rounded-xl py-1.5 px-2 text-[10.5px] font-semibold text-sky-200 truncate">Open Shelf</button>
+                        <button onclick="closeTmOperaO(event)" class="col-span-2 bg-red-500/20 hover:bg-red-500/40 border border-red-400/35 rounded-xl py-1.5 px-2 text-[10.5px] font-semibold text-red-200 truncate" title="Tutup Notch, Chat, Settings, dan seluruh proses background TM Opera O">Close TM Opera O</button>
                     </div>
                 </div>
 
@@ -714,7 +715,10 @@
                             <span class="text-[11px] font-bold text-white/85 uppercase tracking-wider">Notifications</span>
                             <span id="notif-unread-badge" class="hidden px-1.5 py-0.2 rounded-full bg-sky-500/30 text-sky-200 text-[9.5px] font-semibold">0</span>
                         </div>
-                        <button onclick="markAllNotifsRead(event)" class="text-[10px] text-white/55 hover:text-white">Mark all read</button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="markAllNotifsRead(event)" class="text-[10px] text-white/55 hover:text-white">Mark all read</button>
+                            <button onclick="closeTmOperaO(event)" class="px-2 py-0.5 rounded-md bg-red-500/20 hover:bg-red-500/40 border border-red-400/30 text-[9.5px] font-semibold text-red-200" title="Tutup TM Opera O sepenuhnya">Close TM Opera O</button>
+                        </div>
                     </div>
                     <div id="notif-list" class="notch-scroll-y flex-1 flex flex-col gap-1 mt-1 pr-1">
                         <div class="text-[11px] text-white/45 text-center py-4">No notifications</div>
@@ -1387,6 +1391,13 @@
                 await window.agent.start(goal);
                 goToSlide(3, null, true);
                 pollNotchModules();
+            } catch {}
+        }
+
+        async function closeTmOperaO(e) {
+            if (e) e.stopPropagation();
+            try {
+                await callApi('keluar');
             } catch {}
         }
 
