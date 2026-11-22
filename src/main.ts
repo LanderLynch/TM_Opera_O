@@ -1551,6 +1551,32 @@ function startBackgroundLoops(): void {
 let chatWindow: BrowserWindow | null = null;
 let radialWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
+let keepOnTopTimer: NodeJS.Timeout | null = null;
+
+function enforceAlwaysOnTop(win: BrowserWindow | null): void {
+  if (!win || win.isDestroyed()) return;
+  try {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    win.setAlwaysOnTop(true, "screen-saver");
+  } catch {}
+}
+
+function startAlwaysOnTopKeeper(): void {
+  if (keepOnTopTimer) return;
+  keepOnTopTimer = setInterval(() => {
+    if (radialWindow && !radialWindow.isDestroyed() && radialWindow.isVisible()) {
+      try {
+        radialWindow.setAlwaysOnTop(true, "screen-saver");
+        radialWindow.moveTop();
+      } catch {}
+    }
+    if (chatWindow && !chatWindow.isDestroyed() && chatWindow.isVisible() && !chatWindow.isMinimized()) {
+      try {
+        chatWindow.setAlwaysOnTop(true, "screen-saver");
+      } catch {}
+    }
+  }, 2000);
+}
 
 function openSettingsWindow(): void {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
@@ -1579,7 +1605,7 @@ function openSettingsWindow(): void {
       nodeIntegration: false,
     },
   });
-  settingsWindow.setAlwaysOnTop(true, "screen-saver");
+  enforceAlwaysOnTop(settingsWindow);
   settingsWindow.loadFile(path.join(BASE, "web", "settings.html"));
   settingsWindow.on("closed", () => {
     settingsWindow = null;
@@ -1616,11 +1642,12 @@ function createWindows(): void {
     },
   });
 
-  chatWindow.setAlwaysOnTop(true, "screen-saver");
+  enforceAlwaysOnTop(chatWindow);
   chatWindow.on("blur", () => {
-    if (chatWindow && !chatWindow.isDestroyed()) {
-      chatWindow.setAlwaysOnTop(true, "screen-saver");
-    }
+    enforceAlwaysOnTop(chatWindow);
+  });
+  chatWindow.on("show", () => {
+    enforceAlwaysOnTop(chatWindow);
   });
   chatWindow.loadFile(path.join(BASE, "web", "index.html"));
 
@@ -1648,14 +1675,13 @@ function createWindows(): void {
     },
   });
 
-  radialWindow.setAlwaysOnTop(true, "screen-saver");
+  enforceAlwaysOnTop(radialWindow);
   radialWindow.on("blur", () => {
-    if (radialWindow && !radialWindow.isDestroyed()) {
-      radialWindow.setAlwaysOnTop(true, "screen-saver");
-    }
+    enforceAlwaysOnTop(radialWindow);
   });
   radialWindow.setIgnoreMouseEvents(true, { forward: true });
   radialWindow.loadFile(path.join(BASE, "web", "notch.html"));
+  startAlwaysOnTopKeeper();
 }
 
 ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
@@ -2259,6 +2285,10 @@ let isQuittingAll = false;
 function cleanupAndQuit(): void {
   if (isQuittingAll) return;
   isQuittingAll = true;
+  if (keepOnTopTimer) {
+    clearInterval(keepOnTopTimer);
+    keepOnTopTimer = null;
+  }
   try {
     stopMediaWatcher();
   } catch {}
