@@ -17,7 +17,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "login-check",
     name: "Login & Startup Check",
-    pipelineEntry: "StartUp",
+    pipelineEntry: "登录_登录",
     sourceFiles: [
       "upstream/assets/interface/tasks/login.json",
       "upstream/assets/resource/en/pipeline/daily/login.json",
@@ -35,7 +35,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "daily-missions",
     name: "Daily Missions",
-    pipelineEntry: "Task",
+    pipelineEntry: "任务_入口",
     sourceFiles: ["upstream/assets/interface/tasks/task.json", "upstream/assets/resource/en/pipeline/daily/task.json"],
     entryConditions: ["Game is in main lobby"],
     requiredGameState: "Daily missions unlocked",
@@ -49,7 +49,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "mailbox",
     name: "Mailbox Rewards",
-    pipelineEntry: "Mail",
+    pipelineEntry: "邮箱_入口",
     sourceFiles: ["upstream/assets/interface/tasks/mail.json", "upstream/assets/resource/base/pipeline/daily/mail.json"],
     entryConditions: ["Game is in main lobby"],
     requiredGameState: "Mailbox accessible",
@@ -63,7 +63,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "friend-gifts",
     name: "Friend Gifts & Grant",
-    pipelineEntry: "Friend",
+    pipelineEntry: "好友_入口",
     sourceFiles: ["upstream/assets/interface/tasks/friend.json", "upstream/assets/resource/en/pipeline/daily/friend.json"],
     entryConditions: ["Game is in main lobby"],
     requiredGameState: "Friends menu accessible",
@@ -77,7 +77,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "shop",
     name: "Daily Shop",
-    pipelineEntry: "Shop",
+    pipelineEntry: "采购_入口",
     sourceFiles: ["upstream/assets/interface/tasks/shop.json", "upstream/assets/resource/en/pipeline/daily/shop.json"],
     entryConditions: ["Game is in main lobby"],
     requiredGameState: "Shop menu accessible",
@@ -91,7 +91,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "events",
     name: "Event Inspection & Activities",
-    pipelineEntry: "Activity",
+    pipelineEntry: "活动快速战斗_入口",
     sourceFiles: ["upstream/assets/interface/tasks/activity.json", "upstream/assets/resource/en/pipeline/activity/activity.json"],
     entryConditions: ["Game is in main lobby"],
     requiredGameState: "Active seasonal/limited event",
@@ -105,7 +105,7 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
   {
     id: "tower",
     name: "Tyrant's Tower / Climb Tower",
-    pipelineEntry: "ClimbTower",
+    pipelineEntry: "星塔_入口_agent",
     sourceFiles: [
       "upstream/assets/interface/tasks/climb_tower.json",
       "upstream/assets/resource/windows/pipeline/climb_tower/climb_tower_neural.json",

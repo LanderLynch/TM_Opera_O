@@ -989,7 +989,7 @@ async function askAi(pesan: string): Promise<string> {
     setProgress("🎮 Menjalankan Stella Sora Skill...");
     const stellaRes = await handleStellaSoraCommand(stellaSoraManager, pesan);
     notificationHub.push("agent", "Stella Sora Skill", stellaRes.summary.slice(0, 120));
-    systemActionNote = `(Sistem Stella Sora Skill: ${stellaRes.summary} Sampaikan hasil yang terverifikasi ini kepada Lemon tanpa mengarang hasil tambahan.)`;
+    systemActionNote = `(Sistem Stella Sora Skill: ${stellaRes.summary} WAJIB jawab dalam Bahasa Indonesia yang lembut dan sampaikan hasil terverifikasi ini tanpa mengarang hasil tambahan.)`;
   }
 
   // 1. Cek apakah user sedang menjawab pilihan aplikasi (misalnya Strinova Steam vs Launcher)
