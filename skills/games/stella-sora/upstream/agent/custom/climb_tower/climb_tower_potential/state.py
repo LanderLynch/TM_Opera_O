@@ -1,0 +1,347 @@
+import re
+import json
+from datetime import datetime
+from pathlib import Path
+from difflib import SequenceMatcher
+from typing import Literal, Iterable
+from dataclasses import dataclass, field
+
+from .context import MAX_POTENTIAL_LEVEL, PotentialContext, Potential, Trekker
+
+from utils import logger as logger_module
+from utils.dev_config import DRAW_DATA_SAVE_ENABLED
+logger = logger_module.get_logger(__name__)
+
+
+@dataclass(slots=True)
+class OwnedPotential:
+    name: str
+    level: int
+    recommended_level: int
+    trekker: Trekker
+    rarity: str = ""
+
+    def update(self, potential: Potential):
+        """通过提供选择后的潜能数据，更新当前OwnedPotential的潜能等级"""
+        self.level = min(self.max_level, max(self.level, potential.new_level))
+        self.recommended_level = max(self.recommended_level, potential.recommended_level)
+        # 使用更长的名字，因为更长的名字更接近原名
+        self.name = self._longer_name(self.name, potential.name)
+
+    @staticmethod
+    def _longer_name(old: str, new: str) -> str:
+        """一般来讲，更长的名称更接近原名"""
+        return new if len(new) > len(old) else old
+
+    @property
+    def core(self) -> bool:
+        """是否为核心潜能"""
+        return self.rarity == "core"
+
+    @property
+    def max_level(self) -> int:
+        """潜能等级上限"""
+        return 1 if self.core else MAX_POTENTIAL_LEVEL
+
+    @property
+    def owned(self) -> bool:
+        """是否已持有"""
+        return self.level > 0
+
+    @property
+    def recommended(self) -> bool:
+        """是否为推荐潜能"""
+        return self.recommended_level > 0
+
+
+@dataclass(slots=True)
+class OwnedPotentials:
+    potentials: list[OwnedPotential] = field(default_factory=list)
+
+    def __iter__(self):
+        return iter(self.potentials)
+
+    def __len__(self):
+        return len(self.potentials)
+
+    def __bool__(self):
+        return bool(self.potentials)
+
+    def add(self, potential: Potential) -> None:
+        """将选中的潜能添加到OwnedPotentials中"""
+        self.potentials.append(OwnedPotential(
+            name=potential.name,
+            level=max(potential.new_level, 1),
+            recommended_level=potential.recommended_level,
+            trekker=potential.trekker,
+            rarity=potential.rarity,
+        ))
+
+    def find(
+        self,
+        name: str,
+        *,
+        mode: Literal["EXACT", "CONTAINS", "FUZZY"],
+        trekker: Trekker | None = None,
+        trekker_name: str | None = None,
+        core: bool | None = None,
+        threshold: float = 0
+    ) -> OwnedPotential | None:
+        """
+        查找是否已拥有该潜能
+
+        Args:
+            name: 潜能名称
+            mode: 模式， "EXACT"、"CONTAINS" 或 "FUZZY"
+                "EXACT"：精确匹配，只有当名称完全匹配时才返回潜能
+                "CONTAINS"：包含匹配，当名称有一方包含另一方时返回潜能
+                "FUZZY"：模糊匹配，返回相似度最高的潜能，支持通过阈值限制
+            trekker: 指定旅人对象
+            trekker_name: 指定旅人名称
+            core: 指定是否为核心潜能
+            threshold: 指定相似度阈值（仅对"FUZZY"模式有效）
+
+        Returns:
+            OwnedPotential | None: 如果找到则返回该潜能，否则返回None
+        """
+        # 模糊匹配
+        if mode == "FUZZY":
+            results = max(
+                (
+                    (score, p) for p in self.potentials
+                    if (score := self._fuzzy_match(name, p.name)) >= threshold
+                       and (trekker is None or p.trekker == trekker and p.trekker)
+                       and (trekker_name is None or p.trekker.name == trekker_name)
+                       and (core is None or p.core == core)
+                ),
+                key=lambda p: p[0],
+                default=None
+            )
+            return results[1] if results else None
+
+        # 普通匹配
+        contains_mode = mode == "CONTAINS"
+        for p in self.potentials:
+            if trekker is not None and (p.trekker.index != trekker.index or not p.trekker):
+                continue
+            if trekker_name is not None and p.trekker.name != trekker_name:
+                continue
+            if core is not None and p.core != core:
+                continue
+            if self._match(p.name, name, contains_mode=contains_mode):
+                return p
+        return None
+
+    def find_level(
+        self,
+        name: str,
+        *,
+        mode: Literal["EXACT", "CONTAINS", "FUZZY"],
+        trekker: Trekker | None = None,
+        trekker_name: str | None = None,
+        fuzzy_threshold: float = 0,
+    ) -> int:
+        """查找已拥有的某潜能的等级，如果不存在则返回0"""
+        owned_potential = self.find(
+            name, mode=mode, trekker=trekker, trekker_name=trekker_name, threshold=fuzzy_threshold
+        )
+        return owned_potential.level if owned_potential else 0
+
+    def find_recommended_level(
+        self,
+        name: str,
+        *,
+        mode: Literal["EXACT", "CONTAINS", "FUZZY"],
+        trekker: Trekker | None = None,
+        trekker_name: str | None = None,
+        fuzzy_threshold: float = 0,
+    ) -> int:
+        """查找已拥有的某潜能的推荐等级，如果不存在则返回0"""
+        owned_potential = self.find(
+            name, mode=mode, trekker=trekker, trekker_name=trekker_name, threshold=fuzzy_threshold
+        )
+        return owned_potential.recommended_level if owned_potential else 0
+
+    def count(
+        self,
+        *,
+        trekker: Trekker | Iterable[Trekker] | None = None,
+        trekker_name: str | None = None,
+        level_at_least: int | None = None,
+        level_at_most: int | None = None,
+        recommended_level_at_least: int | None = None,
+        recommended_level_at_most: int | None = None,
+        include_core: bool = False,
+        incomplete_only: bool = False,
+        incomplete_level: int | None = None,
+        leveling_only: bool = False
+    ) -> int:
+        """统计符合条件的潜能的数量"""
+        if trekker is not None:
+            items = (trekker,) if isinstance(trekker, Trekker) else trekker
+            trekker_indexes = {t.index for t in items if t is not None}
+        else:
+            trekker_indexes = None
+
+        def get_index(p) -> int | None:
+            """为了防止p.trekker为falsy，所以单独做一个index提取器"""
+            return p.trekker.index if p.trekker else None
+
+        return sum(
+            1 for potential in self.potentials
+            if (trekker_indexes is None or get_index(potential) in trekker_indexes)
+            and (trekker_name is None or potential.trekker.name == trekker_name)
+            and (level_at_least is None or potential.level >= level_at_least)
+            and (level_at_most is None or potential.level <= level_at_most)
+            and (recommended_level_at_least is None or potential.recommended_level >= recommended_level_at_least)
+            and (recommended_level_at_most is None or potential.recommended_level <= recommended_level_at_most)
+            and (include_core or not potential.core)
+            and (not incomplete_only or potential.level < potential.recommended_level)
+            and (incomplete_level is None or potential.recommended_level - potential.level >= incomplete_level)
+            and (not leveling_only or potential.level < potential.max_level)
+        )
+
+    def count_by_trekkers(self) -> dict[Trekker, int]:
+        """统计每个旅人潜能的数量"""
+        return {
+            trekker: self.count(trekker=trekker)
+                for trekker in set(potential.trekker for potential in self.potentials)
+        }
+
+    @staticmethod
+    def _match(a: str, b: str, *, contains_mode: bool) -> bool:
+        """
+        判断两个字符串是否匹配。
+        Args:
+            a: 第一个字符串
+            b: 第二个字符串
+            contains_mode: 是否使用包含匹配模式
+
+        Returns:
+            bool: 是否匹配成功
+        """
+        # 处理特殊符号
+        a = re.sub(r"\W", "", a)
+        b = re.sub(r"\W", "", b)
+
+        # 精确匹配
+        if not contains_mode:
+            return a == b
+
+        # 简单处理日语的长音符号，中文的一不处理是因为会出现重名
+        a = a.replace("ー", "")
+        b = b.replace("ー", "")
+
+        # 通过in进行包含匹配，需要排除空字符串然后再判断包含关系
+        return bool(a and b and (a in b or b in a))
+
+    @staticmethod
+    def _fuzzy_match(a: str, b: str) -> float:
+        """
+        计算两个字符串的相似度。
+        Args:
+            a: 第一个字符串
+            b: 第二个字符串
+
+        Returns:
+            float: 字符串相似度，范围为[0, 1]
+        """
+        # 处理特殊符号
+        a = re.sub(r"\W", "", a)
+        b = re.sub(r"\W", "", b)
+        return SequenceMatcher(None, a, b).ratio()
+
+
+@dataclass
+class PotentialDrawInfo:
+    """储存潜能抽取数据的类，仅preset模式下使用才能获得正确的数据"""
+    potential_draws: list[dict] = field(default_factory=list)
+
+    def add(self, data: PotentialContext) -> None:
+        # 处理潜能来源
+        default_source = "level_up" if data.level_upped else "quiz"
+        potential_source = default_source if data.params.potential_source == "default" else data.params.potential_source
+
+        # 整合数据
+        draws = [
+            {
+                "name": p.name,
+                "trekker": p.trekker.index,
+                "rarity": p.rarity,
+                "old_level": p.old_level,
+                "new_level": p.new_level,
+                "recommended_level": p.recommended_level,
+            }
+            for p in data.potentials
+        ]
+        owned = [
+            {
+                "name": p.name,
+                "trekker": p.trekker.index,
+                "level": p.level,
+                "recommended_level": p.recommended_level,
+                "rarity": p.rarity,
+            }
+            for p in State.owned_potentials
+        ]
+        self.potential_draws.append({
+            "draws": draws,
+            "owned": owned,
+            "core": 1 if data.core_potential else 0,
+            "potential_source": potential_source,
+            "refresh_count": data.refresh_count,
+            "main_trekker": State.get_main_trekker_index() if State.get_main_trekker() else None,
+            "high_level_span_count": State.high_level_span_count,
+            "enhance_high_level_span_count": State.enhance_high_level_span_count,
+        })
+
+    def export(self) -> None:
+        """导出潜能抽取数据到项目根目录下的debug/potential_draws/日期时间.json"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # %f是微秒，取前3位得到毫秒
+        filename = f"{timestamp}.json"
+        file_path = Path(__file__).resolve().parents[4] / "debug" / "potential_draws" / filename
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(self.potential_draws, f, ensure_ascii=False, indent=4)
+        logger.info(
+            "$agent.custom.reco.climb_tower_potential.state.export.exported",
+            {
+                "file_path": file_path,
+            },
+        )
+
+    @property
+    def available(self) -> bool:
+        return len(self.potential_draws) > 0
+
+class State:
+    """保存需要跨节点储存的的潜能抽取相关信息，因为潜能选择节点调用链复杂，无法使用MaaFramework的特性进行跨节点储存"""
+    high_level_span_count: int | None = None  # preset模式种类策略使用
+    enhance_high_level_span_count: int | None = None  # preset模式种类策略使用
+    potentials_level_count: int | None = None  # preset模式种类策略使用
+    trekkers: list[Trekker] = []  # preset模式使用
+    owned_potentials: OwnedPotentials = OwnedPotentials()  # preset、json模式使用
+    potential_draw_info: PotentialDrawInfo = PotentialDrawInfo()  # preset模式开启开发者选项时使用
+
+    @classmethod
+    def reset(cls):
+        cls.high_level_span_count = None
+        cls.enhance_high_level_span_count = None
+        cls.potentials_level_count = None
+        cls.trekkers.clear()
+        cls.owned_potentials = OwnedPotentials()
+        if cls.potential_draw_info.available and DRAW_DATA_SAVE_ENABLED:
+            cls.potential_draw_info.export()
+            cls.potential_draw_info = PotentialDrawInfo()
+
+    @classmethod
+    def get_main_trekker(cls) -> Trekker | None:
+        """获取主旅人对象"""
+        return next((t for t in cls.trekkers if t.is_main), None)
+
+    @classmethod
+    def get_main_trekker_index(cls) -> int:
+        """获取主旅人序号，若无则返回 -1"""
+        main_trekker = cls.get_main_trekker()
+        return main_trekker.index if main_trekker else -1

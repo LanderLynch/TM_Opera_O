@@ -1,0 +1,194 @@
+{
+    "task": [
+        {
+            "name": "猎影合围",
+            "label": "$interface.task.猎影合围.label",
+            "entry": "猎影合围_入口",
+            "description": "$interface.task.猎影合围.description",
+            "group": ["periodic_activity"],
+            "option": [
+                "猎影合围_开启协助讨伐",
+                "猎影合围_开启追踪目标"
+            ]
+        }
+    ],
+    "option": {
+        "猎影合围_开启协助讨伐": {
+            "type": "switch",
+            "label": "$interface.task.option.猎影合围_开启协助讨伐.label",
+            "default_case": "Yes",
+            "cases": [
+                {
+                    "name": "Yes",
+                    "label": "Yes",
+                    "pipeline_override": {
+                        "猎影合围_协助讨伐": {
+                            "enabled": true
+                        }
+                    },
+                    "option": [
+                        "猎影合围_协助讨伐_开启无偿协助"
+                    ]
+                },
+                {
+                    "name": "No",
+                    "label": "No",
+                    "pipeline_override": {
+                        "猎影合围_协助讨伐": {
+                            "enabled": false
+                        }
+                    }
+                }
+            ]
+        },
+        "猎影合围_协助讨伐_保留数量": {
+            "type": "input",
+            "inputs": [
+                {
+                    "name": "猎影合围_协助讨伐_保留围猎许可证数量",
+                    "label": "$interface.task.option.猎影合围_协助讨伐_保留数量.inputs.猎影合围_协助讨伐_保留围猎许可证数量.label",
+                    "verify": "\\d+",
+                    "default": "0",
+                    "pipeline_type": "int"
+                }
+            ],
+            "pipeline_override": {
+                "猎影合围_识别资源数量": {
+                    "attach": {
+                        "hunt_license_keep_count": "{猎影合围_协助讨伐_保留围猎许可证数量}"
+                    }
+                }
+            }
+        },
+        "猎影合围_协助讨伐_开启无偿协助": {
+            "type": "switch",
+            "label": "$interface.task.option.猎影合围_协助讨伐_开启无偿协助.label",
+            "description": "$interface.task.option.猎影合围_协助讨伐_开启无偿协助.description",
+            "default_case": "No",
+            "cases": [
+                {
+                    "name": "No",
+                    "label": "No",
+                    "pipeline_override": {
+                        "猎影合围_协助_点击无偿协助": {
+                            "enabled": false
+                        }
+                    },
+                    "option": [
+                        "猎影合围_协助讨伐_保留数量"
+                    ]
+                },
+                {
+                    "name": "Yes",
+                    "label": "Yes",
+                    "pipeline_override": {
+                        "猎影合围_协助_点击无偿协助": {
+                            "enabled": true
+                        }
+                    },
+                    "option": [
+                        "猎影合围_协助讨伐_无偿协助次数"
+                    ]
+                },
+            ]
+        },
+        "猎影合围_协助讨伐_无偿协助次数": {
+            "type": "input",
+            "inputs": [
+                {
+                    "name": "无偿协助次数",
+                    "label": "$interface.task.option.猎影合围_协助讨伐_无偿协助次数.inputs.无偿协助次数.label",
+                    "description": "$interface.task.option.猎影合围_协助讨伐_无偿协助次数.inputs.无偿协助次数.description",
+                    "verify": "^[1-9]\\d*$",
+                    "default": "5",
+                    "pipeline_type": "int"
+                }
+            ],
+            "pipeline_override": {
+                "猎影合围_协助_点击无偿协助": {
+                    "max_hit": "{无偿协助次数}"
+                }
+            }
+        },
+        "猎影合围_开启追踪目标": {
+            "type": "switch",
+            "label": "$interface.task.option.猎影合围_开启追踪目标.label",
+            "default_case": "Yes",
+            "cases": [
+                {
+                    "name": "Yes",
+                    "label": "Yes",
+                    "pipeline_override": {
+                        "猎影合围_追踪目标": {
+                            "enabled": true
+                        }
+                    },
+                    "option": [
+                        "猎影合围_追踪目标_保留数量",
+                        "猎影合围_追踪目标_是否等待讨伐完成"
+                    ]
+                },
+                {
+                    "name": "No",
+                    "label": "No",
+                    "pipeline_override": {
+                        "猎影合围_追踪目标": {
+                            "enabled": false
+                        }
+                    }
+                }
+            ]
+        },
+        "猎影合围_追踪目标_保留数量": {
+            "type": "input",
+            "inputs": [
+                {
+                    "name": "猎影合围_追踪目标_保留追踪委托书数量",
+                    "label": "$interface.task.option.猎影合围_追踪目标_保留数量.inputs.猎影合围_追踪目标_保留追踪委托书数量.label",
+                    "verify": "\\d+",
+                    "default": "0",
+                    "pipeline_type": "int"
+                }
+            ],
+            "pipeline_override": {
+                "猎影合围_识别资源数量": {
+                    "attach": {
+                        "tracking_permit_keep_count": "{猎影合围_追踪目标_保留追踪委托书数量}"
+                    }
+                }
+            }
+        },
+        "猎影合围_追踪目标_是否等待讨伐完成": {
+            "type": "switch",
+            "label": "$interface.task.option.猎影合围_追踪目标_是否等待讨伐完成.label",
+            "description": "$interface.task.option.猎影合围_追踪目标_是否等待讨伐完成.description",
+            "default_case": "No",
+            "cases": [
+                {
+                    "name": "Yes",
+                    "label": "Yes",
+                    "pipeline_override": {
+                        "猎影合围_追踪目标_等待讨伐完成": {
+                            "enabled": true
+                        },
+                        "猎影合围_追踪目标_不等待讨伐完成": {
+                            "enabled": false
+                        }
+                    }
+                },
+                {
+                    "name": "No",
+                    "label": "No",
+                    "pipeline_override": {
+                        "猎影合围_追踪目标_等待讨伐完成": {
+                            "enabled": false
+                        },
+                        "猎影合围_追踪目标_不等待讨伐完成": {
+                            "enabled": true
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

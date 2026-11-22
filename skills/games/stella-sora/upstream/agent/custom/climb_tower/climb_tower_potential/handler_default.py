@@ -1,0 +1,272 @@
+import time
+from dataclasses import replace
+
+from .context import PotentialContext, Potential
+from .interactor import PotentialInteractor
+from .state import State, Trekker, OwnedPotentials, OwnedPotential
+
+from utils import logger as logger_module
+logger = logger_module.get_logger(__name__)
+
+
+class ChoosePotentialHandler:
+
+    def __init__(self, screen: PotentialInteractor, data: PotentialContext):
+        self.screen = screen
+        self.data = data
+
+    def wait_for_item_list_gone(self):
+        """
+        等待左方获得道具列表消失（仅初次进入时可能存在，刷新后不会重复出现）
+        确保后续读取左侧潜能的潜能名称、推荐图标时不会被遮挡；若发生等待会自动更新最新截图
+        """
+        for _ in range(10):
+            if self.screen.check_item_list_visibility():
+                logger.info(
+                    "$agent.custom.reco.climb_tower_potential.handler_default.wait_for_item_list_gone.status"
+                )
+                time.sleep(1)
+                self.screen.screenshot()
+                continue
+            break
+
+    def initialize_potentials(self):
+        """根据预识别的数据初始化潜能对象"""
+        # 初始化Potential对象，并保存到list中
+        potential_layouts = self.data.params.potential_layouts[self.data.potential_count]
+        potentials = [Potential(potential_layouts[i]) for i in range(self.data.potential_count)]
+
+        # 给潜能的selected、rarity字段赋值
+        self.data.selected_potential_index = self.screen.get_selected_potential_index(self.data.x_bounds)
+        for i, p in enumerate(potentials):
+            p.index = i
+            p.rarity = self.data.potential_rarities[i]
+            if i == self.data.selected_potential_index:
+                p.selected = True
+            if p.core:
+                p.old_level = 0
+                p.new_level = 1
+
+        self.data.potentials = potentials
+
+    def read_potentials_info(self):
+        """最原始的潜能信息识别器，仅识别推荐图标"""
+        self._update_recommended_potentials()
+
+    def choose_potential(self) -> Potential | None:
+        """最原始的潜能选择，仅靠推荐图标选择潜能"""
+        potential = next((p for p in self.data.potentials if p.recommended), None)
+        if potential:
+            logger.info(
+                "$agent.custom.reco.climb_tower_potential.handler_default.choose_potential.selected"
+            )
+        return potential
+
+    def handle_draw_data(self, potential: Potential | None):
+        """处理潜能抽取数据的方法，供钩子使用"""
+        pass
+
+    def pick(self, potential: Potential) -> bool:
+        """点击潜能卡片"""
+        if potential.selected:
+            return True
+        return self.screen.click_potential(potential.box)
+
+    def cache_potential_data(self, potential: Potential):
+        """将选择的潜能数据缓存到State类中，以供策略使用。默认模式不需要缓存，主要是给preset/json模式用"""
+        if not potential.name:
+            return
+        existed = self._find_owned_potential(State.owned_potentials, potential)
+        if existed:
+            existed.update(potential)
+        else:
+            State.owned_potentials.add(potential)
+
+    def _find_owned_potential(self, owned_potentials: OwnedPotentials, potential: Potential) -> OwnedPotential | None:
+        """cache_potential_data用的hook方法：默认模式不需要缓存，返回None"""
+        return None
+
+    def dummy_potential(self, **kwargs) -> Potential:
+        """返回一个虚拟的潜能对象"""
+        potential_layout = self.data.params.potential_layouts[1][0]
+        base_potential = Potential(layout=potential_layout)
+        return replace(base_potential, **kwargs)
+
+    def _update_names(self):
+        rois = self.data.core_potential_name_rois if self.data.core_potential else self.data.general_potential_name_rois
+        adjusted_rois = self._get_adjusted_rois(rois)
+
+        for i, roi in enumerate(adjusted_rois):
+            self.data.potentials[i].name = self.screen.get_potential_name(roi)
+
+    def _update_levels(self):
+        if self.data.core_potential:
+            return
+
+        adjusted_rois = self._get_adjusted_rois(self.data.general_potential_level_rois)
+
+        for i, roi in enumerate(adjusted_rois):
+            old, new = self.screen.get_potential_level(roi)
+            self.data.potentials[i].old_level, self.data.potentials[i].new_level = old, new
+
+    def _update_recommended_potentials(self):
+        """更新推荐潜能信息"""
+        # 识别出哪些潜能是推荐潜能
+        boxes = self.screen.get_recommended_potential()
+        potential_indices = self._get_recommended_potential_indices(boxes, self.data.x_bounds)
+
+        # 开始遍历推荐潜能索引
+        for index in potential_indices:
+            # 更新潜能的是否推荐信息
+            self.data.potentials[index].recommended = True
+
+    def _get_recommended_potential_indices(self, boxes: list[list], borders: list[list]) -> dict[int, list]:
+        """根据推荐图标位置判断哪些是推荐潜能，然后返回索引到推荐图标box的映射"""
+        matched = {}
+        unmatched_xs = []
+
+        for box in boxes:
+            x = box[0]
+            matched_i = next((i for i, (low, high) in enumerate(borders) if low <= x <= high), None)
+            if matched_i is not None:
+                matched[matched_i] = box
+            else:
+                unmatched_xs.append(x)
+
+        if unmatched_xs:
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.handler_default._get_recommended_potential_indices.recommendation_out_of_bounds",
+                {
+                    "count": len(unmatched_xs),
+                },
+            )
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.handler_default._get_recommended_potential_indices.error",
+                {
+                    "unmatched_xs": unmatched_xs,
+                },
+            )
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.handler_default._get_recommended_potential_indices.task_stopped_for_safety"
+            )
+            self.screen.context.tasker.post_stop()
+
+        return matched
+
+    def _update_trekkers(self):
+        save_rois = self._get_adjusted_rois(self.data.trekker_rois)
+        expanded_rois = self._expand_rois(save_rois)
+
+        for potential_i, roi in enumerate(expanded_rois):
+            # 先根据现有旅人信息匹配，如果匹配到对应旅人，给潜能赋值对应的trekker对象
+            for trekker in State.trekkers:
+                if self.screen.match_trekker(trekker.image, roi):
+                    self.data.potentials[potential_i].trekker = trekker
+                    break
+
+            # 匹配不到时，创建新的Trekker实例，保存到State中，然后再赋值
+            if not self.data.potentials[potential_i].trekker:
+                cropped_image = self.screen.crop_screenshot(save_rois[potential_i])
+                new_trekker = Trekker(index=len(State.trekkers), image=cropped_image)
+                State.trekkers.append(new_trekker)
+                self.data.potentials[potential_i].trekker = new_trekker
+                # from utils.image_handler import save_image
+                # save_datetime = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+                # save_image(cropped_image, f"{save_datetime}_新旅人_{new_trekker.index}")
+
+            # 给主控旅人做标记
+            if not State.get_main_trekker() and self.data.params.potential_source == "specified_drink":
+                matched_trekker = self.data.potentials[potential_i].trekker
+                matched_trekker.is_main = True
+                logger.debug("已通过特殊潜能特饮识别到主旅人")
+
+            # 如果trekker超过3个，输出错误日志
+            if len(State.trekkers) > 3:
+                logger.error(
+                    "$agent.custom.reco.climb_tower_potential.handler_default._update_trekkers.too_many_trekkers"
+                )
+
+    def _get_adjusted_rois(self, base_rois: list[list[int]]) -> list[list[int]]:
+        """安全地获取偏移后的 ROI 副本，避免污染原始数据"""
+        selected_index = self.data.selected_potential_index
+        offset = self.data.params.selected_potential_offset
+
+        # 使用列表推导式创建副本并应用偏移
+        return [
+            [r[0], max(0, r[1] - offset), r[2], r[3]] if i == selected_index else list(r)
+            for i, r in enumerate(base_rois)
+        ]
+
+    @staticmethod
+    def _expand_rois(base_rois: list[list[int]], px: int = 15) -> list[list[int]]:
+        """扩展ROI"""
+        return [
+            [r[0] - px, r[1] - px, r[2] + px * 2, r[3] + px * 2]
+            for r in base_rois
+        ]
+
+    def choose_fallback_potential(self):
+        priority_rules = [
+            lambda p: p.recommended, # 1. 尝试取系统推荐潜能
+            lambda p: p.old_level > 0 # 2. 没有系统推荐潜能，选择之前抓过的潜能
+        ]
+
+        for rule in priority_rules:
+            candidates = [p for p in self.data.potentials if rule(p)]
+            if candidates:
+                # 按照等级跨度降序、推荐等级降序、旧等级降序来排序，选择最优的潜能
+                return max(candidates, key=lambda p: (p.level_span, p.recommended_level, p.old_level), default=None)
+
+        # 都没有的话，放弃选择，系统选了哪张就哪张
+        return self._default_potential
+
+    def refresh(self) -> bool:
+        refresh_result = self.screen.refresh()
+        if not refresh_result:
+            return False
+        # 通过检测金币变化来判断是否成功刷新，同时更新当前金币数量
+        wait_time = 60
+        new_coin = -1
+        for i in range(wait_time):
+            # 1. 阶段一：若尚未确认金币扣减，先检测金币
+            if new_coin < 0:
+                coin = self.screen.get_current_coin()
+                if 0 <= coin < self.data.current_coin:
+                    new_coin = coin
+                    logger.debug(f"金币已扣除: {self.data.current_coin} -> {new_coin}")
+                    # 等待1秒，以确保不会出现金币扣除但拿走按钮仍未消失的情况
+                    time.sleep(1)
+                    self.screen.screenshot()
+
+            # 2. 阶段二：金币已扣除的前提下，检测卡片拿走按钮是否就绪
+            # 利用 short-circuit 特性：new_coin 未就绪时不会浪费性能去匹配按钮
+            if new_coin >= 0 and self.screen.get_select_button():
+                self.data.current_coin = new_coin
+                self.data.refresh_count += 1
+                logger.debug(f"潜能刷新成功: 当前金币={new_coin}, 已刷新={self.data.refresh_count}次")
+                return True
+
+            logger.debug(
+                f"等待刷新就绪: 金币扣除确认={new_coin >= 0} (最新={new_coin}), 拿走按钮未检测或未出现"
+            )
+
+            # 末次超时不再白等
+            if i < wait_time - 1:
+                time.sleep(1)
+                self.screen.screenshot()
+
+        logger.error(
+            "$agent.custom.reco.climb_tower_potential.handler_default.refresh.failed",
+            {
+                "wait_time": wait_time,
+                "new_coin_condition": new_coin >= 0,
+                "current_coin": self.data.current_coin,
+            },
+        )
+        return False
+
+    @property
+    def _default_potential(self) -> Potential:
+        """返回默认潜能，由于本节点基于识别到选择按钮才运行，所以理论上不会返回空潜能，所以这里可以不检查None放心交给主函数作兜底使用。"""
+        potential = next(p for p in self.data.potentials if p.selected)
+        return potential

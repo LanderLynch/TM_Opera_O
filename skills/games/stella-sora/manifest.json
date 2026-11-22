@@ -1,0 +1,33 @@
+{
+  "id": "stella-sora",
+  "name": "Stella Sora Game Automation Skill",
+  "version": "0.1.0",
+  "upstream": {
+    "repository": "https://github.com/MaaStellaSora/MaaStellaSora",
+    "version": "0.9.5",
+    "license": "MIT",
+    "licenseFile": "upstream/LICENSE.upstream"
+  },
+  "engine": {
+    "type": "maafw-subprocess",
+    "runnerScript": "engine/maa_runner.py",
+    "interfaceFile": "upstream/assets/interface.json"
+  },
+  "activationCommands": [
+    "Activate Stella Sora Skill",
+    "Open Stella Sora and check whether the game is running",
+    "Run Stella Sora Daily",
+    "Run Stella Sora Daily and inspect active events",
+    "Start Stella Sora Adaptive Mode",
+    "Pause Stella Sora Automation",
+    "Stop Stella Sora Automation",
+    "Show Stella Sora Progress"
+  ],
+  "safety": {
+    "singleDesktopLock": true,
+    "autoExecuteOnActivate": false,
+    "requireApprovalForUntrustedWorkflows": true,
+    "allowMemoryManipulation": false,
+    "allowAntiCheatBypass": false
+  }
+}

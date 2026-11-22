@@ -31,6 +31,8 @@ import { ApplicationStatisticsStore } from "./applications/applicationStatistics
 import { LearningEngine } from "./learning/learningEngine";
 import { SkillStore } from "./learning/skillStore";
 import { SkillStatus } from "./learning/skillTypes";
+import { StellaSoraEngineManager } from "./skills/stellaSora/engineManager";
+import { handleStellaSoraCommand } from "./skills/stellaSoraSkill";
 import { NotificationHub } from "./notch/notificationHub";
 import { getSystemMetrics } from "./notch/systemMonitor";
 import { ShelfItemType, ShelfStore } from "./shelf/shelfStore";
@@ -2062,6 +2064,10 @@ const skillStore = new SkillStore(app.getPath("userData"));
 const learningEngine = new LearningEngine(skillStore);
 const knowledgeStore = new ApplicationKnowledgeStore(app.getPath("userData"));
 const statisticsStore = new ApplicationStatisticsStore(app.getPath("userData"));
+const stellaSoraManager = new StellaSoraEngineManager(
+  path.join(BASE, "skills", "games", "stella-sora"),
+  { skillStore, learningEngine, knowledgeStore, statisticsStore }
+);
 const notificationHub = new NotificationHub();
 
 const agentToolRegistry = createDefaultToolRegistry({
@@ -2075,6 +2081,7 @@ const agentToolRegistry = createDefaultToolRegistry({
   learningEngine,
   knowledgeStore,
   statisticsStore,
+  stellaSoraManager,
   openFilePath: async (filePath: string) => {
     await shell.openPath(filePath);
   },
@@ -2417,6 +2424,16 @@ ipcMain.handle("learning:get-stats", (_e, appId: unknown) =>
   statisticsStore.getSummary(String(appId || ""))
 );
 
+ipcMain.handle("stella-sora:command", async (_e, cmd: unknown) => {
+  const res = await handleStellaSoraCommand(stellaSoraManager, String(cmd || ""));
+  notificationHub.push("agent", "Stella Sora Skill", res.summary.slice(0, 120));
+  return res;
+});
+ipcMain.handle("stella-sora:status", () => stellaSoraManager.getStatus());
+ipcMain.handle("stella-sora:pause", () => stellaSoraManager.pause());
+ipcMain.handle("stella-sora:resume", () => stellaSoraManager.resume());
+ipcMain.handle("stella-sora:stop", async () => await stellaSoraManager.stop());
+
 app.whenReady().then(() => {
   createWindows();
   startBackgroundLoops();
@@ -2436,6 +2453,7 @@ function cleanupAndQuit(): void {
     stopMediaWatcher();
     stopKeyboardWorker();
     stopActiveWindowWorker();
+    void stellaSoraManager?.shutdown();
   } catch {}
   try {
     agentRuntime?.taskManager.emergencyStop();

@@ -1,0 +1,233 @@
+import numpy
+from maa.context import Context
+
+from custom.interactor_template import Interactor
+from utils import logger as logger_module
+logger = logger_module.get_logger(__name__)
+
+
+class PotentialInteractor(Interactor):
+    def __init__(self, context: Context):
+        super().__init__(context)
+
+    def crop_screenshot(self, roi: list[int]) -> numpy.ndarray:
+        return self.image[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2]]
+
+    def refresh(self) -> bool:
+        run_result = self.context.run_task("星塔_节点_选择潜能_点击刷新_agent")
+        if not run_result or not run_result.status.succeeded:
+            logger.error("$agent.custom.reco.climb_tower_potential.interactor.refresh.click_failed")
+            return False
+        self.screenshot()
+        return True
+
+    def click_potential(self, box: list[int]) -> bool:
+        """点击潜能"""
+        return self.click(box)
+
+    def get_current_coin(self) -> int:
+        ocr_results = self._recognize("星塔_通用_识别当前金币_agent")
+        try:
+            return int(ocr_results[0].text)
+        except (ValueError, TypeError, IndexError):
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.interactor.get_current_coin.current_coin_not_recognized"
+            )
+            return -1
+
+    def get_refresh_cost(self) -> int:
+        ocr_results = self._recognize("星塔_通用_识别刷新花费_agent")
+        try:
+            return int(ocr_results[0].text)
+        except (ValueError, TypeError, IndexError):
+            logger.debug("未识别到刷新花费，将默认为-1")
+            return -1
+
+    def check_core_potential(self) -> bool:
+        return bool(self._recognize("星塔_节点_选择潜能_识别核心潜能_agent"))
+
+    def check_level_upped(self) -> bool:
+        return bool(self._recognize("星塔_节点_选择潜能_检测是否升级_agent"))
+
+    def get_team_level(self) -> int:
+        node_name = "星塔_节点_选择潜能_检测是否升级_agent"
+        ocr_results = self._recognize(node_name)
+
+        if self._valid_ocr(node_name, ocr_results):
+            try:
+                return int(ocr_results[0].text)
+            except (ValueError, TypeError, IndexError):
+                pass
+
+        logger.debug("Failed to recognize team level, defaulting to -1")
+        return -1
+
+    def get_potential_name(self, roi: list[int]) -> str:
+        ocr_results = self._recognize("星塔_节点_选择潜能_识别潜能名称_agent", roi=roi)
+        return " ".join([t.text for t in ocr_results])
+
+    def get_potential_level(self, roi: list[int]) -> tuple[int, int]:
+        ocr_results = self._recognize("星塔_节点_选择潜能_识别潜能等级_agent", roi=roi)
+        levels = self._parse_level_text([r.text for r in ocr_results])
+        return levels
+
+    @staticmethod
+    def _parse_level_text(texts: list[str]) -> tuple[int, int]:
+        """解析 OCR 返回的等级数字结果集。
+
+        pipeline OCR 使用 \\d+ 匹配并剔除语言关键词，可能返回：
+            ["1"]       -> old=0, new=1  （新获得，只有新等级）
+            ["4", "5"]  -> old=4, new=5
+            ["45"]      -> old=4, new=5  （两位数粘连）
+        仅在游戏版本保持最大潜能等级小于10时有效。
+
+        Args:
+            texts: OCR filtered_results 中各结果的 text 列表
+
+        Returns:
+            tuple[int, int]: (old_level, new_level)，解析失败返回 (0, 0)
+        """
+        # 将 ["4", "5"] 或 ["45"] 统一转为 "45"
+        full_text = "".join(t for t in texts if t.isdigit())
+
+        if len(full_text) == 1:
+            return 0, int(full_text)
+        if len(full_text) >= 2:
+            # 取前两个数字处理粘连
+            return int(full_text[0]), int(full_text[1])
+        logger.warning(
+            "$agent.custom.reco.climb_tower_potential.interactor._parse_level_text.potential_level_parse_failed",
+            {
+                "texts": texts,
+            },
+        )
+        return -1, -1
+
+    def get_recommend_level(self, roi: list[int]) -> int:
+        ocr_results = self._recognize("星塔_节点_选择潜能_识别推荐等级_agent", roi=roi)
+        try:
+            return int(ocr_results[0].text)
+        except (ValueError, TypeError, IndexError):
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.interactor.get_recommend_level.recommended_level_not_found"
+            )
+            return -1
+
+    def check_item_list_visibility(self) -> bool:
+        node = "星塔_节点_选择潜能_检测干扰文字_agent"
+        ocr_results = self._recognize(node)
+        if not ocr_results:
+            return False
+        return self._valid_ocr(node, ocr_results)
+
+    def get_potentials_rarity(self, core_potential: bool = False) -> list[str]:
+        """
+            检查可选潜能卡片稀有度
+
+            Args:
+                core_potential(bool): 是否为核心潜能，默认为False
+
+            Returns:
+                list: 可选潜能卡片稀有度列表，识别失败时返回3个普通潜能
+        """
+        if core_potential:
+            return ["core", "core", "core"]
+
+        normal_node_name = "星塔_节点_选择潜能_识别普通潜能数量_agent"
+        rare_node_name = "星塔_节点_选择潜能_识别稀有潜能数量_agent"
+        # 获取坐标
+        normal_potentials = [r.box for r in self._recognize(normal_node_name)]
+        rare_potentials = [r.box for r in self._recognize(rare_node_name)]
+        # 打标签，按照x坐标排序
+        potentials = [["common", box] for box in normal_potentials] + [["rare", box] for box in rare_potentials]
+        potentials.sort(key=lambda x: x[1][0])
+        # 去掉坐标，只保留类型标签
+        potentials_rarity = [p[0] for p in potentials]
+        potential_count = len(potentials_rarity)
+
+        if potential_count == 0:
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.interactor.get_potentials_rarity.recognition_failed"
+            )
+            return ["common", "common", "common"]
+        elif potential_count > 3:
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.interactor.get_potentials_rarity.potential_count_recognition_failed",
+                {
+                    "potential_count": potential_count,
+                },
+            )
+            return ["common", "common", "common"]
+        elif potential_count < 3:
+            potentials_rarity = self._fill_missing_three_card_slots(potentials, potentials_rarity)
+
+        return potentials_rarity
+
+    @staticmethod
+    def _fill_missing_three_card_slots(potentials: list[list], potentials_rarity: list[str]) -> list[str]:
+        """补全三卡布局中漏识别的卡片。
+
+        三张卡片的 x 坐标约为 154/498/842，两张卡片约为 326/670。若识别到位于左右两侧位置的卡片，
+        说明当前一定是三卡布局，此时有卡片未被普通/稀有模板命中，按普通潜能补齐，避免误用两卡布局的 ROI。
+        """
+        slots = [154, 498, 842]
+        by_slot = {}
+        for rarity, box in potentials:
+            index = min(range(3), key=lambda i: abs(box[0] - slots[i]))
+            if abs(box[0] - slots[index]) <= 30:
+                by_slot[index] = rarity
+        if len(by_slot) != len(potentials) or not ({0, 2} & by_slot.keys()):
+            return potentials_rarity
+        logger.warning(
+            "$agent.custom.reco.climb_tower_potential.interactor._fill_missing_three_card_slots."
+            "missing_cards_filled_as_common",
+            {
+                "potential_count": len(potentials),
+                "positions": sorted(by_slot),
+            },
+        )
+        return [by_slot.get(i, "common") for i in range(3)]
+
+    def get_recommended_potential(self, roi: list[int] | None = None) -> list:
+        """识别系统推荐图标，返回识别到的推荐潜能图标的坐标列表"""
+        reco_results = self._recognize("星塔_节点_选择潜能_识别推荐图标_agent", roi=roi)
+        return [r.box for r in reco_results]
+
+    def get_select_button(self) -> list[list]:
+        """识别拿到按钮，返回识别到的拿到按钮的坐标列表"""
+        return [r.box for r in self._recognize("星塔_节点_选择潜能_识别预选潜能位置_agent")]
+
+    def get_selected_potential_index(self, bounds: list[list[int]]) -> int:
+        """识别拿到按钮，返回对应卡片的索引。
+
+        拿到按钮位于卡片 box 范围内，通过判断图标命中 x 坐标是否落入各卡片
+        x_bound 区间（左闭右闭）来确定归属卡片。
+        识别失败时返回第一张卡片的索引 作为兜底。
+
+        Args:
+            bounds(list): 可选潜能卡片的边界框，每个元素为一个列表，包含2个元素，分别是左闭右闭的x轴边界
+
+        Returns:
+            int: 目标卡片索引，识别失败时返回0。这里的索引是0-based的，适合给list使用。
+        """
+        result_boxes = self.get_select_button()
+
+        hit_x = result_boxes[0][0] if result_boxes else -1
+        matched = next((i for i, (low, high) in enumerate(bounds) if low <= hit_x <= high), None)
+
+        if matched is None:
+            logger.error(
+                "$agent.custom.reco.climb_tower_potential.interactor.get_selected_potential_index.recognition_failed"
+            )
+            matched = 0
+
+        return matched
+
+    def match_trekker(self, trekker_image: numpy.ndarray, roi: list[int]) -> bool:
+        """匹配旅人"""
+        self.context.override_image("trekker_image", trekker_image)
+        return bool(self._recognize(
+            "星塔_节点_选择潜能_识别旅人_agent",
+            template="trekker_image",
+            roi=roi
+        ))

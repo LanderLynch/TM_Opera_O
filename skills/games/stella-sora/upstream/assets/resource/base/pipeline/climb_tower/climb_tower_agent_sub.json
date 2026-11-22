@@ -1,0 +1,138 @@
+{
+    "星塔_编队角色_识别旅人名称_agent": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "\\w+"
+                ],
+                "roi": [
+                    910,
+                    466,
+                    170,
+                    55
+                ],
+                "threshold": 0.6
+            }
+        }
+    },
+    "星塔_通用_识别当前金币_agent": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "\\d+"
+                ],
+                "replace": [
+                    [
+                        "[oOQD]",
+                        "0"
+                    ],
+                    [
+                        "\\D",
+                        ""
+                    ]
+                ],
+                "roi": [
+                    1180,
+                    20,
+                    65,
+                    25
+                ],
+                "only_rec": true
+            }
+        }
+    },
+    "星塔_通用_识别刷新花费_agent": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "\\d+"
+                ],
+                "roi": [
+                    1165,
+                    560,
+                    105,
+                    50
+                ],
+                "replace": [
+                    [
+                        "\\D",
+                        ""
+                    ]
+                ],
+                "threshold": 0.6
+            }
+        }
+    },
+    "星塔_节点_进行对话选择_寻找650金币选项_agent": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "650"
+                ],
+                "threshold": 0.6
+            }
+        }
+    },
+    "星塔_记录_识别等级_agent": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "^\\d+$"
+                ],
+                "roi": [
+                    60,
+                    35,
+                    90,
+                    90
+                ],
+                "threshold": 0.5
+            }
+        }
+    },
+    "星塔_记录_定位潜能数量位置_agent": {
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": [
+                    "ClimbTower_agent/星塔_纪录数标记.png"
+                ],
+                "roi": [
+                    67,
+                    165,
+                    310,
+                    97
+                ]
+            }
+        }
+    },
+    "星塔_记录_识别潜能数量_agent": {
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "expected": [
+                    "^\\d+$"
+                ],
+                "replace": [
+                    [
+                        "\\D+",
+                        ""
+                    ]
+                ],
+                "roi": "星塔_记录_定位潜能数量位置_agent",
+                "roi_offset": [
+                    15,
+                    -5,
+                    15,
+                    10
+                ],
+                "threshold": 0.6,
+                "only_rec": true
+            }
+        }
+    }
+}

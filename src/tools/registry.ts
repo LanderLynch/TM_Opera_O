@@ -7,6 +7,8 @@ import { ApplicationAction } from "../applications/applicationTypes";
 import { LearningEngine } from "../learning/learningEngine";
 import { SkillStore } from "../learning/skillStore";
 import { SkillStatus } from "../learning/skillTypes";
+import { StellaSoraEngineManager } from "../skills/stellaSora/engineManager";
+import { handleStellaSoraCommand } from "../skills/stellaSoraSkill";
 import {
   createLiveWordDocument,
   findInstalledAppMatches,
@@ -35,6 +37,7 @@ export interface ToolRuntimeDependencies {
   learningEngine?: LearningEngine;
   knowledgeStore?: ApplicationKnowledgeStore;
   statisticsStore?: ApplicationStatisticsStore;
+  stellaSoraManager?: StellaSoraEngineManager;
 }
 
 export class ToolRegistry {
@@ -1000,6 +1003,52 @@ export function createDefaultToolRegistry(deps: ToolRuntimeDependencies): ToolRe
           success: true,
           output: summary,
           evidence: `Stats summary for ${summary.applicationId}: ${summary.completedSessions}/${summary.totalSessions} completed sessions.`,
+        };
+      },
+    });
+  }
+
+  if (deps.stellaSoraManager) {
+    const stella = deps.stellaSoraManager;
+
+    registry.register({
+      name: "stella_sora_command",
+      description:
+        "Route a natural-language Stella Sora skill command (activate, open & check, run daily, inspect events, adaptive mode, pause, resume, stop, progress).",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["command"],
+        properties: {
+          command: { type: "string", minLength: 3, description: "Natural-language Stella Sora command." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const res = await handleStellaSoraCommand(stella, String(args.command));
+        return {
+          success: true,
+          output: res.status,
+          evidence: res.summary,
+        };
+      },
+    });
+
+    registry.register({
+      name: "stella_sora_status",
+      description: "Get live Stella Sora skill activation, engine readiness, game process, and progress status.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+      async execute() {
+        const st = stella.getStatus();
+        return {
+          success: true,
+          output: st,
+          evidence: `Stella Sora phase=${st.phase}, engineReady=${st.engineReady}, gameRunning=${Boolean(st.gameState?.isRunning)}.`,
         };
       },
     });

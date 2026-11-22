@@ -1,0 +1,196 @@
+"""进入商店前读取各音符的持有数量。
+
+界面操作全部通过 pipeline 节点完成（打开背包 / 秘纹技能 / 关闭），
+本模块只负责调度这些节点，不发送任何裸坐标点击，也不在代码中出现音符的显示名称。
+"""
+import numpy as np
+from maa.context import Context
+
+from custom.climb_tower.climb_tower_shop.context import Melody
+from utils import logger as logger_module
+logger = logger_module.get_logger(__name__)
+
+# 主要音符，与 Data.melody_of_xxx 名字一致，不含属性音符，因为属性音符会根据塔属性动态变化
+MAIN_MELODIES = (
+    "melody_of_focus",
+    "melody_of_skill",
+    "melody_of_ultimate",
+    "melody_of_pummel",
+    "melody_of_luck",
+    "melody_of_burst",
+    "melody_of_stamina",
+)
+
+ELEMENT_NODE = "星塔_属性塔选择_agent"
+OPEN_BAG_NODE = "星塔_背包_扫描音符_打开背包界面_agent"
+CLOSE_BAG_NODE = "星塔_关闭背包界面_agent"
+MELODY_NODE = "星塔_背包_识别音符_agent"
+COUNT_NODE = "星塔_背包_识别音符数量_agent"
+
+
+def auto_scan_melody_counts(context: Context, data) -> dict[str, int]:
+    """自动打开背包并读取背包中各音符的持有数量，完成后关闭背包。
+
+    Args:
+        context: 任务上下文。
+        data: 商店配置数据，用于判断是否设置了音符目标。
+
+    Returns:
+        dict[str, int]: {melody_of_xxx: 持有数量}；未设目标或读取失败时为空字典。
+    """
+    targets = _get_active_melodies(context, data)
+    if not targets:
+        logger.debug("未设置音符数量目标，跳过音符读取")
+        return {}
+
+    if not _open_melody_detail(context):
+        return {}
+    counts = scan_melody_counts(context, targets)
+    _close_bag(context)
+
+    return counts
+
+
+def direct_scan_melody_counts(context: Context, data) -> dict[str, int]:
+    """直接读取背包中各音符的持有数量。
+
+    Args:
+        context: 任务上下文。
+        data: 商店配置数据，用于判断是否设置了音符目标。
+
+    Returns:
+        dict[str, int]: {melody_of_xxx: 持有数量}；未设目标或读取失败时为空字典。
+    """
+    targets = _get_active_melodies(context, data)
+    if not targets:
+        logger.debug("未设置音符数量目标，跳过音符读取")
+        return {}
+
+    return scan_melody_counts(context, targets)
+
+
+def scan_melody_counts(context: Context, target_melodies: list[str]) -> dict[str, int]:
+    """读取背包中各音符的持有数量。该函数默认当前界面为背包的秘纹技能界面。
+    仅读取有设置音符策略的音符，如果没有设置音符策略，直接返回空字典。
+
+    Args:
+        context: 任务上下文。
+        target_melodies: 设置了音符策略的音符列表。
+
+    Returns:
+        dict[str, int]: {melody_of_xxx: 持有数量}；未设目标或读取失败时为空字典。
+    """
+    counts: dict[str, int] = {}
+    try:
+        image = context.tasker.controller.post_screencap().wait().get()
+        for melody in target_melodies:
+            counts[melody] = _read_melody_count(context, image, melody)
+            if counts[melody] == -1:
+                logger.error(
+                    "$agent.custom.action.climb_tower_melody_scan.scan_melody_counts.task_stopped_for_safety",
+                    {
+                        "melody": melody,
+                    },
+                )
+                context.tasker.post_stop()
+                return {}
+    except Exception as exc:
+        logger.error(
+            "$agent.custom.action.climb_tower_melody_scan.scan_melody_counts.unexpected_exception",
+            {
+                "exc": exc,
+            },
+        )
+        context.tasker.post_stop()
+
+    if counts:
+        logger.debug(f"读取到音符数量：{counts}")
+    else:
+        logger.warning(
+            "$agent.custom.action.climb_tower_melody_scan.scan_melody_counts.melody_counts_unavailable"
+        )
+    return counts
+
+
+def _get_active_melodies(context: Context, data) -> list[str]:
+    """获取设置了音符策略的音符列表"""
+    # 获取属性音符，整合成正确的音符列表
+    active_element_melodies = _get_element_melodies(context, ELEMENT_NODE)
+    melodies = [*MAIN_MELODIES, *active_element_melodies]
+
+    return [m for m in melodies if getattr(data.params, m, -1) > 0]
+
+
+def _get_element_melodies(context: Context, node: str) -> list[str]:
+    """获取属性塔节点的属性音符名称，该节点只记录塔里会有什么属性音符，不记录用户设置的音符数量。"""
+    node_data = context.get_node_data(node) or {}
+    element_melodies = node_data.get("attach", {}).get("active_melodies", [])
+    if not element_melodies:
+        logger.error(
+            "$agent.custom.action.climb_tower_melody_scan._get_element_melodies.element_melody_not_configured"
+        )
+        context.tasker.post_stop()
+    return element_melodies
+
+
+def _open_melody_detail(context: Context) -> bool:
+    """依次打开 背包 -> 秘纹技能，任一步失败即放弃。"""
+    if not _run(context, OPEN_BAG_NODE):
+        logger.error(
+            "$agent.custom.action.climb_tower_melody_scan._open_melody_detail.melody_details_open_failed"
+        )
+        return False
+    return True
+
+
+def _close_bag(context: Context) -> bool:
+    """关闭背包，任一步失败即放弃。"""
+    if not _run(context, CLOSE_BAG_NODE):
+        logger.error("$agent.custom.action.climb_tower_melody_scan._close_bag.bag_close_failed")
+        return False
+    return True
+
+
+def _read_melody_count(context: Context, image: np.ndarray, melody: str) -> int:
+    """读取指定音符数量，数量位置通过pipeline的节点联动获取"""
+    pipeline_override = _make_pipeline_override(MELODY_NODE, melody)
+    template_results = _recognize(context, MELODY_NODE, image, pipeline_override)
+    if not template_results:
+        logger.error(
+            "$agent.custom.action.climb_tower_melody_scan._read_melody_count.melody_not_recognized",
+            {
+                "melody": melody,
+            },
+        )
+        return -1
+    ocr_results = _recognize(context, COUNT_NODE, image)
+    if not ocr_results:
+        logger.error(
+            "$agent.custom.action.climb_tower_melody_scan._read_melody_count.melody_melody_not_recognized",
+            {
+                "melody": melody,
+            },
+        )
+        return -1
+    logger.debug(f"识别到音符{melody}的数量为：{ocr_results}")
+    return int(ocr_results[0].text)
+
+
+def _make_pipeline_override(node: str, melody: str) -> dict:
+    """根据音符名称生成 pipeline override。"""
+    return {node: {"recognition": {"param": {"template": [f"ClimbTower_agent/melodies/{melody}.png"]}}}}
+
+
+def _recognize(context: Context, node: str, image: np.ndarray, pipeline_override: dict | None = None) -> list:
+    if pipeline_override is None:
+        pipeline_override = {}
+    detail = context.run_recognition(node, image, pipeline_override)
+    return list(detail.filtered_results) if detail and detail.hit else []
+
+
+def _run(context: Context, node: str) -> bool:
+    """执行一个 pipeline 节点。"""
+    result = context.run_task(node)
+    if not result or not result.status.succeeded:
+        return False
+    return True

@@ -1,0 +1,67 @@
+{
+    "task": [
+        {
+            "name": "活动快速战斗",
+            "label": "$interface.task.活动快速战斗.label",
+            "entry": "活动快速战斗_入口",
+            "description": "$interface.task.活动快速战斗.description",
+            "group": ["daily"],
+            "option": [
+                "作战关卡",
+                "活动战斗消耗所有干劲"
+            ]
+        }
+    ],
+    "option": {
+        "作战关卡": {
+            "type": "input",
+            "inputs": [
+                {
+                    "name": "活动关卡名称",
+                    "label": "$interface.task.option.作战关卡.inputs.活动关卡名称.label",
+                    "description": "$interface.task.option.作战关卡.inputs.活动关卡名称.description",
+                    "default": "1-\\d+",
+                    "pipeline_type": "string"
+                }
+            ],
+            "pipeline_override": {
+                "活动快速战斗_选择活动关卡": {
+                    "recognition": {
+                        "type": "OCR",
+                        "param": {
+                            "expected": [
+                                "{活动关卡名称}"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "活动战斗消耗所有干劲": {
+            "type": "switch",
+            "label": "$interface.task.option.活动战斗消耗所有干劲.label",
+            "description": "$interface.task.option.活动战斗消耗所有干劲.description",
+            "default_case": "No",
+            "cases": [
+                {
+                    "name": "No",
+                    "label": "No",
+                    "option": [
+                        "自定义快速作战次数"
+                    ]
+                },
+                {
+                    "name": "Yes",
+                    "label": "Yes",
+                    "pipeline_override": {
+                        "活动快速战斗_开启快速战斗": {
+                            "next": [
+                                "通用_消耗所有干劲"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

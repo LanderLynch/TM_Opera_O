@@ -106,3 +106,11 @@ contextBridge.exposeInMainWorld("learning", {
   getKnowledge: (applicationId: string) => ipcRenderer.invoke("learning:get-knowledge", applicationId),
   getStats: (applicationId: string) => ipcRenderer.invoke("learning:get-stats", applicationId),
 });
+
+contextBridge.exposeInMainWorld("stellaSora", {
+  command: (cmd: string) => ipcRenderer.invoke("stella-sora:command", cmd),
+  status: () => ipcRenderer.invoke("stella-sora:status"),
+  pause: () => ipcRenderer.invoke("stella-sora:pause"),
+  resume: () => ipcRenderer.invoke("stella-sora:resume"),
+  stop: () => ipcRenderer.invoke("stella-sora:stop"),
+});

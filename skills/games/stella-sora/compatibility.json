@@ -1,0 +1,27 @@
+{
+  "targetGame": "Stella Sora",
+  "platforms": {
+    "steam_global": {
+      "status": "pending-live-verification",
+      "controllerType": "Win32",
+      "windowClassRegex": "UnityWndClass",
+      "windowTitleRegex": "xtlr|星塔旅人|ステラソラ|Stella ?Sora",
+      "screencap": "FramePool",
+      "mouse": "SendMessageWithCursorPos",
+      "keyboard": "SendMessageWithCursorPos",
+      "resourceOverlay": [
+        "upstream/assets/resource/base",
+        "upstream/assets/resource/en",
+        "upstream/assets/resource/windows"
+      ],
+      "notes": [
+        "Upstream resource/windows/pipeline/daily/login.json disables StartApp on Windows; TM Opera O launches Steam via steam://rungameid/ and attaches Win32Controller after window detection.",
+        "Steam Global window title/class and OCR accuracy must be verified live once Steam Global client is installed."
+      ]
+    },
+    "android_adb": {
+      "status": "upstream-supported-not-used",
+      "notes": "Excluded from TM Opera O Windows Steam skill."
+    }
+  }
+}
