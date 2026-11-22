@@ -378,7 +378,11 @@ async function callOllama(messages: ChatMessage[]): Promise<string> {
   }
 }
 
-async function callDeepSeek(messages: ChatMessage[], modelOverride?: string): Promise<string> {
+async function callDeepSeek(
+  messages: ChatMessage[],
+  modelOverride?: string,
+  temperatureOverride?: number
+): Promise<string> {
   if (!DEEPSEEK_API_KEY) {
     return "(DeepSeek error: DEEPSEEK_API_KEY belum diisi di .env)";
   }
@@ -392,7 +396,7 @@ async function callDeepSeek(messages: ChatMessage[], modelOverride?: string): Pr
       body: JSON.stringify({
         model: modelOverride || currentModel,
         messages,
-        temperature: 0.85,
+        temperature: temperatureOverride ?? 0.85,
         max_tokens: 1024,
       }),
     });
@@ -2067,7 +2071,7 @@ const agentModelClient: AgentModelClient = {
     const tieredModel = selectModelForTier(currentModel, tier);
     if (tieredModel.startsWith("local:")) return await callOllama(msgs);
     if (tieredModel.startsWith("deepseek-") || tieredModel.startsWith("pecut/")) {
-      return await callDeepSeek(msgs, tieredModel);
+      return await callDeepSeek(msgs, tieredModel, 0.2);
     }
     return await callGemini(msgs, undefined, tieredModel);
   },
@@ -2117,6 +2121,21 @@ const agentToolRegistry = createDefaultToolRegistry({
 const agentRuntime = new AgentRuntime(agentModelClient, agentToolRegistry, {
   observeWindowFn: getActiveWindowTitle,
   storageDir: BASE,
+  skillRouter: async (goal, task) => {
+    const intent = parseStellaSoraCommand(goal);
+    if (!intent) return { handled: false };
+
+    const approvedSkills = skillStore.listAll("stella-sora", "approved");
+    const dailySkill = approvedSkills.find((s) => s.name === "daily-routine") || approvedSkills[0];
+    const plan = dailySkill
+      ? dailySkill.steps.map((s) => s.description)
+      : ["Activate Stella Sora", "Execute Stella Sora workflow", "Verify result"];
+
+    const res = await handleStellaSoraCommand(stellaSoraManager, goal, task.id);
+    notificationHub.push("agent", "Stella Sora Skill", res.summary.slice(0, 120));
+    const ok = res.status.taskState !== "failed" && res.status.phase !== "error";
+    return { handled: true, success: ok, summary: res.summary, plan };
+  },
 });
 
 let pendingAgentApproval: {
@@ -2332,12 +2351,32 @@ ipcMain.handle("shelf:get-storage-info", () => shelfStore.getStorageInfo());
 ipcMain.handle("notch:get-modules-state", () => {
   const activeTask = agentRuntime.taskManager.getActiveTask();
   const recentTasks = agentRuntime.taskManager.getAllTasks().slice(0, 3);
+  const stellaStatus = stellaSoraManager.getStatus();
+  const stellaActive =
+    stellaStatus.phase === "running" ||
+    stellaStatus.phase === "paused" ||
+    Boolean(stellaStatus.currentWorkflow);
+
   const task = activeTask || recentTasks[0] || null;
 
   let agentState = "Idle";
-  if (agentRuntime.taskManager.isPaused()) agentState = "Paused";
-  else if (pendingAgentApproval) agentState = "Waiting for approval";
-  else if (task) {
+  if (agentRuntime.taskManager.isPaused() || stellaStatus.taskState === "paused") {
+    agentState = "Paused";
+  } else if (pendingAgentApproval) {
+    agentState = "Waiting for approval";
+  } else if (stellaActive && !activeTask) {
+    const stellaMap: Record<string, string> = {
+      queued: "Idle",
+      initializing: "Planning",
+      running: "Running",
+      verifying: "Running",
+      completed: "Completed",
+      failed: "Failed",
+      paused: "Paused",
+      cancelled: "Idle",
+    };
+    agentState = stellaMap[stellaStatus.taskState] || "Idle";
+  } else if (task) {
     const map: Record<string, string> = {
       planning: "Planning",
       running: "Running",
@@ -2350,10 +2389,24 @@ ipcMain.handle("notch:get-modules-state", () => {
     agentState = map[task.status] || "Idle";
   }
 
+  const effectiveTask =
+    activeTask ||
+    (stellaActive
+      ? {
+          title: stellaStatus.currentWorkflow || stellaStatus.skillName,
+          activeApp: stellaStatus.lastRecognizedScreen || "Stella Sora",
+          totalSteps: 8,
+          completedSteps: Math.round((stellaStatus.progressPercent / 100) * 8),
+          currentStep: stellaStatus.currentStep || stellaStatus.taskState,
+          lastVerifiedAction: stellaStatus.lastVerification?.evidence || "",
+        }
+      : task);
+
   return {
     agentState,
-    activeTask,
-    latestTask: task,
+    activeTask: activeTask || (stellaActive ? effectiveTask : null),
+    latestTask: effectiveTask,
+    stellaSora: stellaStatus,
     pendingApproval: pendingAgentApproval,
     system: getSystemMetrics(),
     notifications: notificationHub.listActive(15),

@@ -1,4 +1,4 @@
-import { AgentModelClient, ModelTier, ParsedAgentTurn, parseStructuredTurn } from "../ai/toolCalling";
+import { AgentModelClient, ModelTier, ParsedAgentTurn, parseStructuredTurnWithDiagnostics } from "../ai/toolCalling";
 import { logger } from "../core/logger";
 import { ToolRegistry } from "../tools/registry";
 import { AgentTask } from "./taskManager";
@@ -43,19 +43,28 @@ export class AgentPlanner {
       "Choose the next single action or provide finalAnswer.",
     ].join("\n\n");
 
+    let lastDiagError = "Unknown error";
+    let lastRawPreview = "";
     for (let attempt = 0; attempt <= maxParseRetries; attempt++) {
       const effectiveTier: ModelTier = attempt > 0 ? "chief" : tier;
       const raw = await this.modelClient.complete(systemPrompt, userPrompt, effectiveTier);
-      const parsed = parseStructuredTurn(raw);
-      if (parsed && (parsed.action || parsed.finalAnswer !== undefined)) {
-        return parsed;
+      const diag = parseStructuredTurnWithDiagnostics(raw);
+      if (diag.turn && (diag.turn.action || diag.turn.finalAnswer !== undefined)) {
+        return diag.turn;
       }
-      logger.warn("planner", "Malformed planner JSON, retrying", { attempt, rawPreview: raw.slice(0, 120) });
-      userPrompt += "\n\nYour previous response was not valid JSON with `action` or `finalAnswer`. Reply ONLY with valid JSON.";
+      lastDiagError = diag.error || "Invalid structured turn";
+      lastRawPreview = diag.rawPreview;
+      logger.warn("planner", "Malformed planner JSON, retrying", {
+        attempt,
+        tier: effectiveTier,
+        parseError: lastDiagError,
+        rawPreview: lastRawPreview,
+      });
+      userPrompt += `\n\nParse error (${lastDiagError}). Reply ONLY with valid JSON matching {"thought":"...","action":{"tool":"...","arguments":{}}} or {"thought":"...","finalAnswer":"..."}.`;
     }
 
     return {
-      finalAnswer: "Unable to produce a valid structured plan for this request after retries.",
+      finalAnswer: `Unable to produce a valid structured plan after ${maxParseRetries + 1} attempts. ParseError: ${lastDiagError}. Raw: ${lastRawPreview}`,
     };
   }
 }

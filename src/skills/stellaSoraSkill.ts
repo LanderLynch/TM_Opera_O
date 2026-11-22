@@ -67,7 +67,8 @@ export function parseStellaSoraCommand(input: string): StellaSoraIntent | null {
 
 export async function handleStellaSoraCommand(
   manager: StellaSoraEngineManager,
-  command: string
+  command: string,
+  lockOwnerTaskId?: string
 ): Promise<{ summary: string; status: StellaSoraStatusSnapshot }> {
   const intent = parseStellaSoraCommand(command) || { type: "activate" };
 
@@ -106,18 +107,18 @@ export async function handleStellaSoraCommand(
       await manager.activate();
       const reports: string[] = [];
       if (intent.mode === "maa_win32" || intent.mode === "both") {
-        const rA = await manager.runControlledClickTest("maa_win32");
+        const rA = await manager.runControlledClickTest("maa_win32", undefined, lockOwnerTaskId);
         reports.push(rA.report);
       }
       if (intent.mode === "win32_sendinput" || intent.mode === "both") {
-        const rB = await manager.runControlledClickTest("win32_sendinput");
+        const rB = await manager.runControlledClickTest("win32_sendinput", undefined, lockOwnerTaskId);
         reports.push(rB.report);
       }
       return { summary: reports.join("\n\n"), status: manager.getStatus() };
     }
 
     case "run_workflows": {
-      const res = await manager.runWorkflows(intent.workflowIds);
+      const res = await manager.runWorkflows(intent.workflowIds, { lockOwnerTaskId });
       return { summary: res.report, status: res.status };
     }
 

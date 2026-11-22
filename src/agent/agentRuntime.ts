@@ -14,12 +14,20 @@ import { RecoveryManager } from "./recovery";
 import { AgentTask, TaskManager } from "./taskManager";
 import { ActionVerifier } from "./verifier";
 
+export interface SkillRouteResult {
+  handled: boolean;
+  success?: boolean;
+  summary?: string;
+  plan?: string[];
+}
+
 export interface AgentRuntimeConfig {
   maxSteps?: number;
   maxRetriesPerStep?: number;
   maxDurationMs?: number;
   observeWindowFn?: () => Promise<string>;
   storageDir?: string;
+  skillRouter?: (goal: string, task: AgentTask) => Promise<SkillRouteResult>;
 }
 
 export class AgentRuntime {
@@ -36,6 +44,7 @@ export class AgentRuntime {
   private readonly maxRetriesPerStep: number;
   private readonly maxDurationMs: number;
   private readonly observeWindowFn?: () => Promise<string>;
+  private readonly skillRouter?: (goal: string, task: AgentTask) => Promise<SkillRouteResult>;
 
   constructor(
     modelClient: AgentModelClient,
@@ -55,6 +64,7 @@ export class AgentRuntime {
     this.maxRetriesPerStep = config.maxRetriesPerStep ?? 2;
     this.maxDurationMs = config.maxDurationMs ?? Number.POSITIVE_INFINITY;
     this.observeWindowFn = config.observeWindowFn;
+    this.skillRouter = config.skillRouter;
   }
 
   public async runObjective(goal: string, workingDirectory?: string): Promise<AgentTask> {
@@ -71,6 +81,27 @@ export class AgentRuntime {
 
     try {
       this.taskManager.setStatus(task.id, "running");
+
+      if (this.skillRouter) {
+        const routed = await this.skillRouter(goal, task);
+        if (routed.handled) {
+          if (routed.plan && routed.plan.length > 0) {
+            this.taskManager.setPlan(task.id, routed.plan);
+          }
+          task.finalReport = routed.summary || "Skill workflow executed.";
+          if (routed.success === false) {
+            this.taskManager.setStatus(task.id, "failed", task.finalReport);
+            this.memoryStore?.saveTask(task);
+            eventBus.emit("task:failed", { taskId: task.id, error: task.finalReport });
+          } else {
+            this.taskManager.setStatus(task.id, "completed");
+            this.memoryStore?.saveTask(task);
+            eventBus.emit("task:completed", { taskId: task.id, summary: task.finalReport });
+          }
+          return task;
+        }
+      }
+
       let consecutiveErrors = 0;
 
       for (let stepIdx = 0; stepIdx < this.maxSteps; stepIdx++) {

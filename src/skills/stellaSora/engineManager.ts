@@ -197,14 +197,14 @@ export class StellaSoraEngineManager {
   }
 
   public async runDailyWorkflow(
-    options: { autoLaunch?: boolean; skipCompletedToday?: boolean } = {}
+    options: { autoLaunch?: boolean; skipCompletedToday?: boolean; lockOwnerTaskId?: string } = {}
   ) {
     return await this.runWorkflows(STELLA_SORA_DAILY_SEQUENCE, options);
   }
 
   public async runWorkflows(
     workflowIds: string[],
-    options: { autoLaunch?: boolean; skipCompletedToday?: boolean } = {}
+    options: { autoLaunch?: boolean; skipCompletedToday?: boolean; lockOwnerTaskId?: string } = {}
   ): Promise<{
     ok: boolean;
     report: string;
@@ -218,7 +218,8 @@ export class StellaSoraEngineManager {
       await this.activate();
     }
 
-    const lockTaskId = `stella_sora_${Date.now()}`;
+    const lockTaskId = options.lockOwnerTaskId || `stella_sora_${Date.now()}`;
+    const ownsLock = !options.lockOwnerTaskId;
     const lock = desktopExecutionLock.acquire(lockTaskId);
     if (!lock.ok) {
       const msg = `Cannot run Stella Sora: desktop lock is held by "${lock.holder}".`;
@@ -418,7 +419,9 @@ export class StellaSoraEngineManager {
       );
       return { ok: pending.length === 0, report, results, status: this.getStatus() };
     } finally {
-      desktopExecutionLock.release(lockTaskId);
+      if (ownsLock) {
+        desktopExecutionLock.release(lockTaskId);
+      }
     }
   }
 
@@ -431,9 +434,11 @@ export class StellaSoraEngineManager {
 
   public async runControlledClickTest(
     mode: "maa_win32" | "win32_sendinput",
-    outDir?: string
+    outDir?: string,
+    lockOwnerTaskId?: string
   ): Promise<{ ok: boolean; report: string; data?: unknown }> {
-    const lockTaskId = `stella_probe_${Date.now()}`;
+    const lockTaskId = lockOwnerTaskId || `stella_probe_${Date.now()}`;
+    const ownsLock = !lockOwnerTaskId;
     const lock = desktopExecutionLock.acquire(lockTaskId);
     if (!lock.ok) {
       return { ok: false, report: `Desktop lock sedang dipakai oleh "${lock.holder}".` };
@@ -458,7 +463,9 @@ export class StellaSoraEngineManager {
       ].join("\n");
       return { ok: d.dispatched, report, data: d };
     } finally {
-      desktopExecutionLock.release(lockTaskId);
+      if (ownsLock) {
+        desktopExecutionLock.release(lockTaskId);
+      }
     }
   }
 

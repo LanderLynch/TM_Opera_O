@@ -16,7 +16,8 @@ const { desktopExecutionLock } = require("../dist/agent/executionLock.js");
 const { createDefaultToolRegistry } = require("../dist/tools/registry.js");
 const { STELLA_PIPELINE_MAP, STELLA_SORA_DAILY_SEQUENCE, validatePipelineEntry } = require("../dist/skills/stellaSora/workflowCatalog.js");
 const { StellaSoraReportGenerator } = require("../dist/skills/stellaSora/reportGenerator.js");
-const { validatePecutModelId } = require("../dist/ai/toolCalling.js");
+const { validatePecutModelId, parseStructuredTurnWithDiagnostics } = require("../dist/ai/toolCalling.js");
+const { AgentRuntime } = require("../dist/agent/agentRuntime.js");
 
 const SKILL_ROOT = path.resolve("skills/games/stella-sora");
 
@@ -145,4 +146,45 @@ test("StellaSoraReportGenerator outputs Bahasa Indonesia without Hindi/Devanagar
   ]);
   assert.match(summary, /Laporan Stella Sora: 1 terverifikasi/i);
   assert.equal(/[\u0900-\u097F]/.test(summary), false);
+});
+
+test("parseStructuredTurnWithDiagnostics strips <think> tags and surfaces parse diagnostics", () => {
+  const withThink = `<think>Reasoning {not json}</think>\n{"thought":"ok","action":{"tool":"stella_sora_status","arguments":{}}}`;
+  const ok = parseStructuredTurnWithDiagnostics(withThink);
+  assert.equal(ok.turn?.action?.tool, "stella_sora_status");
+
+  const bad = parseStructuredTurnWithDiagnostics("Plain prose without JSON");
+  assert.equal(bad.turn, null);
+  assert.match(bad.error || "", /No JSON object/i);
+  assert.equal(bad.rawPreview, "Plain prose without JSON");
+});
+
+test("AgentRuntime deterministically routes Run Daily Stella Sora via skillRouter without LLM planner", async () => {
+  let llmCalled = false;
+  const runtime = new AgentRuntime(
+    {
+      async complete() {
+        llmCalled = true;
+        return "{}";
+      },
+    },
+    createDefaultToolRegistry({ getActiveWindowTitle: async () => "Desktop", openExternalUrl: async () => {} }),
+    {
+      skillRouter: async (goal) => {
+        if (!/stella\s*sora/i.test(goal)) return { handled: false };
+        return {
+          handled: true,
+          success: true,
+          plan: ["Step 1", "Step 2"],
+          summary: "Routed deterministically to Stella Sora",
+        };
+      },
+    }
+  );
+
+  const task = await runtime.runObjective("Run Daily Stella Sora");
+  assert.equal(llmCalled, false);
+  assert.equal(task.status, "completed");
+  assert.equal(task.planSummary.length, 2);
+  assert.equal(task.finalReport, "Routed deterministically to Stella Sora");
 });

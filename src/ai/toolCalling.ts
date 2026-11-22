@@ -106,48 +106,102 @@ export function normalizeModelResponse(rawText: string): ModelResponse {
   };
 }
 
-export function parseStructuredTurn(rawText: string): ParsedAgentTurn | null {
-  if (!rawText) return null;
-  const trimmed = rawText.trim();
-
-  // Extract JSON from ```json ... ``` block or raw {...}
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenced ? fenced[1].trim() : trimmed;
-  const objMatch = candidate.match(/\{[\s\S]*\}/);
-  if (!objMatch) return null;
-
-  try {
-    const obj = JSON.parse(objMatch[0]) as Record<string, unknown>;
-    const turn: ParsedAgentTurn = {};
-
-    if (typeof obj.thought === "string") turn.thought = obj.thought;
-    if (Array.isArray(obj.plan)) {
-      turn.plan = obj.plan.map((s) => String(s));
+function extractBalancedJsonObjects(text: string): string[] {
+  const results: string[] = [];
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
     }
-
-    if (obj.action && typeof obj.action === "object" && !Array.isArray(obj.action)) {
-      const act = obj.action as Record<string, unknown>;
-      if (typeof act.tool === "string" && act.tool.trim().length > 0) {
-        const args =
-          act.arguments && typeof act.arguments === "object" && !Array.isArray(act.arguments)
-            ? (act.arguments as Record<string, unknown>)
-            : {};
-        turn.action = {
-          tool: act.tool.trim(),
-          arguments: args,
-        };
+    if (ch === "\\" && inString) {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === "{") {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0 && start >= 0) {
+        results.push(text.slice(start, i + 1));
+        start = -1;
       }
     }
-
-    if (typeof obj.finalAnswer === "string") {
-      turn.finalAnswer = obj.finalAnswer;
-    }
-
-    if (!turn.action && turn.finalAnswer === undefined && !turn.plan) {
-      return null;
-    }
-    return turn;
-  } catch {
-    return null;
   }
+  return results;
+}
+
+export function parseStructuredTurnWithDiagnostics(rawText: string): {
+  turn: ParsedAgentTurn | null;
+  error?: string;
+  rawPreview: string;
+} {
+  if (!rawText) {
+    return { turn: null, error: "Empty model response.", rawPreview: "" };
+  }
+  const stripped = rawText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  const fenced = stripped.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1].trim() : stripped;
+  const blocks = extractBalancedJsonObjects(candidate);
+  if (blocks.length === 0) {
+    return {
+      turn: null,
+      error: "No JSON object {...} found in model response.",
+      rawPreview: stripped.slice(0, 240),
+    };
+  }
+
+  let lastParseError = "Unknown JSON structure.";
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    try {
+      const obj = JSON.parse(blocks[i]) as Record<string, unknown>;
+      const turn: ParsedAgentTurn = {};
+
+      if (typeof obj.thought === "string") turn.thought = obj.thought;
+      if (Array.isArray(obj.plan)) {
+        turn.plan = obj.plan.map((s) => String(s));
+      }
+
+      if (obj.action && typeof obj.action === "object" && !Array.isArray(obj.action)) {
+        const act = obj.action as Record<string, unknown>;
+        if (typeof act.tool === "string" && act.tool.trim().length > 0) {
+          const args =
+            act.arguments && typeof act.arguments === "object" && !Array.isArray(act.arguments)
+              ? (act.arguments as Record<string, unknown>)
+              : {};
+          turn.action = {
+            tool: act.tool.trim(),
+            arguments: args,
+          };
+        }
+      }
+
+      if (typeof obj.finalAnswer === "string") {
+        turn.finalAnswer = obj.finalAnswer;
+      }
+
+      if (turn.action || turn.finalAnswer !== undefined || turn.plan) {
+        return { turn, rawPreview: stripped.slice(0, 240) };
+      }
+      lastParseError = "JSON parsed, but missing required 'action', 'finalAnswer', or 'plan' key.";
+    } catch (err) {
+      lastParseError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  return { turn: null, error: lastParseError, rawPreview: stripped.slice(0, 240) };
+}
+
+export function parseStructuredTurn(rawText: string): ParsedAgentTurn | null {
+  return parseStructuredTurnWithDiagnostics(rawText).turn;
 }
