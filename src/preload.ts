@@ -91,3 +91,18 @@ contextBridge.exposeInMainWorld("notch", {
   markNotificationsRead: (id?: string) => ipcRenderer.invoke("notch:mark-read", id),
   setShelfOpen: (open: boolean) => ipcRenderer.invoke("notch:set-shelf-open", open),
 });
+
+contextBridge.exposeInMainWorld("learning", {
+  listSkills: (applicationId?: string, status?: string) =>
+    ipcRenderer.invoke("learning:list-skills", applicationId, status),
+  approveSkill: (skillId: string) => ipcRenderer.invoke("learning:approve-skill", skillId),
+  learnInstruction: (applicationId: string, name: string, instruction: string) =>
+    ipcRenderer.invoke("learning:learn-instruction", applicationId, name, instruction),
+  startDemo: (applicationId: string, name: string) =>
+    ipcRenderer.invoke("learning:start-demo", applicationId, name),
+  stopDemo: () => ipcRenderer.invoke("learning:stop-demo"),
+  addKnowledge: (payload: { applicationId: string; category: string; title: string; content: string }) =>
+    ipcRenderer.invoke("learning:add-knowledge", payload),
+  getKnowledge: (applicationId: string) => ipcRenderer.invoke("learning:get-knowledge", applicationId),
+  getStats: (applicationId: string) => ipcRenderer.invoke("learning:get-stats", applicationId),
+});

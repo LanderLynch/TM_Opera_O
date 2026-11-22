@@ -1,7 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
+import { ApplicationKnowledgeStore, KnowledgeCategory } from "../applications/applicationKnowledge";
 import { ApplicationManager } from "../applications/applicationManager";
+import { ApplicationStatisticsStore } from "../applications/applicationStatistics";
 import { ApplicationAction } from "../applications/applicationTypes";
+import { LearningEngine } from "../learning/learningEngine";
+import { SkillStore } from "../learning/skillStore";
+import { SkillStatus } from "../learning/skillTypes";
 import {
   createLiveWordDocument,
   findInstalledAppMatches,
@@ -26,6 +31,10 @@ export interface ToolRuntimeDependencies {
   searchWeb?: (query: string) => Promise<string>;
   shelfStore?: ShelfStore;
   openFilePath?: (filePath: string) => Promise<void>;
+  skillStore?: SkillStore;
+  learningEngine?: LearningEngine;
+  knowledgeStore?: ApplicationKnowledgeStore;
+  statisticsStore?: ApplicationStatisticsStore;
 }
 
 export class ToolRegistry {
@@ -780,6 +789,217 @@ export function createDefaultToolRegistry(deps: ToolRuntimeDependencies): ToolRe
           output: { deleted: ok, id: args.id },
           evidence: ok ? `Deleted Shelf item ${String(args.id)}.` : "Shelf item not found.",
           error: ok ? undefined : "Item not found.",
+        };
+      },
+    });
+  }
+
+  // ---- APPLICATION LEARNING, KNOWLEDGE & STATISTICS TOOLS ----
+  if (deps.skillStore && deps.learningEngine) {
+    const skillStore = deps.skillStore;
+    const learning = deps.learningEngine;
+
+    registry.register({
+      name: "skill_list",
+      description: "List learned application skills (optionally filtered by applicationId or status).",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        properties: {
+          applicationId: { type: "string", description: "Optional app id (e.g. stella-sora, steam, discord)." },
+          status: { type: "string", enum: ["draft", "approved", "needs-review", "deprecated"], description: "Optional status filter." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const items = skillStore.listAll(
+          args.applicationId ? String(args.applicationId) : undefined,
+          args.status ? (String(args.status) as SkillStatus) : undefined
+        );
+        return {
+          success: true,
+          output: items.map((s) => ({
+            id: s.id,
+            applicationId: s.applicationId,
+            name: s.name,
+            version: s.version,
+            status: s.status,
+            stepsCount: s.steps.length,
+          })),
+          evidence: `Found ${items.length} learned application skill(s).`,
+        };
+      },
+    });
+
+    registry.register({
+      name: "skill_learn_instruction",
+      description: "Convert a natural-language application workflow instruction into a structured draft ApplicationSkill.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["applicationId", "name", "instruction"],
+        properties: {
+          applicationId: { type: "string", minLength: 2, description: "Target app id (e.g. stella-sora)." },
+          name: { type: "string", minLength: 2, description: "Skill name (e.g. daily-routine)." },
+          instruction: { type: "string", minLength: 5, description: "Procedure description." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const skill = await learning.learnFromInstruction(
+          String(args.applicationId),
+          String(args.name),
+          String(args.instruction)
+        );
+        return {
+          success: true,
+          output: skill,
+          evidence: `Created draft skill "${skill.name}" (v${skill.version}) for ${skill.applicationId} with ${skill.steps.length} step(s).`,
+        };
+      },
+    });
+
+    registry.register({
+      name: "skill_approve",
+      description: "Approve a draft or needs-review ApplicationSkill so it becomes a trusted reusable procedure.",
+      permissionLevel: "confirm",
+      parameterSchema: {
+        type: "object",
+        required: ["skillId"],
+        properties: {
+          skillId: { type: "string", minLength: 3, description: "Skill ID to approve." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const approved = skillStore.approve(String(args.skillId));
+        return {
+          success: Boolean(approved),
+          output: approved,
+          evidence: approved
+            ? `Approved skill "${approved.name}" (v${approved.version}) for ${approved.applicationId}.`
+            : "Skill not found.",
+          error: approved ? undefined : "Skill not found.",
+        };
+      },
+    });
+  }
+
+  if (deps.knowledgeStore) {
+    const knowledge = deps.knowledgeStore;
+
+    registry.register({
+      name: "knowledge_add",
+      description: "Store an application-specific event notice, maintenance alert, personal note, gameplay tip, or reminder.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["applicationId", "category", "title", "content"],
+        properties: {
+          applicationId: { type: "string", minLength: 2, description: "Target application id." },
+          category: {
+            type: "string",
+            enum: ["event", "maintenance", "personal-note", "application-update", "gameplay", "reminder"],
+            description: "Knowledge category.",
+          },
+          title: { type: "string", minLength: 2, description: "Short title." },
+          content: { type: "string", minLength: 2, description: "Detailed content." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const rec = knowledge.add({
+          applicationId: String(args.applicationId),
+          category: String(args.category) as KnowledgeCategory,
+          title: String(args.title),
+          content: String(args.content),
+          source: "user",
+        });
+        return {
+          success: true,
+          output: rec,
+          evidence: `Saved ${rec.category} knowledge "${rec.title}" for ${rec.applicationId}.`,
+        };
+      },
+    });
+
+    registry.register({
+      name: "knowledge_query",
+      description: "Contextually retrieve active, non-expired knowledge and reminders for a specific application.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["applicationId"],
+        properties: {
+          applicationId: { type: "string", minLength: 2, description: "Target application id." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const items = knowledge.getRelevant(String(args.applicationId));
+        return {
+          success: true,
+          output: items,
+          evidence: `Retrieved ${items.length} active knowledge item(s) for ${String(args.applicationId)}.`,
+        };
+      },
+    });
+  }
+
+  if (deps.statisticsStore) {
+    const stats = deps.statisticsStore;
+
+    registry.register({
+      name: "stats_record_session",
+      description: "Record a verified application workflow session (completed/pending activities and verified results).",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["applicationId", "taskName", "status"],
+        properties: {
+          applicationId: { type: "string", minLength: 2, description: "Target application id." },
+          taskName: { type: "string", minLength: 2, description: "Workflow/task name." },
+          status: { type: "string", enum: ["completed", "partial", "failed", "cancelled"], description: "Verified outcome." },
+          completedActivities: { type: "array", description: "Verified completed items." },
+          pendingActivities: { type: "array", description: "Remaining pending items." },
+          verifiedResults: { type: "array", description: "Verified result notes." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const s = stats.startSession(String(args.applicationId), String(args.taskName));
+        const finished = stats.finishSession(s.id, {
+          status: String(args.status) as "completed" | "partial" | "failed" | "cancelled",
+          completedActivities: Array.isArray(args.completedActivities) ? args.completedActivities.map(String) : [],
+          pendingActivities: Array.isArray(args.pendingActivities) ? args.pendingActivities.map(String) : [],
+          verifiedResults: Array.isArray(args.verifiedResults) ? args.verifiedResults.map(String) : [],
+        });
+        return {
+          success: Boolean(finished),
+          output: finished,
+          evidence: `Recorded ${String(args.status)} session "${String(args.taskName)}" for ${String(args.applicationId)}.`,
+        };
+      },
+    });
+
+    registry.register({
+      name: "stats_summary",
+      description: "Get verified historical statistics summary for an application.",
+      permissionLevel: "autonomous",
+      parameterSchema: {
+        type: "object",
+        required: ["applicationId"],
+        properties: {
+          applicationId: { type: "string", minLength: 2, description: "Target application id." },
+        },
+        additionalProperties: false,
+      },
+      async execute(args) {
+        const summary = stats.getSummary(String(args.applicationId));
+        return {
+          success: true,
+          output: summary,
+          evidence: `Stats summary for ${summary.applicationId}: ${summary.completedSessions}/${summary.totalSessions} completed sessions.`,
         };
       },
     });

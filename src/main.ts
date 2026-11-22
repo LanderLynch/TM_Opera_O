@@ -26,6 +26,11 @@ import { AgentRuntime } from "./agent/agentRuntime";
 import { stopKeyboardWorker } from "./desktop/keyboard";
 import { AgentModelClient, ModelTier, selectModelForTier } from "./ai/toolCalling";
 import { eventBus } from "./core/eventBus";
+import { ApplicationKnowledgeStore, KnowledgeCategory } from "./applications/applicationKnowledge";
+import { ApplicationStatisticsStore } from "./applications/applicationStatistics";
+import { LearningEngine } from "./learning/learningEngine";
+import { SkillStore } from "./learning/skillStore";
+import { SkillStatus } from "./learning/skillTypes";
 import { NotificationHub } from "./notch/notificationHub";
 import { getSystemMetrics } from "./notch/systemMonitor";
 import { ShelfItemType, ShelfStore } from "./shelf/shelfStore";
@@ -2053,6 +2058,10 @@ const agentModelClient: AgentModelClient = {
 };
 
 const shelfStore = new ShelfStore(app.getPath("userData"));
+const skillStore = new SkillStore(app.getPath("userData"));
+const learningEngine = new LearningEngine(skillStore);
+const knowledgeStore = new ApplicationKnowledgeStore(app.getPath("userData"));
+const statisticsStore = new ApplicationStatisticsStore(app.getPath("userData"));
 const notificationHub = new NotificationHub();
 
 const agentToolRegistry = createDefaultToolRegistry({
@@ -2062,6 +2071,10 @@ const agentToolRegistry = createDefaultToolRegistry({
   },
   searchWeb: searchOnlineContext,
   shelfStore,
+  skillStore,
+  learningEngine,
+  knowledgeStore,
+  statisticsStore,
   openFilePath: async (filePath: string) => {
     await shell.openPath(filePath);
   },
@@ -2354,6 +2367,56 @@ ipcMain.handle("notch:set-shelf-open", (_e, open: unknown) => {
   return { ok: true };
 });
 
+ipcMain.handle("learning:list-skills", (_e, applicationId?: unknown, status?: unknown) =>
+  skillStore.listAll(
+    applicationId ? String(applicationId) : undefined,
+    status ? (String(status) as SkillStatus) : undefined
+  )
+);
+
+ipcMain.handle("learning:approve-skill", (_e, skillId: unknown) => {
+  const approved = skillStore.approve(String(skillId || ""));
+  if (approved) {
+    notificationHub.push("agent", "Skill Approved", `${approved.applicationId}: ${approved.name} v${approved.version}`);
+  }
+  return approved;
+});
+
+ipcMain.handle("learning:learn-instruction", async (_e, appId: unknown, name: unknown, instruction: unknown) =>
+  await learningEngine.learnFromInstruction(
+    String(appId || ""),
+    String(name || "workflow"),
+    String(instruction || ""),
+    agentModelClient
+  )
+);
+
+ipcMain.handle("learning:start-demo", (_e, appId: unknown, name: unknown) => {
+  learningEngine.recorder.start(String(appId || ""), String(name || "demo-skill"));
+  return { ok: true };
+});
+
+ipcMain.handle("learning:stop-demo", () => learningEngine.recorder.stopAndPropose(skillStore));
+
+ipcMain.handle("learning:add-knowledge", (_e, payload: unknown) => {
+  const p = (payload || {}) as { applicationId?: string; category?: string; title?: string; content?: string };
+  return knowledgeStore.add({
+    applicationId: String(p.applicationId || "general"),
+    category: (p.category || "personal-note") as KnowledgeCategory,
+    title: String(p.title || "Note"),
+    content: String(p.content || ""),
+    source: "user",
+  });
+});
+
+ipcMain.handle("learning:get-knowledge", (_e, appId: unknown) =>
+  knowledgeStore.getRelevant(String(appId || ""))
+);
+
+ipcMain.handle("learning:get-stats", (_e, appId: unknown) =>
+  statisticsStore.getSummary(String(appId || ""))
+);
+
 app.whenReady().then(() => {
   createWindows();
   startBackgroundLoops();
@@ -2379,6 +2442,9 @@ function cleanupAndQuit(): void {
   } catch {}
   try {
     shelfStore?.close();
+    skillStore?.close();
+    knowledgeStore?.close();
+    statisticsStore?.close();
   } catch {}
   for (const win of BrowserWindow.getAllWindows()) {
     try {

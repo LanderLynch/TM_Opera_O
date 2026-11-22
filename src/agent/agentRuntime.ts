@@ -1,4 +1,5 @@
 import { AgentModelClient, ModelTier } from "../ai/toolCalling";
+import { desktopExecutionLock } from "./executionLock";
 import { ExecutionCancelledError } from "../core/errors";
 import { eventBus } from "../core/eventBus";
 import { logger } from "../core/logger";
@@ -58,6 +59,13 @@ export class AgentRuntime {
 
   public async runObjective(goal: string, workingDirectory?: string): Promise<AgentTask> {
     const { task, signal } = this.taskManager.createTask(goal, workingDirectory);
+    const lock = desktopExecutionLock.acquire(task.id);
+    if (!lock.ok) {
+      const msg = `Desktop execution lock is currently held by task "${lock.holder}".`;
+      this.taskManager.setStatus(task.id, "failed", msg);
+      eventBus.emit("task:failed", { taskId: task.id, error: msg });
+      return task;
+    }
     const startMs = Date.now();
     logger.info("runtime", "Starting agent objective", { taskId: task.id, goal });
 
@@ -221,6 +229,8 @@ export class AgentRuntime {
       this.taskManager.setStatus(task.id, "failed", msg);
       eventBus.emit("task:failed", { taskId: task.id, error: msg });
       return task;
+    } finally {
+      desktopExecutionLock.release(task.id);
     }
   }
 }
