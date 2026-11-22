@@ -227,6 +227,34 @@
             background: #38bdf8;
         }
 
+        /* Smooth Directional Slide Animations */
+        @keyframes slideInFromRight {
+            from {
+                opacity: 0;
+                transform: translateX(28px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-28px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+        .slide-enter-right {
+            animation: slideInFromRight 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .slide-enter-left {
+            animation: slideInFromLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
         /* Hover Tooltip Card inside Usage Slide */
         .usage-card {
             position: relative;
@@ -360,6 +388,10 @@
         .shelf-item:hover {
             background: rgba(255, 255, 255, 0.09);
             border-color: rgba(255, 255, 255, 0.22);
+        }
+        .shelf-item.selected {
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(248, 113, 113, 0.72);
         }
 
         .shelf-filter-btn {
@@ -713,14 +745,17 @@
             <!-- HORIZONTAL SLIDE-OUT SHELF PANEL -->
             <div id="shelf-panel" class="shelf-panel notch-interactive" tabindex="0">
                 <div class="flex items-center justify-between gap-1.5 pb-1 border-b border-white/10">
-                    <div class="flex items-center gap-1">
-                        <input id="shelf-search" type="text" placeholder="Search shelf..." oninput="refreshShelf()" onclick="event.stopPropagation()" class="bg-white/10 border border-white/10 rounded-lg px-2 py-0.5 text-[10px] text-white placeholder-white/40 w-[108px] focus:outline-none focus:border-white/30">
+                    <div class="flex items-center gap-1 min-w-0">
+                        <input id="shelf-search" type="text" placeholder="Search..." oninput="refreshShelf()" onclick="event.stopPropagation()" class="bg-white/10 border border-white/10 rounded-lg px-2 py-0.5 text-[10px] text-white placeholder-white/40 w-[84px] focus:outline-none focus:border-white/30">
                         <button onclick="setShelfFilter('all', event)" data-filter="all" class="shelf-filter-btn active">All</button>
                         <button onclick="setShelfFilter('image', event)" data-filter="image" class="shelf-filter-btn">Img</button>
                         <button onclick="setShelfFilter('document', event)" data-filter="document" class="shelf-filter-btn">Doc</button>
                         <button onclick="setShelfFilter('text', event)" data-filter="text" class="shelf-filter-btn">Txt</button>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
+                        <button id="shelf-select-btn" onclick="toggleShelfSelectMode(event)" title="Pilih beberapa item untuk dihapus" class="px-1.5 h-5 rounded-md bg-white/10 hover:bg-white/20 text-[9.5px] font-semibold text-white/80">Select</button>
+                        <button id="shelf-select-all-btn" onclick="toggleSelectAllShelf(event)" title="Pilih semua" class="hidden px-1.5 h-5 rounded-md bg-white/10 hover:bg-white/20 text-[9.5px] font-semibold text-white/80">All</button>
+                        <button id="shelf-delete-selected-btn" onclick="deleteSelectedShelfItems(event)" title="Hapus item terpilih" class="hidden px-1.5 h-5 rounded-md bg-red-500/80 hover:bg-red-500 text-[9.5px] font-semibold text-white">Del (0)</button>
                         <button onclick="openShelfAddDialog(event)" title="Add files (or Ctrl+V / Drag & Drop)" class="w-5 h-5 rounded-md bg-white/10 hover:bg-white/25 text-white text-[12px] leading-none flex items-center justify-center">+</button>
                         <button onclick="toggleShelf(event, false)" title="Collapse Shelf" class="w-5 h-5 rounded-md bg-white/5 hover:bg-white/20 text-white/70 text-[11px] leading-none flex items-center justify-center">×</button>
                     </div>
@@ -766,15 +801,27 @@
         const TOTAL_SLIDES = 8;
         let userPinnedSlideUntil = 0;
 
-        function goToSlide(idx, e, isAuto = false) {
+        function goToSlide(idx, e, isAuto = false, dirHint = 0) {
             if (e) e.stopPropagation();
             if (!isAuto) {
                 userPinnedSlideUntil = Date.now() + 12000;
             }
-            currentSlide = (idx + TOTAL_SLIDES) % TOTAL_SLIDES;
+            const prevIdx = currentSlide;
+            const targetIdx = (idx + TOTAL_SLIDES) % TOTAL_SLIDES;
+            if (targetIdx === prevIdx) return;
+
+            const isForward = dirHint !== 0 ? dirHint > 0 : targetIdx > prevIdx;
+            currentSlide = targetIdx;
             for (let i = 0; i < TOTAL_SLIDES; i++) {
                 const el = document.getElementById(`slide-${i}`);
-                if (el) el.classList.toggle('hidden', i !== currentSlide);
+                if (!el) continue;
+                el.classList.remove('slide-enter-right', 'slide-enter-left');
+                el.classList.toggle('hidden', i !== currentSlide);
+            }
+            const activeEl = document.getElementById(`slide-${currentSlide}`);
+            if (activeEl) {
+                void activeEl.offsetWidth;
+                activeEl.classList.add(isForward ? 'slide-enter-right' : 'slide-enter-left');
             }
             const dots = document.querySelectorAll('.slide-dot');
             dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
@@ -783,8 +830,8 @@
             }
         }
 
-        function nextSlide(e) { goToSlide(currentSlide + 1, e); }
-        function prevSlide(e) { goToSlide(currentSlide - 1, e); }
+        function nextSlide(e) { goToSlide(currentSlide + 1, e, false, 1); }
+        function prevSlide(e) { goToSlide(currentSlide - 1, e, false, -1); }
 
         let hoverSlideTimer = null;
         function hoverToSlide(idx, e) {
@@ -1386,6 +1433,68 @@
         let shelfFilter = 'all';
         let shelfItems = [];
         let activeModalItem = null;
+        let shelfSelectMode = false;
+        const selectedShelfIds = new Set();
+
+        function updateShelfSelectionBar() {
+            const selectBtn = document.getElementById('shelf-select-btn');
+            const selectAllBtn = document.getElementById('shelf-select-all-btn');
+            const delBtn = document.getElementById('shelf-delete-selected-btn');
+            const count = selectedShelfIds.size;
+            if (selectBtn) {
+                selectBtn.textContent = shelfSelectMode ? 'Done' : 'Select';
+                selectBtn.classList.toggle('bg-sky-500/30', shelfSelectMode);
+                selectBtn.classList.toggle('text-sky-200', shelfSelectMode);
+            }
+            if (selectAllBtn) {
+                selectAllBtn.classList.toggle('hidden', !shelfSelectMode);
+                selectAllBtn.textContent = (shelfItems.length > 0 && count === shelfItems.length) ? 'None' : 'All';
+            }
+            if (delBtn) {
+                delBtn.classList.toggle('hidden', count === 0);
+                delBtn.textContent = `Del (${count})`;
+            }
+        }
+
+        function toggleShelfSelectMode(e) {
+            if (e) e.stopPropagation();
+            shelfSelectMode = !shelfSelectMode;
+            if (!shelfSelectMode) selectedShelfIds.clear();
+            updateShelfSelectionBar();
+            renderShelfItems();
+        }
+
+        function toggleSelectAllShelf(e) {
+            if (e) e.stopPropagation();
+            if (shelfItems.length > 0 && selectedShelfIds.size === shelfItems.length) {
+                selectedShelfIds.clear();
+            } else {
+                for (const item of shelfItems) selectedShelfIds.add(item.id);
+            }
+            updateShelfSelectionBar();
+            renderShelfItems();
+        }
+
+        function toggleShelfItemSelection(id, e) {
+            if (e) e.stopPropagation();
+            if (selectedShelfIds.has(id)) selectedShelfIds.delete(id);
+            else selectedShelfIds.add(id);
+            updateShelfSelectionBar();
+            renderShelfItems();
+        }
+
+        async function deleteSelectedShelfItems(e) {
+            if (e) e.stopPropagation();
+            if (!window.shelf || selectedShelfIds.size === 0) return;
+            const ids = Array.from(selectedShelfIds);
+            for (const id of ids) {
+                await window.shelf.delete(id);
+            }
+            selectedShelfIds.clear();
+            shelfSelectMode = false;
+            updateShelfSelectionBar();
+            refreshShelf();
+        }
 
         async function toggleShelf(e, forceState) {
             if (e) e.stopPropagation();
@@ -1429,6 +1538,11 @@
                 shelfItems = Array.isArray(items) ? items : [];
                 const badge = document.getElementById('shelf-count-badge');
                 if (badge) badge.textContent = String(shelfItems.length);
+                const visibleIds = new Set(shelfItems.map((x) => x.id));
+                for (const id of Array.from(selectedShelfIds)) {
+                    if (!visibleIds.has(id)) selectedShelfIds.delete(id);
+                }
+                updateShelfSelectionBar();
                 renderShelfItems();
             } catch {}
         }
@@ -1442,12 +1556,17 @@
             }
             track.innerHTML = shelfItems.map((item) => {
                 const isImg = item.type === 'image';
+                const isSelected = selectedShelfIds.has(item.id);
                 const icon = item.type === 'document' ? 'DOC' : (item.type === 'text' ? 'TXT' : 'FILE');
                 const previewHtml = isImg && item.filePath
                     ? `<img src="file:///${encodeURI(item.filePath.replace(/\\\\/g, '/'))}" class="w-full h-[50px] object-cover rounded-lg bg-black/30" draggable="false" />`
                     : `<div class="w-full h-[50px] rounded-lg bg-white/[0.06] flex items-center justify-center text-[11px] font-bold text-white/70">${icon}</div>`;
+                const checkHtml = (shelfSelectMode || isSelected)
+                    ? `<span onclick="toggleShelfItemSelection('${escapeHtml(item.id)}', event)" class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full border ${isSelected ? 'bg-red-500 border-red-300 text-white' : 'bg-black/60 border-white/40 text-transparent'} text-[9px] font-bold flex items-center justify-center">✓</span>`
+                    : '';
                 return `
-                    <div class="shelf-item" onclick="handleShelfItemClick('${escapeHtml(item.id)}', event)">
+                    <div class="shelf-item ${isSelected ? 'selected' : ''}" onclick="handleShelfItemClick('${escapeHtml(item.id)}', event)">
+                        ${checkHtml}
                         ${previewHtml}
                         <div class="min-w-0">
                             <div class="text-[10px] font-medium text-white truncate">${escapeHtml(item.name)}</div>
@@ -1473,6 +1592,10 @@
 
         async function handleShelfItemClick(id, e) {
             if (e) e.stopPropagation();
+            if (shelfSelectMode || (e && (e.ctrlKey || e.shiftKey))) {
+                toggleShelfItemSelection(id, e);
+                return;
+            }
             const item = shelfItems.find((x) => x.id === id) || (window.shelf ? await window.shelf.get(id) : null);
             if (!item) return;
             if (item.type === 'image' || item.type === 'text') {
