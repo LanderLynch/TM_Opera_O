@@ -37,6 +37,21 @@ import { NotificationHub } from "./notch/notificationHub";
 import { getSystemMetrics } from "./notch/systemMonitor";
 import { ShelfItemType, ShelfStore } from "./shelf/shelfStore";
 import { createDefaultToolRegistry } from "./tools/registry";
+import {
+  LegacyAppSettings,
+  PartialSettingsPatch,
+  SettingsSectionKey,
+  SettingsV2,
+} from "./settings/settingsSchema";
+import { SettingsStore } from "./settings/settingsStore";
+import {
+  checkPrivacyToolAccess,
+  clearSafeCache,
+  clearSafeLogs,
+  getProviderStatuses,
+  getStorageBreakdown,
+  isReminderSuppressed,
+} from "./settings/settingsRuntime";
 
 const BASE = path.resolve(__dirname, "..");
 
@@ -95,62 +110,30 @@ const USAGE_FILE = path.join(BASE, "usage.json");
 const SETTINGS_FILE = path.join(BASE, "settings.json");
 const GDRIVE_MEMORY_FOLDER_URL = "https://drive.google.com/drive/folders/1vX9buLsxScng0ccqH3lvy8Gyc9bEra9V?usp=sharing";
 
-interface AppSettings {
-  colorAlbumFocus: boolean;
-  customAccentColor: string;
-  mediaPriority: "spotify" | "youtube" | "any";
-  compactLyric: boolean;
-  lyricOffsetSec: number;
-  personaPreset: "soft" | "hype" | "calm" | "tsundere";
-  customPersona: string;
-  reminderEnabled: boolean;
-  reminderMinutes: number;
-  focusModeEnabled: boolean;
-}
+type AppSettings = LegacyAppSettings;
 
-function loadAppSettings(): AppSettings {
-  try {
-    if (fs.existsSync(SETTINGS_FILE)) {
-      const raw = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf-8"));
-      return {
-        colorAlbumFocus: raw.colorAlbumFocus !== false,
-        customAccentColor: String(raw.customAccentColor || "#f472b6"),
-        mediaPriority: raw.mediaPriority || "spotify",
-        compactLyric: raw.compactLyric !== false,
-        lyricOffsetSec: Number(raw.lyricOffsetSec || 0),
-        personaPreset: raw.personaPreset || "soft",
-        customPersona: String(raw.customPersona || ""),
-        reminderEnabled: raw.reminderEnabled !== false,
-        reminderMinutes: Number(raw.reminderMinutes || 120),
-        focusModeEnabled: raw.focusModeEnabled !== false,
-      };
-    }
-  } catch {}
-  return {
-    colorAlbumFocus: true,
-    customAccentColor: "#f472b6",
-    mediaPriority: "spotify",
-    compactLyric: true,
-    lyricOffsetSec: 0,
-    personaPreset: "soft",
-    customPersona: "",
-    reminderEnabled: true,
-    reminderMinutes: 120,
-    focusModeEnabled: true,
-  };
-}
-
-let appSettings: AppSettings = loadAppSettings();
+const settingsStore = new SettingsStore(SETTINGS_FILE);
+let appSettings: AppSettings = settingsStore.getLegacy();
 setMediaPriority(appSettings.mediaPriority);
 
-function saveAppSettings(s: Partial<AppSettings>): void {
-  appSettings = { ...appSettings, ...s };
-  if (s.mediaPriority) {
-    setMediaPriority(appSettings.mediaPriority);
-  }
+function applyRuntimeSettings(v2: SettingsV2): void {
+  appSettings = settingsStore.getLegacy();
+  setMediaPriority(v2.media.mediaPriority);
   try {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2), "utf-8");
+    if (typeof ttsEnabled !== "undefined") {
+      ttsEnabled = v2.opera.ttsEnabled;
+    }
   } catch {}
+  try {
+    app.setLoginItemSettings({
+      openAtLogin: v2.system.startWithWindows,
+    });
+  } catch {}
+}
+
+function saveAppSettings(s: Partial<AppSettings>): void {
+  const updated = settingsStore.updateLegacy(s);
+  applyRuntimeSettings(updated);
 }
 
 interface UsageStore {
@@ -1585,6 +1568,8 @@ function startBackgroundLoops(): void {
 
   setInterval(() => {
     if (focusMode) return;
+    const remCheck = isReminderSuppressed(new Date(), currentActiveWindow, settingsStore.get().reminder);
+    if (remCheck.suppressed) return;
     const now = Date.now();
     REMINDERS.forEach(([interval, msg], i) => {
       if (now >= nexts[i]) {
@@ -2501,7 +2486,162 @@ ipcMain.handle("stella-sora:pause", () => stellaSoraManager.pause());
 ipcMain.handle("stella-sora:resume", () => stellaSoraManager.resume());
 ipcMain.handle("stella-sora:stop", async () => await stellaSoraManager.stop());
 
+// ---------------------------------------------------------
+// SETTINGS V2 IPC HANDLERS
+// ---------------------------------------------------------
+ipcMain.handle("settings:get", () => settingsStore.get());
+
+ipcMain.handle("settings:update", (_event, patch: PartialSettingsPatch) => {
+  const updated = settingsStore.update(patch || {});
+  applyRuntimeSettings(updated);
+  return updated;
+});
+
+ipcMain.handle("settings:reset-section", (_event, section: SettingsSectionKey) => {
+  const updated = settingsStore.resetSection(section);
+  applyRuntimeSettings(updated);
+  return updated;
+});
+
+ipcMain.handle("settings:export", () => settingsStore.exportConfig());
+
+ipcMain.handle("settings:import", (_event, rawJson: string) => {
+  const result = settingsStore.importConfig(String(rawJson || ""));
+  if (result.ok) {
+    applyRuntimeSettings(result.settings);
+  }
+  return result;
+});
+
+ipcMain.handle("settings:backup", () => {
+  const backupPath = settingsStore.createBackup();
+  return { ok: true, path: backupPath };
+});
+
+ipcMain.handle("settings:provider-statuses", () => {
+  return getProviderStatuses(settingsStore.get().ai.ollamaUrl);
+});
+
+ipcMain.handle("settings:test-provider", async (_event, providerId: string) => {
+  const id = String(providerId || "");
+  const s = settingsStore.get();
+  const started = Date.now();
+  try {
+    if (id === "ollama") {
+      const base = (s.ai.ollamaUrl || "http://localhost:11434/api/chat").replace(/\/api\/chat\/?$/, "");
+      const res = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(4000) });
+      return { ok: res.ok, latencyMs: Date.now() - started, message: res.ok ? "Ollama reachable" : `HTTP ${res.status}` };
+    }
+    if (id === "pecut") {
+      const key = process.env.DEEPSEEK_API_KEY || "";
+      if (!key) return { ok: false, latencyMs: 0, message: "DEEPSEEK_API_KEY not set in .env" };
+      const res = await fetch("https://api.pecutopus.web.id/v1/models", {
+        headers: { Authorization: `Bearer ${key}` },
+        signal: AbortSignal.timeout(6000),
+      });
+      return { ok: res.ok, latencyMs: Date.now() - started, message: res.ok ? "Pecut API reachable" : `HTTP ${res.status}` };
+    }
+    if (id === "gemini") {
+      const key = process.env.GEMINI_API_KEY || "";
+      if (!key) return { ok: false, latencyMs: 0, message: "GEMINI_API_KEY not set in .env" };
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`, {
+        signal: AbortSignal.timeout(6000),
+      });
+      return { ok: res.ok, latencyMs: Date.now() - started, message: res.ok ? "Gemini API reachable" : `HTTP ${res.status}` };
+    }
+    if (id === "elevenlabs") {
+      const key = process.env.ELEVENLABS_API_KEY || "";
+      if (!key) return { ok: false, latencyMs: 0, message: "ELEVENLABS_API_KEY not set in .env" };
+      const res = await fetch("https://api.elevenlabs.io/v1/user", {
+        headers: { "xi-api-key": key },
+        signal: AbortSignal.timeout(6000),
+      });
+      return { ok: res.ok, latencyMs: Date.now() - started, message: res.ok ? "ElevenLabs reachable" : `HTTP ${res.status}` };
+    }
+    return { ok: false, latencyMs: 0, message: `Unknown provider "${id}"` };
+  } catch (err) {
+    return { ok: false, latencyMs: Date.now() - started, message: err instanceof Error ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle("settings:discover-ollama", async () => {
+  const s = settingsStore.get();
+  const base = (s.ai.ollamaUrl || "http://localhost:11434/api/chat").replace(/\/api\/chat\/?$/, "");
+  try {
+    const res = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(3500) });
+    if (!res.ok) return { ok: false, models: [], error: `HTTP ${res.status}` };
+    const data = (await res.json()) as { models?: Array<{ name?: string }> };
+    const models = (data.models || []).map((m) => m.name).filter((n): n is string => Boolean(n));
+    return { ok: true, models };
+  } catch (err) {
+    return { ok: false, models: [], error: err instanceof Error ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle("settings:storage-info", () => {
+  return getStorageBreakdown(app.getPath("userData"), BASE);
+});
+
+ipcMain.handle("settings:clear-cache", () => {
+  return clearSafeCache(app.getPath("userData"), BASE);
+});
+
+ipcMain.handle("settings:clear-logs", () => {
+  return clearSafeLogs(app.getPath("userData"), BASE);
+});
+
+ipcMain.handle("settings:audit-log", () => {
+  return agentRuntime.auditLog.getRecentAudit(50);
+});
+
+ipcMain.handle("settings:system-info", () => {
+  return {
+    metrics: getSystemMetrics(),
+    stellaSora: stellaSoraManager.getStatus(),
+    recorderActive: learningEngine.recorder.isRecording(),
+  };
+});
+
+ipcMain.handle("settings:about-info", () => {
+  let version = "1.0.0";
+  let description = "TM Opera O — AI Talker (Electron + TypeScript)";
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(BASE, "package.json"), "utf-8"));
+    version = pkg.version || version;
+    description = pkg.description || description;
+  } catch {}
+  return {
+    name: "TM Opera O",
+    version,
+    description,
+    electron: process.versions.electron,
+    node: process.versions.node,
+    chrome: process.versions.chrome,
+    platform: process.platform,
+    arch: process.arch,
+    userDataDir: app.getPath("userData"),
+    baseDir: BASE,
+  };
+});
+
+ipcMain.handle("settings:open-folder", async (_event, which: "userData" | "base") => {
+  const target = which === "userData" ? app.getPath("userData") : BASE;
+  await shell.openPath(target);
+  return true;
+});
+
+ipcMain.handle("settings:pick-folder", async () => {
+  const res = await dialog.showOpenDialog({ properties: ["openDirectory"] });
+  if (res.canceled || res.filePaths.length === 0) return { canceled: true, path: "" };
+  return { canceled: false, path: res.filePaths[0] };
+});
+
+ipcMain.handle("settings:check-privacy", (_event, toolName: string) => {
+  return checkPrivacyToolAccess(String(toolName || ""), settingsStore.get().privacy);
+});
+
 app.whenReady().then(() => {
+  applyRuntimeSettings(settingsStore.get());
   createWindows();
   startBackgroundLoops();
   startMediaWatcher();

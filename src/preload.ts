@@ -114,3 +114,24 @@ contextBridge.exposeInMainWorld("stellaSora", {
   resume: () => ipcRenderer.invoke("stella-sora:resume"),
   stop: () => ipcRenderer.invoke("stella-sora:stop"),
 });
+
+contextBridge.exposeInMainWorld("settings", {
+  get: () => ipcRenderer.invoke("settings:get"),
+  update: (patch: unknown) => ipcRenderer.invoke("settings:update", patch),
+  resetSection: (section: string) => ipcRenderer.invoke("settings:reset-section", section),
+  exportConfig: () => ipcRenderer.invoke("settings:export"),
+  importConfig: (rawJson: string) => ipcRenderer.invoke("settings:import", rawJson),
+  backup: () => ipcRenderer.invoke("settings:backup"),
+  providerStatuses: () => ipcRenderer.invoke("settings:provider-statuses"),
+  testProvider: (providerId: string) => ipcRenderer.invoke("settings:test-provider", providerId),
+  discoverOllama: () => ipcRenderer.invoke("settings:discover-ollama"),
+  storageInfo: () => ipcRenderer.invoke("settings:storage-info"),
+  clearCache: () => ipcRenderer.invoke("settings:clear-cache"),
+  clearLogs: () => ipcRenderer.invoke("settings:clear-logs"),
+  auditLog: () => ipcRenderer.invoke("settings:audit-log"),
+  systemInfo: () => ipcRenderer.invoke("settings:system-info"),
+  aboutInfo: () => ipcRenderer.invoke("settings:about-info"),
+  openFolder: (which: "userData" | "base") => ipcRenderer.invoke("settings:open-folder", which),
+  pickFolder: () => ipcRenderer.invoke("settings:pick-folder"),
+  checkPrivacy: (toolName: string) => ipcRenderer.invoke("settings:check-privacy", toolName),
+});

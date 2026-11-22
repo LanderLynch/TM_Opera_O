@@ -248,7 +248,8 @@
                 </div>
 
                 <!-- Navigation List (36px row height, 4px gap, 16px Lucide 1.5 stroke icons) -->
-                <nav class="flex flex-col gap-1" style="-webkit-app-region: no-drag;">
+                <nav class="flex-1 flex flex-col gap-0.5 overflow-y-auto pr-1" style="-webkit-app-region: no-drag;">
+                    <div class="px-2.5 pt-1 pb-1 text-[10px] font-semibold tracking-wider uppercase" style="color: var(--text-muted);">Personalization</div>
                     <div class="nav-item active" onclick="switchPanel('media', this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
@@ -267,16 +268,58 @@
                         </svg>
                         <span>Pengingat dan fokus</span>
                     </div>
+
+                    <div class="px-2.5 pt-3 pb-1 text-[10px] font-semibold tracking-wider uppercase" style="color: var(--text-muted);">Control &amp; System</div>
                     <div class="nav-item" onclick="switchPanel('turbo', this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
                         </svg>
                         <span>Kontrol PC</span>
                     </div>
+                    <div class="nav-item" onclick="switchPanel('ai', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span>AI &amp; Models</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('automation', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                        <span>Automation &amp; Skills</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('privacy', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                        <span>Privacy &amp; Permissions</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('system', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        <span>System &amp; Performance</span>
+                    </div>
+                    <div class="nav-item" onclick="switchPanel('storage', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
+                        </svg>
+                        <span>Storage &amp; Backup</span>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t" style="border-color: var(--hairline);">
+                        <div class="px-2.5 pt-0.5 pb-1 text-[10px] font-semibold tracking-wider uppercase" style="color: var(--text-muted);">Information</div>
+                        <div class="nav-item" onclick="switchPanel('about', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                            </svg>
+                            <span>About</span>
+                        </div>
+                    </div>
                 </nav>
             </div>
 
-            <div style="-webkit-app-region: no-drag;">
+            <div class="pt-3" style="-webkit-app-region: no-drag;">
                 <button onclick="callApi('close_settings')" class="btn-secondary w-full">
                     Tutup pengaturan
                 </button>
@@ -287,14 +330,22 @@
         <main class="flex-1 h-full flex flex-col overflow-hidden">
             <!-- Header (56px tall, 1:1 36x36 close button) -->
             <header class="h-14 px-6 flex items-center justify-between border-b shrink-0" style="border-color: var(--hairline); -webkit-app-region: drag;">
-                <h1 id="panel-title" class="text-[16px] font-medium" style="color: var(--text-primary);">Media dan notch</h1>
-                <button style="-webkit-app-region: no-drag;" onclick="callApi('close_settings')"
-                    class="w-9 h-9 rounded-[8px] flex items-center justify-center hover:bg-[#232325] transition-colors"
-                    title="Tutup">
-                    <svg class="w-4 h-4" style="stroke: var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-                    </svg>
-                </button>
+                <div class="flex items-center gap-3">
+                    <h1 id="panel-title" class="text-[16px] font-medium" style="color: var(--text-primary);">Media dan notch</h1>
+                    <span id="save-status-pill" class="text-[11px] px-2 py-0.5 rounded-full hidden" style="background: var(--bg-raised); color: var(--text-muted);">Saved.</span>
+                </div>
+                <div class="flex items-center gap-2" style="-webkit-app-region: no-drag;">
+                    <button id="btn-reset-section" onclick="resetCurrentSection()" class="btn-secondary text-[12px] px-2.5 py-1.5" title="Reset halaman ini ke default">
+                        Reset default
+                    </button>
+                    <button onclick="callApi('close_settings')"
+                        class="w-9 h-9 rounded-[8px] flex items-center justify-center hover:bg-[#232325] transition-colors"
+                        title="Tutup">
+                        <svg class="w-4 h-4" style="stroke: var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </div>
             </header>
 
             <!-- Content Body -->
@@ -381,8 +432,29 @@
                         <div class="pt-3 border-t" style="border-color: var(--hairline);">
                             <div class="text-[13px] font-medium mb-2" style="color: var(--text-secondary);">Arahan kepribadian tambahan</div>
                             <textarea id="cfg-custom-persona" rows="2" placeholder="Contoh: Panggil aku Sayang, gunakan kalimat pendek yang tenang"
-                                onchange="saveCustomConfig()"
+                                oninput="debouncedSave('opera')"
                                 class="control-input w-full"></textarea>
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Suara TTS aktif</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Aktifkan pembacaan suara balasan AI</div>
+                            </div>
+                            <input type="checkbox" id="cfg-tts-enabled" class="toggle" checked onchange="saveSection('opera')">
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Suara TTS</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Pilih profil suara untuk output ucapan</div>
+                            </div>
+                            <select id="cfg-tts-voice" onchange="saveSection('opera')" class="control-select text-[13px]">
+                                <option value="auto">Otomatis (Gemini / Edge)</option>
+                                <option value="id-ID-GadisNeural">Gadis (id-ID)</option>
+                                <option value="id-ID-ArdiNeural">Ardi (id-ID)</option>
+                                <option value="en-US-AriaNeural">Aria (en-US)</option>
+                            </select>
                         </div>
 
                         <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
@@ -463,6 +535,30 @@
                             <input type="checkbox" id="cfg-focus-on" class="toggle" checked onchange="saveCustomConfig()">
                         </div>
 
+                        <div class="pt-3 border-t grid grid-cols-2 gap-3" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[13px] font-medium mb-1">Jam aktif mulai</div>
+                                <input type="time" id="cfg-rem-start" value="08:00" onchange="saveSection('reminder')" class="control-input w-full font-mono-num">
+                            </div>
+                            <div>
+                                <div class="text-[13px] font-medium mb-1">Jam aktif selesai</div>
+                                <input type="time" id="cfg-rem-end" value="23:00" onchange="saveSection('reminder')" class="control-input w-full font-mono-num">
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Durasi snooze</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Menit tunda saat pengingat di-snooze</div>
+                            </div>
+                            <input type="number" id="cfg-rem-snooze" min="1" max="120" value="15" oninput="debouncedSave('reminder')" class="control-input w-24 font-mono-num text-right">
+                        </div>
+
+                        <div class="pt-3 border-t" style="border-color: var(--hairline);">
+                            <div class="text-[13px] font-medium mb-1">Aplikasi dikecualikan (pisahkan dengan koma)</div>
+                            <input type="text" id="cfg-rem-excluded" placeholder="Contoh: VALORANT, StellaSora_steam, Code" oninput="debouncedSave('reminder')" class="control-input w-full">
+                        </div>
+
                         <div class="pt-3 border-t" style="border-color: var(--hairline);">
                             <button onclick="callApi('tes_reminder')" class="btn-secondary w-full">
                                 <svg class="w-4 h-4" style="stroke: var(--text-secondary);" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -512,6 +608,299 @@
                             </button>
                         </div>
                     </section>
+
+                    <section class="card space-y-4">
+                        <div class="section-title">Preferensi kontrol file &amp; PC</div>
+                        <div>
+                            <div class="text-[13px] font-medium mb-1">Folder target pengelompokan Downloads</div>
+                            <div class="flex gap-2">
+                                <input type="text" id="cfg-turbo-downloads" placeholder="Default: Folder Downloads Windows" oninput="debouncedSave('turbo')" class="control-input flex-1 font-mono-num text-[12px]">
+                                <button onclick="pickDownloadsFolder()" class="btn-secondary">Pilih folder</button>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Konfirmasi operasi file sensitif</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Minta persetujuan sebelum menghapus atau memindahkan file besar</div>
+                            </div>
+                            <input type="checkbox" id="cfg-turbo-confirm" class="toggle" checked onchange="saveSection('turbo')">
+                        </div>
+                    </section>
+                </div>
+
+                <!-- PANEL 5: AI & MODELS -->
+                <div id="panel-ai" class="hidden space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Model &amp; fallback</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Model aktif</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Model utama yang dipilih saat ini</div>
+                            </div>
+                            <select id="cfg-ai-active-2" onchange="changeModelFromSettings(this.value)" class="control-select font-mono-num text-[12px]"></select>
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Model fallback</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Dipakai otomatis jika model utama gagal</div>
+                            </div>
+                            <select id="cfg-ai-fallback" onchange="saveSection('ai')" class="control-select font-mono-num text-[12px]"></select>
+                        </div>
+                        <div class="pt-3 border-t grid grid-cols-2 gap-3" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[13px] font-medium mb-1">Request timeout (ms)</div>
+                                <input type="number" id="cfg-ai-timeout" min="5000" max="180000" step="1000" value="45000" oninput="debouncedSave('ai')" class="control-input w-full font-mono-num">
+                            </div>
+                            <div>
+                                <div class="text-[13px] font-medium mb-1">Retry limit</div>
+                                <input type="number" id="cfg-ai-retry" min="0" max="5" value="2" oninput="debouncedSave('ai')" class="control-input w-full font-mono-num">
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t grid grid-cols-2 gap-3" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[13px] font-medium mb-1">Token budget (0 = unlimited)</div>
+                                <input type="number" id="cfg-ai-budget" min="0" step="10000" value="0" oninput="debouncedSave('ai')" class="control-input w-full font-mono-num">
+                            </div>
+                            <div>
+                                <div class="text-[13px] font-medium mb-1">Warning threshold (%)</div>
+                                <input type="number" id="cfg-ai-warn-pct" min="10" max="99" value="80" oninput="debouncedSave('ai')" class="control-input w-full font-mono-num">
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Streaming response</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Aktifkan streaming bila didukung provider</div>
+                            </div>
+                            <input type="checkbox" id="cfg-ai-streaming" class="toggle" onchange="saveSection('ai')">
+                        </div>
+                    </section>
+
+                    <section class="card space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="section-title mb-0">Status provider &amp; Ollama lokal</div>
+                            <button onclick="discoverOllamaModels()" class="btn-secondary text-[12px] px-2.5 py-1.5">Discover Ollama</button>
+                        </div>
+                        <div>
+                            <div class="text-[12px] mb-1" style="color: var(--text-muted);">Ollama Endpoint</div>
+                            <input type="text" id="cfg-ai-ollama-url" value="http://localhost:11434/api/chat" oninput="debouncedSave('ai')" class="control-input w-full font-mono-num text-[12px]">
+                        </div>
+                        <div id="provider-status-list" class="space-y-2"></div>
+                        <div id="ollama-models-box" class="text-[12px]" style="color: var(--text-muted);"></div>
+                    </section>
+                </div>
+
+                <!-- PANEL 6: AUTOMATION & SKILLS -->
+                <div id="panel-automation" class="hidden space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Eksekusi &amp; keamanan skill</div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <div class="text-[12px] font-medium mb-1">Retry limit</div>
+                                <input type="number" id="cfg-auto-retry" min="0" max="5" value="2" oninput="debouncedSave('automation')" class="control-input w-full font-mono-num">
+                            </div>
+                            <div>
+                                <div class="text-[12px] font-medium mb-1">Timeout (ms)</div>
+                                <input type="number" id="cfg-auto-timeout" min="10000" max="300000" step="1000" value="60000" oninput="debouncedSave('automation')" class="control-input w-full font-mono-num">
+                            </div>
+                            <div>
+                                <div class="text-[12px] font-medium mb-1">Max steps</div>
+                                <input type="number" id="cfg-auto-steps" min="1" max="50" value="18" oninput="debouncedSave('automation')" class="control-input w-full font-mono-num">
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Wajib persetujuan skill baru</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Skill hasil belajar harus di-approve sebelum dijalankan</div>
+                            </div>
+                            <input type="checkbox" id="cfg-auto-approve" class="toggle" checked onchange="saveSection('automation')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Aktifkan Demonstration Recorder</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Izinkan perekaman demonstrasi untuk membuat skill draft</div>
+                            </div>
+                            <input type="checkbox" id="cfg-auto-recorder" class="toggle" checked onchange="saveSection('automation')">
+                        </div>
+                    </section>
+
+                    <section class="card space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="section-title mb-0">Stella Sora &amp; Demonstration Recorder</div>
+                            <span id="stella-status-badge" class="text-[11px] px-2 py-0.5 rounded-full font-mono-num" style="background: var(--bg-raised); color: var(--text-secondary);">idle</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="stellaAction('pause')" class="btn-secondary text-[12px]">Pause Stella Sora</button>
+                            <button onclick="stellaAction('resume')" class="btn-secondary text-[12px]">Resume Stella Sora</button>
+                            <button onclick="stellaAction('stop')" class="btn-danger text-[12px]">Stop Stella Sora</button>
+                            <button id="btn-demo-rec" onclick="toggleDemoRecording()" class="btn-primary text-[12px]">Mulai Rekam Demo</button>
+                        </div>
+                    </section>
+
+                    <section class="card space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="section-title mb-0">Skill Library</div>
+                            <button onclick="loadAutomationPanel()" class="btn-secondary text-[12px] px-2.5 py-1">Refresh</button>
+                        </div>
+                        <div id="skill-library-list" class="max-h-56 overflow-y-auto space-y-2 pr-1"></div>
+                    </section>
+                </div>
+
+                <!-- PANEL 7: PRIVACY & PERMISSIONS -->
+                <div id="panel-privacy" class="hidden space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Kontrol izin &amp; jeda global</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium" style="color: var(--negative);">Jeda semua otomasi (Global Pause)</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Blokir seluruh eksekusi tool desktop dan game sementara</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-paused" class="toggle" onchange="saveSection('privacy')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Izinkan tangkapan layar (Screenshots)</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Untuk Vision, analisis layar, dan verifikasi aksi</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-screen" class="toggle" checked onchange="saveSection('privacy')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Izinkan akses Clipboard</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Membaca dan menyalin teks ke clipboard</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-clip" class="toggle" checked onchange="saveSection('privacy')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Izinkan akses Filesystem</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Membaca, merapikan, dan mengelola file lokal</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-fs" class="toggle" checked onchange="saveSection('privacy')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Izinkan kontrol Aplikasi &amp; UI</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Klik, ketik, dan fokus jendela aplikasi</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-app" class="toggle" checked onchange="saveSection('privacy')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Izinkan akses Browser &amp; Web</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Membuka URL dan pencarian web</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-browser" class="toggle" checked onchange="saveSection('privacy')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Konfirmasi aksi sensitif</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Wajib konfirmasi untuk kirim pesan eksternal atau hapus file</div>
+                            </div>
+                            <input type="checkbox" id="cfg-priv-confirm" class="toggle" checked onchange="saveSection('privacy')">
+                        </div>
+                    </section>
+
+                    <section class="card space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="section-title mb-0">Audit Log Terbaru</div>
+                            <button onclick="loadPrivacyPanel()" class="btn-secondary text-[12px] px-2.5 py-1">Refresh</button>
+                        </div>
+                        <div id="audit-log-list" class="max-h-44 overflow-y-auto space-y-1.5 font-mono-num text-[11px]"></div>
+                    </section>
+                </div>
+
+                <!-- PANEL 8: SYSTEM & PERFORMANCE -->
+                <div id="panel-system" class="hidden space-y-4">
+                    <section class="card space-y-4">
+                        <div class="section-title">Startup &amp; perilaku jendela</div>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[14px] font-medium">Mulai bersama Windows</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Jalankan TM Opera O otomatis saat login</div>
+                            </div>
+                            <input type="checkbox" id="cfg-sys-autostart" class="toggle" onchange="saveSection('system')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Mulai dalam kondisi minimized</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Sembunyikan jendela chat saat aplikasi baru dibuka</div>
+                            </div>
+                            <input type="checkbox" id="cfg-sys-minimized" class="toggle" onchange="saveSection('system')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Tetap berjalan di background</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Izinkan watcher media dan pengingat tetap aktif</div>
+                            </div>
+                            <input type="checkbox" id="cfg-sys-bg" class="toggle" checked onchange="saveSection('system')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Tutup ke tray / standby</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Tombol tutup hanya menyembunyikan jendela</div>
+                            </div>
+                            <input type="checkbox" id="cfg-sys-tray" class="toggle" checked onchange="saveSection('system')">
+                        </div>
+                        <div class="pt-3 border-t flex items-center justify-between gap-4" style="border-color: var(--hairline);">
+                            <div>
+                                <div class="text-[14px] font-medium">Mode performa</div>
+                                <div class="text-[13px]" style="color: var(--text-secondary);">Seimbang atau hemat resource</div>
+                            </div>
+                            <select id="cfg-sys-perf" onchange="saveSection('system')" class="control-select">
+                                <option value="balanced">Balanced</option>
+                                <option value="low-resource">Low Resource</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <section class="card space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="section-title mb-0">Metrik Sistem Langsung</div>
+                            <button onclick="loadSystemPanel()" class="btn-secondary text-[12px] px-2.5 py-1">Refresh</button>
+                        </div>
+                        <div id="system-metrics-grid" class="grid grid-cols-2 gap-3 font-mono-num text-[12px]"></div>
+                    </section>
+                </div>
+
+                <!-- PANEL 9: STORAGE & BACKUP -->
+                <div id="panel-storage" class="hidden space-y-4">
+                    <section class="card space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="section-title mb-0">Penggunaan Penyimpanan</div>
+                            <button onclick="loadStoragePanel()" class="btn-secondary text-[12px] px-2.5 py-1">Refresh</button>
+                        </div>
+                        <div id="storage-breakdown-list" class="space-y-2 text-[13px]"></div>
+                    </section>
+
+                    <section class="card space-y-3">
+                        <div class="section-title">Ekspor, Impor &amp; Pembersihan Aman</div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="exportSettingsFile()" class="btn-primary text-[12px]">Export Settings JSON</button>
+                            <button onclick="backupSettingsNow()" class="btn-secondary text-[12px]">Buat Backup</button>
+                            <button onclick="window.settings.openFolder('userData')" class="btn-secondary text-[12px]">Buka UserData</button>
+                            <button onclick="clearCacheNow()" class="btn-secondary text-[12px]">Bersihkan Cache</button>
+                            <button onclick="clearLogsNow()" class="btn-secondary text-[12px]">Bersihkan Logs</button>
+                        </div>
+                        <div class="pt-3 border-t space-y-2" style="border-color: var(--hairline);">
+                            <div class="text-[12px] font-medium" style="color: var(--text-secondary);">Import Settings JSON (tempel isi JSON di bawah)</div>
+                            <textarea id="import-json-box" rows="3" placeholder='{"schemaVersion":2,"settings":{...}}' class="control-input w-full font-mono-num text-[11px]"></textarea>
+                            <div class="flex items-center justify-between">
+                                <span id="storage-action-msg" class="text-[12px]" style="color: var(--text-muted);"></span>
+                                <button onclick="importSettingsJson()" class="btn-secondary text-[12px]">Import JSON</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- PANEL 10: ABOUT -->
+                <div id="panel-about" class="hidden space-y-4">
+                    <section class="card space-y-3">
+                        <div class="section-title">Informasi Aplikasi</div>
+                        <div id="about-info-box" class="space-y-2 text-[13px]"></div>
+                        <div class="pt-3 border-t flex gap-2" style="border-color: var(--hairline);">
+                            <button onclick="window.settings.openFolder('base')" class="btn-secondary text-[12px]">Buka Folder Proyek</button>
+                        </div>
+                    </section>
                 </div>
             </div>
         </main>
@@ -532,16 +921,49 @@
             opera: 'TM Opera O',
             reminder: 'Pengingat dan fokus',
             turbo: 'Kontrol PC',
+            ai: 'AI & Models',
+            automation: 'Automation & Skills',
+            privacy: 'Privacy & Permissions',
+            system: 'System & Performance',
+            storage: 'Storage & Backup',
+            about: 'About',
         };
+        const ALL_PANELS = Object.keys(TITLES);
+        const RESETTABLE_PANELS = new Set(['media', 'opera', 'reminder', 'turbo', 'ai', 'automation', 'privacy', 'system']);
+        let activePanel = 'media';
+        let saveDebounceTimer = null;
+        let statusHideTimer = null;
+
+        function setSaveStatus(state, text) {
+            const pill = document.getElementById('save-status-pill');
+            if (!pill) return;
+            if (statusHideTimer) clearTimeout(statusHideTimer);
+            pill.classList.remove('hidden');
+            pill.textContent = text;
+            pill.style.color = state === 'error' ? 'var(--negative)' : state === 'saving' ? 'var(--accent)' : 'var(--positive)';
+            if (state === 'saved') {
+                statusHideTimer = setTimeout(() => pill.classList.add('hidden'), 1800);
+            }
+        }
 
         function switchPanel(id, el) {
+            activePanel = id;
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (el) el.classList.add('active');
-            ['media', 'opera', 'reminder', 'turbo'].forEach(p => {
-                document.getElementById('panel-' + p).classList.toggle('hidden', p !== id);
+            ALL_PANELS.forEach(p => {
+                const panelEl = document.getElementById('panel-' + p);
+                if (panelEl) panelEl.classList.toggle('hidden', p !== id);
             });
             document.getElementById('panel-title').textContent = TITLES[id] || '';
+            document.getElementById('btn-reset-section').classList.toggle('hidden', !RESETTABLE_PANELS.has(id));
+
             if (id === 'opera') loadOperaPanelData();
+            if (id === 'ai') loadAiPanel();
+            if (id === 'automation') loadAutomationPanel();
+            if (id === 'privacy') loadPrivacyPanel();
+            if (id === 'system') loadSystemPanel();
+            if (id === 'storage') loadStoragePanel();
+            if (id === 'about') loadAboutPanel();
         }
 
         let currentAccent = '#e5a04b';
@@ -553,20 +975,229 @@
             saveCustomConfig();
         }
 
+        function collectSectionPatch(section) {
+            if (section === 'media') {
+                return {
+                    media: {
+                        colorAlbumFocus: document.getElementById('cfg-color-album').checked,
+                        customAccentColor: currentAccent,
+                        mediaPriority: document.getElementById('cfg-media-priority').value,
+                        compactLyric: document.getElementById('cfg-compact-lyric').checked,
+                        lyricOffsetSec: parseFloat(document.getElementById('cfg-lyric-offset').value || '0'),
+                    }
+                };
+            }
+            if (section === 'opera') {
+                return {
+                    opera: {
+                        personaPreset: document.getElementById('cfg-persona-preset').value,
+                        customPersona: document.getElementById('cfg-custom-persona').value,
+                        ttsEnabled: document.getElementById('cfg-tts-enabled').checked,
+                        ttsVoice: document.getElementById('cfg-tts-voice').value,
+                    }
+                };
+            }
+            if (section === 'reminder') {
+                const excludedRaw = document.getElementById('cfg-rem-excluded').value || '';
+                const excludedApps = excludedRaw.split(',').map(s => s.trim()).filter(Boolean);
+                return {
+                    reminder: {
+                        reminderEnabled: document.getElementById('cfg-reminder-on').checked,
+                        reminderMinutes: parseInt(document.getElementById('cfg-reminder-mins').value || '120', 10),
+                        focusModeEnabled: document.getElementById('cfg-focus-on').checked,
+                        activeHoursStart: document.getElementById('cfg-rem-start').value || '08:00',
+                        activeHoursEnd: document.getElementById('cfg-rem-end').value || '23:00',
+                        snoozeMinutes: parseInt(document.getElementById('cfg-rem-snooze').value || '15', 10),
+                        excludedApps,
+                    }
+                };
+            }
+            if (section === 'turbo') {
+                return {
+                    turbo: {
+                        downloadsTargetDir: document.getElementById('cfg-turbo-downloads').value.trim(),
+                        confirmFileOps: document.getElementById('cfg-turbo-confirm').checked,
+                    }
+                };
+            }
+            if (section === 'ai') {
+                return {
+                    ai: {
+                        fallbackModel: document.getElementById('cfg-ai-fallback').value,
+                        timeoutMs: parseInt(document.getElementById('cfg-ai-timeout').value || '45000', 10),
+                        retryLimit: parseInt(document.getElementById('cfg-ai-retry').value || '2', 10),
+                        streaming: document.getElementById('cfg-ai-streaming').checked,
+                        tokenBudget: parseInt(document.getElementById('cfg-ai-budget').value || '0', 10),
+                        warningThresholdPct: parseInt(document.getElementById('cfg-ai-warn-pct').value || '80', 10),
+                        ollamaUrl: document.getElementById('cfg-ai-ollama-url').value.trim(),
+                    }
+                };
+            }
+            if (section === 'automation') {
+                return {
+                    automation: {
+                        retryLimit: parseInt(document.getElementById('cfg-auto-retry').value || '2', 10),
+                        timeoutMs: parseInt(document.getElementById('cfg-auto-timeout').value || '60000', 10),
+                        maxSteps: parseInt(document.getElementById('cfg-auto-steps').value || '18', 10),
+                        requireApprovalForSkills: document.getElementById('cfg-auto-approve').checked,
+                        recorderEnabled: document.getElementById('cfg-auto-recorder').checked,
+                    }
+                };
+            }
+            if (section === 'privacy') {
+                return {
+                    privacy: {
+                        pausedGlobally: document.getElementById('cfg-priv-paused').checked,
+                        allowScreenshots: document.getElementById('cfg-priv-screen').checked,
+                        allowClipboard: document.getElementById('cfg-priv-clip').checked,
+                        allowFilesystem: document.getElementById('cfg-priv-fs').checked,
+                        allowAppControl: document.getElementById('cfg-priv-app').checked,
+                        allowBrowser: document.getElementById('cfg-priv-browser').checked,
+                        requireSensitiveConfirm: document.getElementById('cfg-priv-confirm').checked,
+                    }
+                };
+            }
+            if (section === 'system') {
+                return {
+                    system: {
+                        startWithWindows: document.getElementById('cfg-sys-autostart').checked,
+                        startMinimized: document.getElementById('cfg-sys-minimized').checked,
+                        runInBackground: document.getElementById('cfg-sys-bg').checked,
+                        closeToTray: document.getElementById('cfg-sys-tray').checked,
+                        performanceMode: document.getElementById('cfg-sys-perf').value,
+                    }
+                };
+            }
+            return {};
+        }
+
+        async function saveSection(section) {
+            try {
+                setSaveStatus('saving', 'Saving...');
+                if (window.settings) {
+                    await window.settings.update(collectSectionPatch(section));
+                } else {
+                    await saveCustomConfig();
+                }
+                setSaveStatus('saved', 'Saved.');
+            } catch {
+                setSaveStatus('error', 'Save failed.');
+            }
+        }
+
+        function debouncedSave(section) {
+            setSaveStatus('saving', 'Saving...');
+            if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(() => {
+                saveSection(section);
+            }, 600);
+        }
+
         async function saveCustomConfig() {
-            const cfg = {
-                colorAlbumFocus: document.getElementById('cfg-color-album').checked,
-                customAccentColor: currentAccent,
-                mediaPriority: document.getElementById('cfg-media-priority').value,
-                compactLyric: document.getElementById('cfg-compact-lyric').checked,
-                lyricOffsetSec: parseFloat(document.getElementById('cfg-lyric-offset').value || '0'),
-                personaPreset: document.getElementById('cfg-persona-preset').value,
-                customPersona: document.getElementById('cfg-custom-persona').value,
-                reminderEnabled: document.getElementById('cfg-reminder-on').checked,
-                reminderMinutes: parseInt(document.getElementById('cfg-reminder-mins').value || '120', 10),
-                focusModeEnabled: document.getElementById('cfg-focus-on').checked,
-            };
-            await callApi('save_settings', cfg);
+            try {
+                setSaveStatus('saving', 'Saving...');
+                const cfg = {
+                    colorAlbumFocus: document.getElementById('cfg-color-album').checked,
+                    customAccentColor: currentAccent,
+                    mediaPriority: document.getElementById('cfg-media-priority').value,
+                    compactLyric: document.getElementById('cfg-compact-lyric').checked,
+                    lyricOffsetSec: parseFloat(document.getElementById('cfg-lyric-offset').value || '0'),
+                    personaPreset: document.getElementById('cfg-persona-preset').value,
+                    customPersona: document.getElementById('cfg-custom-persona').value,
+                    reminderEnabled: document.getElementById('cfg-reminder-on').checked,
+                    reminderMinutes: parseInt(document.getElementById('cfg-reminder-mins').value || '120', 10),
+                    focusModeEnabled: document.getElementById('cfg-focus-on').checked,
+                };
+                await callApi('save_settings', cfg);
+                setSaveStatus('saved', 'Saved.');
+            } catch {
+                setSaveStatus('error', 'Save failed.');
+            }
+        }
+
+        function applyV2ToDom(v2) {
+            if (!v2) return;
+            if (v2.media) {
+                document.getElementById('cfg-color-album').checked = v2.media.colorAlbumFocus !== false;
+                currentAccent = v2.media.customAccentColor || '#e5a04b';
+                document.getElementById('cfg-custom-color').value = currentAccent;
+                document.getElementById('cfg-media-priority').value = v2.media.mediaPriority || 'spotify';
+                document.getElementById('cfg-compact-lyric').checked = v2.media.compactLyric !== false;
+                document.getElementById('cfg-lyric-offset').value = v2.media.lyricOffsetSec || 0;
+                document.getElementById('lbl-lyric-offset').textContent = Number(v2.media.lyricOffsetSec || 0).toFixed(1) + 's';
+            }
+            if (v2.opera) {
+                document.getElementById('cfg-persona-preset').value = v2.opera.personaPreset || 'soft';
+                document.getElementById('cfg-custom-persona').value = v2.opera.customPersona || '';
+                document.getElementById('cfg-tts-enabled').checked = v2.opera.ttsEnabled !== false;
+                document.getElementById('cfg-tts-voice').value = v2.opera.ttsVoice || 'auto';
+            }
+            if (v2.reminder) {
+                document.getElementById('cfg-reminder-on').checked = v2.reminder.reminderEnabled !== false;
+                document.getElementById('cfg-reminder-mins').value = String(v2.reminder.reminderMinutes || 120);
+                document.getElementById('cfg-focus-on').checked = v2.reminder.focusModeEnabled !== false;
+                document.getElementById('cfg-rem-start').value = v2.reminder.activeHoursStart || '08:00';
+                document.getElementById('cfg-rem-end').value = v2.reminder.activeHoursEnd || '23:00';
+                document.getElementById('cfg-rem-snooze').value = String(v2.reminder.snoozeMinutes || 15);
+                document.getElementById('cfg-rem-excluded').value = Array.isArray(v2.reminder.excludedApps) ? v2.reminder.excludedApps.join(', ') : '';
+            }
+            if (v2.turbo) {
+                document.getElementById('cfg-turbo-downloads').value = v2.turbo.downloadsTargetDir || '';
+                document.getElementById('cfg-turbo-confirm').checked = v2.turbo.confirmFileOps !== false;
+            }
+            if (v2.ai) {
+                document.getElementById('cfg-ai-timeout').value = String(v2.ai.timeoutMs || 45000);
+                document.getElementById('cfg-ai-retry').value = String(v2.ai.retryLimit ?? 2);
+                document.getElementById('cfg-ai-budget').value = String(v2.ai.tokenBudget || 0);
+                document.getElementById('cfg-ai-warn-pct').value = String(v2.ai.warningThresholdPct || 80);
+                document.getElementById('cfg-ai-streaming').checked = Boolean(v2.ai.streaming);
+                document.getElementById('cfg-ai-ollama-url').value = v2.ai.ollamaUrl || 'http://localhost:11434/api/chat';
+            }
+            if (v2.automation) {
+                document.getElementById('cfg-auto-retry').value = String(v2.automation.retryLimit ?? 2);
+                document.getElementById('cfg-auto-timeout').value = String(v2.automation.timeoutMs || 60000);
+                document.getElementById('cfg-auto-steps').value = String(v2.automation.maxSteps || 18);
+                document.getElementById('cfg-auto-approve').checked = v2.automation.requireApprovalForSkills !== false;
+                document.getElementById('cfg-auto-recorder').checked = v2.automation.recorderEnabled !== false;
+            }
+            if (v2.privacy) {
+                document.getElementById('cfg-priv-paused').checked = Boolean(v2.privacy.pausedGlobally);
+                document.getElementById('cfg-priv-screen').checked = v2.privacy.allowScreenshots !== false;
+                document.getElementById('cfg-priv-clip').checked = v2.privacy.allowClipboard !== false;
+                document.getElementById('cfg-priv-fs').checked = v2.privacy.allowFilesystem !== false;
+                document.getElementById('cfg-priv-app').checked = v2.privacy.allowAppControl !== false;
+                document.getElementById('cfg-priv-browser').checked = v2.privacy.allowBrowser !== false;
+                document.getElementById('cfg-priv-confirm').checked = v2.privacy.requireSensitiveConfirm !== false;
+            }
+            if (v2.system) {
+                document.getElementById('cfg-sys-autostart').checked = Boolean(v2.system.startWithWindows);
+                document.getElementById('cfg-sys-minimized').checked = Boolean(v2.system.startMinimized);
+                document.getElementById('cfg-sys-bg').checked = v2.system.runInBackground !== false;
+                document.getElementById('cfg-sys-tray').checked = v2.system.closeToTray !== false;
+                document.getElementById('cfg-sys-perf').value = v2.system.performanceMode || 'balanced';
+            }
+        }
+
+        async function resetCurrentSection() {
+            if (!window.settings || !RESETTABLE_PANELS.has(activePanel)) return;
+            try {
+                setSaveStatus('saving', 'Resetting...');
+                const updated = await window.settings.resetSection(activePanel);
+                applyV2ToDom(updated);
+                if (activePanel === 'ai') await loadAiPanel();
+                setSaveStatus('saved', 'Saved.');
+            } catch {
+                setSaveStatus('error', 'Save failed.');
+            }
+        }
+
+        async function pickDownloadsFolder() {
+            if (!window.settings) return;
+            const res = await window.settings.pickFolder();
+            if (res && !res.canceled && res.path) {
+                document.getElementById('cfg-turbo-downloads').value = res.path;
+                await saveSection('turbo');
+            }
         }
 
         async function applyPersonaPreset() {
@@ -574,7 +1205,9 @@
         }
 
         async function changeModelFromSettings(m) {
+            setSaveStatus('saving', 'Saving...');
             await callApi('ganti_model', m);
+            setSaveStatus('saved', 'Saved.');
         }
 
         async function loadOperaPanelData() {
@@ -590,6 +1223,259 @@
                 sel.appendChild(opt);
             }
             await renderMemoryList();
+        }
+
+        async function loadAiPanel() {
+            const [models, current, v2, statuses] = await Promise.all([
+                callApi('get_models'),
+                callApi('get_current_model'),
+                window.settings ? window.settings.get() : null,
+                window.settings ? window.settings.providerStatuses() : [],
+            ]);
+            const selActive = document.getElementById('cfg-ai-active-2');
+            const selFallback = document.getElementById('cfg-ai-fallback');
+            selActive.innerHTML = '';
+            selFallback.innerHTML = '';
+            for (const m of models || []) {
+                const o1 = document.createElement('option');
+                o1.value = m; o1.textContent = m;
+                if (m === current) o1.selected = true;
+                selActive.appendChild(o1);
+
+                const o2 = document.createElement('option');
+                o2.value = m; o2.textContent = m;
+                if (v2?.ai?.fallbackModel === m) o2.selected = true;
+                selFallback.appendChild(o2);
+            }
+            const list = document.getElementById('provider-status-list');
+            list.innerHTML = '';
+            for (const p of statuses || []) {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border text-[12px]';
+                row.style.background = 'var(--bg-raised)';
+                row.style.borderColor = 'var(--hairline)';
+                row.innerHTML = `
+                    <div class="min-w-0">
+                        <div class="font-medium">${p.label}</div>
+                        <div class="text-[11px] truncate" style="color: ${p.configured ? 'var(--positive)' : 'var(--text-muted)'};">
+                            ${p.configured ? 'Configured' : 'Not configured'} — ${p.endpoint}
+                        </div>
+                    </div>
+                    <button class="btn-secondary text-[11px] px-2.5 py-1 shrink-0">Test</button>
+                `;
+                const btn = row.querySelector('button');
+                btn.onclick = async () => {
+                    btn.textContent = 'Testing...';
+                    const res = await window.settings.testProvider(p.id);
+                    btn.textContent = res.ok ? `OK (${res.latencyMs}ms)` : 'Failed';
+                    btn.style.color = res.ok ? 'var(--positive)' : 'var(--negative)';
+                };
+                list.appendChild(row);
+            }
+        }
+
+        async function discoverOllamaModels() {
+            const box = document.getElementById('ollama-models-box');
+            box.textContent = 'Scanning Ollama...';
+            const res = await window.settings.discoverOllama();
+            if (res.ok) {
+                box.textContent = res.models.length > 0 ? `Detected local models: ${res.models.join(', ')}` : 'Ollama reachable, no models pulled yet.';
+            } else {
+                box.textContent = `Ollama not reachable: ${res.error}`;
+            }
+        }
+
+        async function loadAutomationPanel() {
+            const [skills, sysInfo] = await Promise.all([
+                window.learning ? window.learning.listSkills() : [],
+                window.settings ? window.settings.systemInfo() : null,
+            ]);
+            const badge = document.getElementById('stella-status-badge');
+            if (sysInfo?.stellaSora) {
+                badge.textContent = sysInfo.stellaSora.state || 'idle';
+            }
+            const recBtn = document.getElementById('btn-demo-rec');
+            if (sysInfo?.recorderActive) {
+                recBtn.textContent = 'Stop & Propose Demo';
+            } else {
+                recBtn.textContent = 'Mulai Rekam Demo';
+            }
+            const box = document.getElementById('skill-library-list');
+            box.innerHTML = '';
+            if (!skills || skills.length === 0) {
+                box.innerHTML = '<div class="text-[12px]" style="color: var(--text-muted);">Belum ada skill tersimpan.</div>';
+                return;
+            }
+            for (const sk of skills) {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border text-[12px]';
+                row.style.background = 'var(--bg-raised)';
+                row.style.borderColor = 'var(--hairline)';
+                const statusColor = sk.status === 'approved' ? 'var(--positive)' : 'var(--accent)';
+                row.innerHTML = `
+                    <div class="min-w-0 flex-1">
+                        <div class="font-medium truncate">${sk.name} <span class="text-[11px]" style="color: var(--text-muted);">(${sk.applicationId})</span></div>
+                        <div class="text-[11px]" style="color: ${statusColor};">${sk.status} • ${(sk.steps || []).length} steps</div>
+                    </div>
+                `;
+                if (sk.status !== 'approved' && window.learning) {
+                    const appBtn = document.createElement('button');
+                    appBtn.className = 'btn-secondary text-[11px] px-2.5 py-1';
+                    appBtn.textContent = 'Approve';
+                    appBtn.onclick = async () => {
+                        await window.learning.approveSkill(sk.id);
+                        await loadAutomationPanel();
+                    };
+                    row.appendChild(appBtn);
+                }
+                box.appendChild(row);
+            }
+        }
+
+        async function stellaAction(act) {
+            if (!window.stellaSora) return;
+            await window.stellaSora[act]();
+            await loadAutomationPanel();
+        }
+
+        async function toggleDemoRecording() {
+            if (!window.learning || !window.settings) return;
+            const info = await window.settings.systemInfo();
+            if (info?.recorderActive) {
+                await window.learning.stopDemo();
+            } else {
+                await window.learning.startDemo('desktop', 'demo-' + Date.now());
+            }
+            await loadAutomationPanel();
+        }
+
+        async function loadPrivacyPanel() {
+            if (!window.settings) return;
+            const entries = await window.settings.auditLog();
+            const box = document.getElementById('audit-log-list');
+            box.innerHTML = '';
+            if (!entries || entries.length === 0) {
+                box.innerHTML = '<div style="color: var(--text-muted);">Belum ada aktivitas audit tercatat.</div>';
+                return;
+            }
+            for (const e of entries.slice().reverse()) {
+                const row = document.createElement('div');
+                row.className = 'px-2.5 py-1.5 rounded-[6px] border';
+                row.style.background = 'var(--bg-raised)';
+                row.style.borderColor = 'var(--hairline)';
+                const t = new Date(e.timestamp).toLocaleTimeString();
+                row.textContent = `[${t}] ${e.action} -> ${e.target} (${e.outcome})`;
+                box.appendChild(row);
+            }
+        }
+
+        async function loadSystemPanel() {
+            if (!window.settings) return;
+            const info = await window.settings.systemInfo();
+            const m = info?.metrics || {};
+            const grid = document.getElementById('system-metrics-grid');
+            grid.innerHTML = `
+                <div class="p-3 rounded-[8px] border" style="background: var(--bg-raised); border-color: var(--hairline);">
+                    <div class="text-[11px]" style="color: var(--text-muted);">CPU Load</div>
+                    <div class="text-[15px] font-medium mt-0.5">${m.cpuPercent ?? 0}%</div>
+                </div>
+                <div class="p-3 rounded-[8px] border" style="background: var(--bg-raised); border-color: var(--hairline);">
+                    <div class="text-[11px]" style="color: var(--text-muted);">System RAM</div>
+                    <div class="text-[15px] font-medium mt-0.5">${m.ramUsedGb ?? 0} / ${m.ramTotalGb ?? 0} GB</div>
+                </div>
+                <div class="p-3 rounded-[8px] border" style="background: var(--bg-raised); border-color: var(--hairline);">
+                    <div class="text-[11px]" style="color: var(--text-muted);">App Memory</div>
+                    <div class="text-[15px] font-medium mt-0.5">${m.appMemoryMb ?? 0} MB</div>
+                </div>
+                <div class="p-3 rounded-[8px] border" style="background: var(--bg-raised); border-color: var(--hairline);">
+                    <div class="text-[11px]" style="color: var(--text-muted);">Stella Sora / MaaFw</div>
+                    <div class="text-[15px] font-medium mt-0.5">${info?.stellaSora?.state || 'idle'}</div>
+                </div>
+            `;
+        }
+
+        function fmtBytes(b) {
+            if (!b) return '0 B';
+            if (b < 1024) return b + ' B';
+            if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+            return (b / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        async function loadStoragePanel() {
+            if (!window.settings) return;
+            const s = await window.settings.storageInfo();
+            const items = [
+                ['Settings (settings.json)', s.settingsBytes],
+                ['Long-Term Memory (memory.json)', s.memoryBytes],
+                ['Shelf Storage', s.shelfBytes],
+                ['Skills & Knowledge', s.skillsBytes],
+                ['Logs', s.logsBytes],
+                ['Cache & Temp', s.cacheBytes],
+                ['Total Terukur', s.totalBytes],
+            ];
+            const box = document.getElementById('storage-breakdown-list');
+            box.innerHTML = items.map(([label, bytes]) => `
+                <div class="flex items-center justify-between px-3 py-2 rounded-[8px] border" style="background: var(--bg-raised); border-color: var(--hairline);">
+                    <span>${label}</span>
+                    <span class="font-mono-num text-[12px]" style="color: var(--text-secondary);">${fmtBytes(bytes)}</span>
+                </div>
+            `).join('');
+        }
+
+        async function exportSettingsFile() {
+            const jsonText = await window.settings.exportConfig();
+            const blob = new Blob([jsonText], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tm-opera-o-settings.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            document.getElementById('storage-action-msg').textContent = 'Settings exported (no API keys included).';
+        }
+
+        async function importSettingsJson() {
+            const raw = document.getElementById('import-json-box').value;
+            const res = await window.settings.importConfig(raw);
+            const msg = document.getElementById('storage-action-msg');
+            if (res.ok) {
+                applyV2ToDom(res.settings);
+                msg.textContent = 'Settings imported successfully.';
+                msg.style.color = 'var(--positive)';
+            } else {
+                msg.textContent = 'Import rejected: ' + res.error;
+                msg.style.color = 'var(--negative)';
+            }
+        }
+
+        async function backupSettingsNow() {
+            const res = await window.settings.backup();
+            document.getElementById('storage-action-msg').textContent = 'Backup created: ' + res.path;
+        }
+
+        async function clearCacheNow() {
+            const res = await window.settings.clearCache();
+            document.getElementById('storage-action-msg').textContent = `Cache cleared (${fmtBytes(res.clearedBytes)}). Memory preserved.`;
+            await loadStoragePanel();
+        }
+
+        async function clearLogsNow() {
+            const res = await window.settings.clearLogs();
+            document.getElementById('storage-action-msg').textContent = `Logs cleared (${fmtBytes(res.clearedBytes)}).`;
+            await loadStoragePanel();
+        }
+
+        async function loadAboutPanel() {
+            if (!window.settings) return;
+            const a = await window.settings.aboutInfo();
+            document.getElementById('about-info-box').innerHTML = `
+                <div class="flex justify-between py-1 border-b" style="border-color: var(--hairline);"><span>Application</span><span class="font-mono-num">${a.name} v${a.version}</span></div>
+                <div class="flex justify-between py-1 border-b" style="border-color: var(--hairline);"><span>Electron</span><span class="font-mono-num">${a.electron}</span></div>
+                <div class="flex justify-between py-1 border-b" style="border-color: var(--hairline);"><span>Node.js</span><span class="font-mono-num">${a.node}</span></div>
+                <div class="flex justify-between py-1 border-b" style="border-color: var(--hairline);"><span>Chromium</span><span class="font-mono-num">${a.chrome}</span></div>
+                <div class="flex justify-between py-1 border-b" style="border-color: var(--hairline);"><span>Platform</span><span class="font-mono-num">${a.platform} (${a.arch})</span></div>
+                <div class="pt-2 text-[12px]" style="color: var(--text-muted);">${a.description}</div>
+            `;
         }
 
         async function renderMemoryList() {
@@ -636,20 +1522,12 @@
 
         (async () => {
             try {
-                const cfg = await callApi('get_settings');
-                if (cfg) {
-                    document.getElementById('cfg-color-album').checked = cfg.colorAlbumFocus !== false;
-                    currentAccent = cfg.customAccentColor || '#e5a04b';
-                    document.getElementById('cfg-custom-color').value = currentAccent;
-                    document.getElementById('cfg-media-priority').value = cfg.mediaPriority || 'spotify';
-                    document.getElementById('cfg-compact-lyric').checked = cfg.compactLyric !== false;
-                    document.getElementById('cfg-lyric-offset').value = cfg.lyricOffsetSec || 0;
-                    document.getElementById('lbl-lyric-offset').textContent = Number(cfg.lyricOffsetSec || 0).toFixed(1) + 's';
-                    document.getElementById('cfg-persona-preset').value = cfg.personaPreset || 'soft';
-                    document.getElementById('cfg-custom-persona').value = cfg.customPersona || '';
-                    document.getElementById('cfg-reminder-on').checked = cfg.reminderEnabled !== false;
-                    document.getElementById('cfg-reminder-mins').value = String(cfg.reminderMinutes || 120);
-                    document.getElementById('cfg-focus-on').checked = cfg.focusModeEnabled !== false;
+                if (window.settings) {
+                    const v2 = await window.settings.get();
+                    applyV2ToDom(v2);
+                } else {
+                    const cfg = await callApi('get_settings');
+                    if (cfg) applyV2ToDom({ media: cfg, opera: cfg, reminder: cfg });
                 }
                 await loadOperaPanelData();
             } catch {}
