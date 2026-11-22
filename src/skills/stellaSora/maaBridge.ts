@@ -159,6 +159,10 @@ export class MaaBridge {
     return await this.sendCommand("run_task", { entry }, timeoutMs);
   }
 
+  public async captureScreenshot(outPath?: string): Promise<MaaBridgeResponse<{ savedPath?: string; title?: string }>> {
+    return await this.sendCommand("capture_screenshot", { outPath }, 15_000);
+  }
+
   public async emergencyStop(): Promise<MaaBridgeResponse> {
     if (!this.isRunning()) return { ok: true, data: { stopped: true } };
     return await this.sendCommand("stop", {}, 5_000);

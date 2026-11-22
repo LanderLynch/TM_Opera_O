@@ -80,6 +80,30 @@ def handle_command(cmd: dict) -> dict:
         regex = cmd.get("windowRegex") or r"xtlr|星塔旅人|ステラソラ|Stella ?Sora"
         return {"id": cmd.get("id"), "ok": True, "data": find_game_window(regex)}
 
+    if action == "capture_screenshot":
+        win_res = find_game_window()
+        if not win_res.get("found"):
+            return {"id": cmd.get("id"), "ok": False, "error": "Stella Sora window not found for screenshot."}
+        try:
+            from maa.controller import Win32Controller  # type: ignore
+            import base64
+            import io
+
+            hwnd = int(win_res["windows"][0]["hwnd"])
+            ctrl = Win32Controller(hwnd)
+            ctrl.post_connection().wait()
+            job = ctrl.post_screencap()
+            job.wait()
+            img = job.get()
+            out_path = cmd.get("outPath")
+            if out_path and img is not None:
+                from PIL import Image  # type: ignore
+                Image.fromarray(img).save(str(out_path))
+                return {"id": cmd.get("id"), "ok": True, "data": {"savedPath": str(out_path), "title": win_res["windows"][0]["title"]}}
+            return {"id": cmd.get("id"), "ok": img is not None, "data": {"title": win_res["windows"][0]["title"]}}
+        except Exception as exc:
+            return {"id": cmd.get("id"), "ok": False, "error": str(exc)}
+
     if action == "stop":
         stop_event.set()
         global active_tasker

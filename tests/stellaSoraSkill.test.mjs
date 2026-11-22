@@ -14,7 +14,7 @@ const { SkillStore } = require("../dist/learning/skillStore.js");
 const { LearningEngine } = require("../dist/learning/learningEngine.js");
 const { desktopExecutionLock } = require("../dist/agent/executionLock.js");
 const { createDefaultToolRegistry } = require("../dist/tools/registry.js");
-const { STELLA_PIPELINE_MAP, validatePipelineEntry } = require("../dist/skills/stellaSora/workflowCatalog.js");
+const { STELLA_PIPELINE_MAP, STELLA_SORA_DAILY_SEQUENCE, validatePipelineEntry } = require("../dist/skills/stellaSora/workflowCatalog.js");
 const { StellaSoraReportGenerator } = require("../dist/skills/stellaSora/reportGenerator.js");
 const { validatePecutModelId } = require("../dist/ai/toolCalling.js");
 
@@ -110,10 +110,13 @@ test("ToolRegistry registers stella_sora_command and stella_sora_status", () => 
 test("validatePipelineEntry verifies upstream Chinese entries and rejects invalid English aliases", () => {
   assert.equal(STELLA_PIPELINE_MAP.mailbox, "邮箱_入口");
   assert.equal(STELLA_PIPELINE_MAP["daily-missions"], "任务_入口");
-  assert.equal(validatePipelineEntry(SKILL_ROOT, "邮箱_入口").valid, true);
-  assert.equal(validatePipelineEntry(SKILL_ROOT, "任务_入口").valid, true);
-  assert.equal(validatePipelineEntry(SKILL_ROOT, "好友_入口").valid, true);
-  assert.equal(validatePipelineEntry(SKILL_ROOT, "采购_入口").valid, true);
+  assert.equal(STELLA_PIPELINE_MAP.dispatch, "委托_入口");
+  assert.equal(STELLA_PIPELINE_MAP.grant, "基金_入口");
+  for (const wfId of STELLA_SORA_DAILY_SEQUENCE) {
+    const entry = STELLA_PIPELINE_MAP[wfId];
+    assert.ok(entry, `Missing entry for ${wfId}`);
+    assert.equal(validatePipelineEntry(SKILL_ROOT, entry).valid, true, `Upstream entry missing: ${entry}`);
+  }
 
   const bad = validatePipelineEntry(SKILL_ROOT, "Mail");
   assert.equal(bad.valid, false);

@@ -6,10 +6,26 @@ export const STELLA_PIPELINE_MAP = {
   "daily-missions": "任务_入口",
   mailbox: "邮箱_入口",
   "friend-gifts": "好友_入口",
+  dispatch: "委托_入口",
   shop: "采购_入口",
+  grant: "基金_入口",
+  talk: "心链_入口",
   events: "活动快速战斗_入口",
   tower: "星塔_入口_agent",
 } as const;
+
+export const STELLA_SORA_DAILY_WORKFLOW_ID = "stella-sora.daily";
+
+export const STELLA_SORA_DAILY_SEQUENCE: string[] = [
+  "login-check",
+  "mailbox",
+  "friend-gifts",
+  "dispatch",
+  "shop",
+  "grant",
+  "daily-missions",
+  "events",
+];
 
 export function collectUpstreamPipelineEntries(skillRootDir: string): Set<string> {
   const entries = new Set<string>();
@@ -151,6 +167,40 @@ export const STELLA_SORA_WORKFLOWS: StellaSoraWorkflowSpec[] = [
     recoveryProcedure: "Never confirm real-money purchases; stop and request user approval",
     serverCompatibility: ["en (pending live Steam verification)"],
     knownLimitations: ["Premium purchases are blocked by safety policy"],
+  },
+  {
+    id: "dispatch",
+    name: "Dispatch Management",
+    pipelineEntry: "委托_入口",
+    sourceFiles: [
+      "upstream/assets/interface/tasks/quest.json",
+      "upstream/assets/resource/en/pipeline/daily/quest.json",
+    ],
+    entryConditions: ["Game is in main lobby"],
+    requiredGameState: "Dispatch / Commission menu accessible",
+    recognitionRules: ["Claim completed dispatches and re-dispatch"],
+    expectedResult: "Completed dispatches claimed and new dispatches started",
+    failureConditions: ["No eligible characters or unexpected modal"],
+    recoveryProcedure: "Skip dispatch with failure note if blocked",
+    serverCompatibility: ["en (pending live Steam verification)"],
+    knownLimitations: ["Requires EN overlay verification"],
+  },
+  {
+    id: "grant",
+    name: "Battle Pass / Grant Rewards",
+    pipelineEntry: "基金_入口",
+    sourceFiles: [
+      "upstream/assets/interface/tasks/grant.json",
+      "upstream/assets/resource/en/pipeline/daily/grant.json",
+    ],
+    entryConditions: ["Game is in main lobby"],
+    requiredGameState: "Grant / Battle Pass menu accessible",
+    recognitionRules: ["Claim available daily grant rewards"],
+    expectedResult: "Available daily grant rewards claimed",
+    failureConditions: ["No claimable rewards"],
+    recoveryProcedure: "Continue cleanly when no rewards are available",
+    serverCompatibility: ["en (pending live Steam verification)"],
+    knownLimitations: ["Requires EN overlay verification"],
   },
   {
     id: "events",

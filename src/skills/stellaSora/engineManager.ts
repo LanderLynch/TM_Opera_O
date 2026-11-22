@@ -5,9 +5,10 @@ import { ApplicationKnowledgeStore } from "../../applications/applicationKnowled
 import { ApplicationStatisticsStore } from "../../applications/applicationStatistics";
 import { LearningEngine } from "../../learning/learningEngine";
 import { SkillStore } from "../../learning/skillStore";
-import { StellaSoraReportGenerator } from "./reportGenerator";
+import { StellaSoraReportGenerator, DailySkippedItem } from "./reportGenerator";
 import { StellaSoraTaskVerifier, WorkflowVerificationResult } from "./taskVerifier";
 import {
+  STELLA_SORA_DAILY_SEQUENCE,
   STELLA_SORA_WORKFLOWS,
   StellaSoraWorkflowSpec,
   validatePipelineEntry,
@@ -195,6 +196,12 @@ export class StellaSoraEngineManager {
     return STELLA_SORA_WORKFLOWS;
   }
 
+  public async runDailyWorkflow(
+    options: { autoLaunch?: boolean; skipCompletedToday?: boolean } = {}
+  ) {
+    return await this.runWorkflows(STELLA_SORA_DAILY_SEQUENCE, options);
+  }
+
   public async runWorkflows(
     workflowIds: string[],
     options: { autoLaunch?: boolean; skipCompletedToday?: boolean } = {}
@@ -219,7 +226,9 @@ export class StellaSoraEngineManager {
       return { ok: false, report: msg, results: [], status: this.getStatus() };
     }
 
+    const runStartedAt = Date.now();
     const results: WorkflowVerificationResult[] = [];
+    const skippedItems: DailySkippedItem[] = [];
     const session = this.deps.statisticsStore?.startSession("stella-sora", workflowIds.join(", "));
 
     try {
@@ -280,25 +289,38 @@ export class StellaSoraEngineManager {
           }
         }
       }
-      const queueIds = workflowIds.filter((id) => {
-        if (wasAlreadyRunning && id === "login-check") return false;
-        if (completedToday.has(id)) return false;
-        return true;
-      });
+      const queueIds: string[] = [];
+      for (const id of workflowIds) {
+        if (wasAlreadyRunning && id === "login-check") {
+          skippedItems.push({ workflowId: id, reason: "Game sudah terbuka di desktop" });
+          continue;
+        }
+        if (completedToday.has(id)) {
+          skippedItems.push({ workflowId: id, reason: "Sudah terverifikasi selesai hari ini" });
+          continue;
+        }
+        queueIds.push(id);
+      }
 
       if (queueIds.length === 0) {
         this.phase = "activated";
-        this.currentStep = "All requested workflows already completed today";
+        this.taskState = "completed";
+        this.currentStep = "Seluruh aktivitas harian sudah selesai hari ini";
         this.progressPercent = 100;
-        const msg = "All requested Stella Sora daily workflows were already verified completed today.";
+        const report = this.reporter.buildSessionSummary(
+          results,
+          this.deps.statisticsStore?.getSummary("stella-sora"),
+          skippedItems,
+          Date.now() - runStartedAt
+        );
         if (session) {
           this.deps.statisticsStore?.finishSession(session.id, {
             status: "completed",
             completedActivities: workflowIds,
-            verifiedResults: [msg],
+            verifiedResults: [report],
           });
         }
-        return { ok: true, report: msg, results, status: this.getStatus() };
+        return { ok: true, report, results, status: this.getStatus() };
       }
 
       // Check active knowledge notices before running workflows
@@ -336,7 +358,13 @@ export class StellaSoraEngineManager {
         this.currentWorkflow = spec.name;
         this.currentStep = `Executing ${spec.pipelineEntry}`;
 
-        const execRes = await this.bridge.runPipelineTask(spec.pipelineEntry, 0);
+        let execRes = await this.bridge.runPipelineTask(spec.pipelineEntry, 0);
+        if (!execRes.ok && this.adaptiveMode && !this.stopRequested) {
+          this.currentStep = `Adaptive retry for ${spec.pipelineEntry}`;
+          await this.bridge.captureScreenshot().catch(() => {});
+          execRes = await this.bridge.runPipelineTask(spec.pipelineEntry, 0);
+        }
+
         this.taskState = "verifying";
         const postState = await this.processManager.detect();
         this.lastRecognizedScreen = postState.windowTitle;
@@ -384,7 +412,9 @@ export class StellaSoraEngineManager {
 
       const report = this.reporter.buildSessionSummary(
         results,
-        this.deps.statisticsStore?.getSummary("stella-sora")
+        this.deps.statisticsStore?.getSummary("stella-sora"),
+        skippedItems,
+        Date.now() - runStartedAt
       );
       return { ok: pending.length === 0, report, results, status: this.getStatus() };
     } finally {

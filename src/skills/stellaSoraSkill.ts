@@ -1,4 +1,5 @@
 import { StellaSoraEngineManager, StellaSoraStatusSnapshot } from "./stellaSora/engineManager";
+import { STELLA_SORA_DAILY_SEQUENCE } from "./stellaSora/workflowCatalog";
 
 export type StellaSoraIntent =
   | { type: "activate" }
@@ -28,16 +29,19 @@ export function parseStellaSoraCommand(input: string): StellaSoraIntent | null {
   }
   if (/\badaptive\b/i.test(lower)) {
     const off = /\b(off|disable|stop)\b/i.test(lower);
+    if (!off && /\b(run|jalankan)\b/i.test(lower) && !/\bmode\b/i.test(lower)) {
+      return { type: "run_workflows", workflowIds: [...STELLA_SORA_DAILY_SEQUENCE] };
+    }
     return { type: "adaptive_mode", enabled: !off };
   }
   if (/\b(open|launch|buka)\b/i.test(lower) && /\b(check|running|cek)\b/i.test(lower)) {
     return { type: "open_and_check" };
   }
   if (/\b(run|jalankan|start|mulai|daily|harian)\b/i.test(lower)) {
-    const workflows = ["login-check", "mailbox", "friend-gifts", "daily-missions", "shop"];
-    if (/\b(event|events|activity)\b/i.test(lower)) {
-      workflows.push("events");
+    if (/\b(event|events|activity)\b/i.test(lower) && !/\b(daily|harian)\b/i.test(lower)) {
+      return { type: "run_workflows", workflowIds: ["events"] };
     }
+    const workflows = [...STELLA_SORA_DAILY_SEQUENCE];
     if (/\btower\b/i.test(lower)) {
       workflows.push("tower");
     }
