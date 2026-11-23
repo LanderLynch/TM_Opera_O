@@ -1243,13 +1243,13 @@ async function synthesizeElevenLabs(text: string): Promise<string> {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_flash_v2_5",
-          language_code: "id",
+          model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: 0.78,
-            similarity_boost: 0.75,
-            style: 0.0,
-            speed: 0.84,
+            stability: 0.38,
+            similarity_boost: 0.8,
+            style: 0.45,
+            use_speaker_boost: true,
+            speed: 0.98,
           },
         }),
       });
@@ -1275,13 +1275,8 @@ function ttsSay(text: string): void {
   ttsQueue = ttsQueue.then(async () => {
     if (!ttsEnabled) return;
     try {
-      const dataUrl = await synthesizeGeminiTts(cleaned);
-      await playAudioInRenderer(dataUrl, 0.94);
-      return;
-    } catch {}
-    try {
       const dataUrl = await synthesizeElevenLabs(cleaned);
-      await playAudioInRenderer(dataUrl, 0.94);
+      await playAudioInRenderer(dataUrl, 0.95);
       return;
     } catch {}
     try {
