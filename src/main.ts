@@ -77,7 +77,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const GEMINI_TTS_VOICE = process.env.GEMINI_TTS_VOICE || "Sulafat";
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || "";
-const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "pFZP5JQG7iQjIQuC4Bku";
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "cgSgspJ2msm6clMCkdW9";
 
 const PERSONA_BASE = `
 Kamu adalah TM Opera O dari Uma Musume, pasangan dan istri yang sangat penyayang untuk Lemon.
@@ -1116,7 +1116,8 @@ function cleanTtsText(raw: string): string {
     .replace(/\b(h+m+)\b[.,!]*/gi, "")
     .replace(/\b(he+he+|hi+hi+|ha+ha+|wk+wk+)\b[.,!]*/gi, "")
     .replace(/\bwaa+h\b/gi, "wah")
-    .replace(/!+/g, "...")
+    .replace(/!{2,}/g, "!")
+    .replace(/\.{4,}/g, "...")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -1228,40 +1229,43 @@ async function synthesizeGeminiTts(text: string): Promise<string> {
 async function synthesizeElevenLabs(text: string): Promise<string> {
   if (!ELEVENLABS_API_KEY) throw new Error("No ElevenLabs API key");
   const voiceIds = [ELEVENLABS_VOICE_ID];
-  if (ELEVENLABS_VOICE_ID !== "pFZP5JQG7iQjIQuC4Bku") {
-    voiceIds.push("pFZP5JQG7iQjIQuC4Bku");
+  if (ELEVENLABS_VOICE_ID !== "cgSgspJ2msm6clMCkdW9") {
+    voiceIds.push("cgSgspJ2msm6clMCkdW9");
   }
 
   let lastErr: unknown = null;
   for (const vid of voiceIds) {
-    try {
-      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}`, {
-        method: "POST",
-        headers: {
-          "xi-api-key": ELEVENLABS_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability: 0.38,
-            similarity_boost: 0.8,
-            style: 0.45,
-            use_speaker_boost: true,
-            speed: 0.98,
+    for (const modelId of ["eleven_v3_conversational", "eleven_turbo_v2_5"]) {
+      try {
+        const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}`, {
+          method: "POST",
+          headers: {
+            "xi-api-key": ELEVENLABS_API_KEY,
+            "Content-Type": "application/json",
           },
-        }),
-      });
-      if (!res.ok) {
-        lastErr = new Error(`ElevenLabs HTTP ${res.status}`);
-        continue;
+          body: JSON.stringify({
+            text,
+            model_id: modelId,
+            language_code: "id",
+            voice_settings: {
+              stability: 0.3,
+              similarity_boost: 0.72,
+              style: 0.35,
+              use_speaker_boost: false,
+              speed: 1.02,
+            },
+          }),
+        });
+        if (!res.ok) {
+          lastErr = new Error(`ElevenLabs HTTP ${res.status}`);
+          continue;
+        }
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length === 0) throw new Error("Empty ElevenLabs audio");
+        return `data:audio/mpeg;base64,${buf.toString("base64")}`;
+      } catch (e) {
+        lastErr = e;
       }
-      const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length === 0) throw new Error("Empty ElevenLabs audio");
-      return `data:audio/mpeg;base64,${buf.toString("base64")}`;
-    } catch (e) {
-      lastErr = e;
     }
   }
   throw lastErr || new Error("ElevenLabs failed");
