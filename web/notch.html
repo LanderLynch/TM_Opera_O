@@ -450,7 +450,7 @@
             <!-- COMPACT PILL VIEW -->
             <div class="compact-view">
                 <div class="flex items-center gap-2">
-                    <img id="compact-cover" src="opera_profile.jpg?v=2" class="w-5 h-5 rounded-md object-cover" draggable="false">
+                    <img id="compact-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';" class="w-5 h-5 rounded-md object-cover" draggable="false">
                     <div class="flex items-center gap-0.5 h-3.5">
                         <span class="eq-bar"></span>
                         <span class="eq-bar"></span>
@@ -1151,13 +1151,31 @@
                     if (cover !== lastCoverUrl) {
                         lastCoverUrl = cover;
                         const imgEl = document.getElementById('album-cover');
+                        const compactEl = document.getElementById('compact-cover');
+                        compactEl.onerror = () => {
+                            if (!compactEl.src.includes('opera_profile.jpg')) {
+                                compactEl.src = 'opera_profile.jpg?v=2';
+                            }
+                        };
+                        imgEl.onerror = () => {
+                            if (imgEl.hasAttribute('crossorigin')) {
+                                imgEl.removeAttribute('crossorigin');
+                                imgEl.src = cover;
+                            } else if (!imgEl.src.includes('opera_profile.jpg')) {
+                                imgEl.src = 'opera_profile.jpg?v=2';
+                            }
+                        };
                         imgEl.crossOrigin = 'Anonymous';
                         imgEl.onload = () => {
                             if (notchSettings.colorAlbumFocus !== false) {
-                                const palette = extractDominantColorsFromImg(imgEl);
-                                if (palette) {
-                                    applyNotchAmbient(palette.primary, palette.secondary, isPlaying);
-                                } else {
+                                try {
+                                    const palette = extractDominantColorsFromImg(imgEl);
+                                    if (palette) {
+                                        applyNotchAmbient(palette.primary, palette.secondary, isPlaying);
+                                    } else {
+                                        applyNotchAmbient(notchSettings.customAccentColor, notchSettings.customAccentColor, isPlaying);
+                                    }
+                                } catch {
                                     applyNotchAmbient(notchSettings.customAccentColor, notchSettings.customAccentColor, isPlaying);
                                 }
                             } else {
@@ -1165,7 +1183,7 @@
                             }
                         };
                         imgEl.src = cover;
-                        document.getElementById('compact-cover').src = cover;
+                        compactEl.src = cover;
                     } else {
                         const wash = document.getElementById('ambient-wash');
                         if (wash) wash.classList.toggle('paused', !isPlaying);
