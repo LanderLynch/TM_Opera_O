@@ -263,9 +263,9 @@
             background: var(--card-hover);
         }
         .ayasa-quick-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
+            flex: 1;
+            height: 36px;
+            border-radius: 18px;
             background: var(--card-bg);
             color: #d1d1d6;
             display: flex;
@@ -342,84 +342,108 @@
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
 
-                    <!-- 3-Zone Top Header: Title | Date & Time | Pin + Mascot -->
+                    <!-- 3-Zone Top Header: Title | Date & Time | Mascot (click to Pin) -->
                     <div class="flex items-center justify-between h-6 shrink-0 mb-2">
-                        <span id="header-title" class="text-[13px] font-semibold text-[#f5f5f7]">Home</span>
+                        <span id="header-title" class="text-[13px] font-bold text-[#f5f5f7]">Home</span>
                         <div class="flex items-center gap-2 text-[12px]">
-                            <span class="w-3.5 h-3.5 rounded-full border border-[#30d158] flex items-center justify-center">
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#30d158]"></span>
+                            <span class="w-4 h-4 rounded-full border-2 border-[#30d158] flex items-center justify-center">
+                                <svg class="w-2.5 h-2.5 text-[#30d158]" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
                             </span>
-                            <span id="hud-date" class="text-[#8e8e96] font-medium">Wed 25 Nov</span>
+                            <span id="hud-date" class="text-[#f5f5f7] font-medium">Wed 25 Nov 2026</span>
                             <span id="hud-time" class="text-[#f5f5f7] font-bold font-mono-num">00:00</span>
                         </div>
-                        <div class="flex items-center gap-1.5">
-                            <button id="pin-btn" onclick="togglePin(event)" class="px-2 py-0.5 rounded-md text-[10.5px] bg-[#2c2c2e] hover:bg-[#3a3a3e] text-[#d1d1d6] transition-colors" title="Pin Notch">Pin</button>
+                        <button id="pin-btn" onclick="togglePin(event)" class="rounded-md p-0.5 transition-all" title="Klik untuk Pin/Unpin Notch">
                             <img src="opera_profile.jpg?v=2" class="w-5 h-5 rounded-md object-cover border border-white/10" alt="TM Opera O" draggable="false">
-                        </div>
+                        </button>
                     </div>
 
                     <!-- BODY SLIDES -->
                     <div id="slides-body" class="flex-1 min-h-0 flex items-center">
-                        <!-- SLIDE 0: HOME DASHBOARD (Ayasa 4-Widget + Quick Action Row) -->
+                        <!-- SLIDE 0: HOME DASHBOARD (Exact Aya Notch 4-Card + 8-Pill Row) -->
                         <div id="slide-0" class="w-full h-full flex flex-col justify-between gap-2 pg-anim">
-                            <div class="grid grid-cols-12 gap-2 flex-1 min-h-0">
-                                <!-- Mini Music Card -->
-                                <div class="col-span-5 ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(1, event)">
+                            <div class="flex items-stretch gap-2 flex-1 min-h-0">
+                                <!-- Card 1: Mini Music -->
+                                <div class="w-[34%] ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(1, event)">
                                     <div class="flex items-center gap-2 min-w-0">
                                         <img id="home-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';" class="w-9 h-9 rounded-lg object-cover shrink-0 bg-[#2c2c2e]" draggable="false">
                                         <div class="min-w-0 flex-1">
-                                            <div id="home-music-title" class="text-[12px] font-semibold text-[#f5f5f7] truncate">Belum ada lagu</div>
-                                            <div id="home-music-artist" class="text-[10.5px] text-[#8e8e96] truncate">Spotify · Standby</div>
+                                            <div id="home-music-title" class="text-[12px] font-bold text-[#f5f5f7] truncate">Belum ada lagu</div>
+                                            <div id="home-music-artist" class="text-[10px] text-[#8e8e96] truncate">Spotify</div>
                                         </div>
                                     </div>
-                                    <div class="flex items-center justify-between pt-1">
-                                        <div class="flex-1 h-1 bg-[#2c2c2e] rounded-full overflow-hidden mr-2">
-                                            <div id="home-music-bar" class="h-full bg-white rounded-full" style="width: 0%;"></div>
-                                        </div>
-                                        <div class="flex items-center gap-1.5 text-[#f5f5f7]">
-                                            <button onclick="mediaCmd('prev', event)" class="hover:text-white text-[#a1a1a6]"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
-                                            <button onclick="mediaCmd('play_pause', event)" class="hover:text-white"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-                                            <button onclick="mediaCmd('next', event)" class="hover:text-white text-[#a1a1a6]"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
-                                        </div>
+                                    <div class="w-full h-[3px] bg-[#2c2c2e] rounded-full overflow-hidden my-1">
+                                        <div id="home-music-bar" class="h-full bg-white rounded-full" style="width: 0%;"></div>
+                                    </div>
+                                    <div class="flex items-center justify-center gap-3.5 text-[#f5f5f7]">
+                                        <button onclick="mediaCmd('prev', event)" class="hover:text-white text-[#a1a1a6]"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+                                        <button onclick="mediaCmd('play_pause', event)" class="hover:text-white"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                                        <button onclick="mediaCmd('next', event)" class="hover:text-white text-[#a1a1a6]"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
                                     </div>
                                 </div>
 
-                                <!-- Blue Date Tile -->
-                                <div class="col-span-2 rounded-[13px] bg-[#2563eb] flex flex-col items-center justify-center text-white">
-                                    <span id="tile-weekday" class="text-[10px] font-semibold uppercase tracking-wide opacity-85">Wed</span>
+                                <!-- Card 2: Blue Date Tile -->
+                                <div class="w-[13.5%] rounded-[14px] bg-[#2563eb] flex flex-col items-center justify-center text-white shrink-0">
+                                    <span id="tile-weekday" class="text-[11px] font-medium opacity-90">Wed</span>
                                     <span id="tile-day" class="text-[24px] font-bold leading-none mt-0.5 font-mono-num">25</span>
                                 </div>
 
-                                <!-- Companion / AI & Screen Status Card -->
-                                <div class="col-span-5 ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(5, event)">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[11px] font-semibold text-[#f5f5f7]">TM Opera O</span>
-                                        <span class="text-[10px] text-[#30d158] font-medium">Ready</span>
+                                <!-- Card 3: Clipboard / Active Context -->
+                                <div class="w-[24.5%] ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(5, event)">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-[#a78bfa] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                                        <span class="text-[11.5px] font-bold text-[#f5f5f7] truncate">Clipboard</span>
                                     </div>
-                                    <div id="home-active-win" class="text-[11px] text-[#8e8e96] truncate">Standby</div>
-                                    <div id="home-model-label" class="text-[10.5px] text-[#a1a1a6] truncate font-mono-num">Tanya AI / Layar →</div>
+                                    <div id="home-clipboard-text" class="text-[10.5px] text-[#8e8e96] truncate font-mono-num">Kosong</div>
+                                    <div id="home-active-win" class="text-[9.5px] text-[#636369] truncate">Standby</div>
+                                </div>
+
+                                <!-- Card 4: CPU & RAM Circular Gauges -->
+                                <div class="flex-1 ayasa-card px-2.5 py-2 flex items-center justify-around">
+                                    <div class="flex flex-col items-center">
+                                        <div class="relative w-10 h-10 flex items-center justify-center">
+                                            <svg class="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+                                                <circle cx="20" cy="20" r="16" stroke="#2c2c2e" stroke-width="3.5" fill="none"/>
+                                                <circle id="home-cpu-ring" cx="20" cy="20" r="16" stroke="#38bdf8" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="94"/>
+                                            </svg>
+                                            <span id="home-cpu-val" class="absolute text-[11px] font-bold text-white font-mono-num">0</span>
+                                        </div>
+                                        <span class="text-[9.5px] text-[#8e8e96] mt-0.5">CPU</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="relative w-10 h-10 flex items-center justify-center">
+                                            <svg class="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+                                                <circle cx="20" cy="20" r="16" stroke="#2c2c2e" stroke-width="3.5" fill="none"/>
+                                                <circle id="home-ram-ring" cx="20" cy="20" r="16" stroke="#30d158" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="50"/>
+                                            </svg>
+                                            <span id="home-ram-val" class="absolute text-[11px] font-bold text-white font-mono-num">0</span>
+                                        </div>
+                                        <span class="text-[9.5px] text-[#8e8e96] mt-0.5">RAM</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Bottom Row: Ayasa Circular Quick Actions -->
-                            <div class="flex items-center justify-between px-3 shrink-0">
+                            <!-- Bottom Row: 8 Wide Pill-Shaped Quick Actions -->
+                            <div class="flex items-center gap-2 shrink-0">
                                 <button onclick="runQuick('buka_chat', event)" class="ayasa-quick-btn" title="Buka Chat">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                </button>
+                                <button onclick="goToSlide(3, event)" class="ayasa-quick-btn" title="Pomodoro">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
                                 </button>
                                 <button onclick="goToSlide(2, event)" class="ayasa-quick-btn" title="List Tasks">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                                </button>
-                                <button onclick="goToSlide(3, event)" class="ayasa-quick-btn" title="Pomodoro Focus">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
                                 </button>
                                 <button onclick="goToSlide(4, event)" class="ayasa-quick-btn" title="Water Drink">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
                                 </button>
-                                <button onclick="goToSlide(5, event)" class="ayasa-quick-btn" title="Tanya AI Cepat">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
-                                </button>
                                 <button onclick="callApi('lihat_layar_radial')" class="ayasa-quick-btn" title="Analisis Layar">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+                                </button>
+                                <button onclick="goToSlide(5, event)" class="ayasa-quick-btn" title="Ask AI">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                </button>
+                                <button onclick="callApi('tes_reminder')" class="ayasa-quick-btn" title="Pengingat">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
                                 </button>
                                 <button onclick="callApi('open_settings')" class="ayasa-quick-btn" title="Pengaturan">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -806,7 +830,7 @@
         function collapseNow(e) {
             if (e) e.stopPropagation();
             pinned = false;
-            document.getElementById('pin-btn').textContent = 'Pin';
+            document.getElementById('pin-btn').style.boxShadow = 'none';
             island.classList.remove('expanded');
             island.setAttribute('aria-expanded', 'false');
         }
@@ -842,9 +866,7 @@
             e.stopPropagation();
             pinned = !pinned;
             const btn = document.getElementById('pin-btn');
-            btn.textContent = pinned ? 'Pinned' : 'Pin';
-            btn.style.background = pinned ? '#3b82f6' : '#2c2c2e';
-            btn.style.color = pinned ? '#ffffff' : '#d1d1d6';
+            btn.style.boxShadow = pinned ? '0 0 0 2px #3b82f6' : 'none';
         }
 
         function toggleLyricsMode(e) {
@@ -1031,7 +1053,17 @@
                 const st = await callApi('get_notch_status');
                 if (!st) return;
                 document.getElementById('home-active-win').textContent = st.taskProgress || st.activeWindow || 'Standby';
-                if (st.model) document.getElementById('home-model-label').textContent = st.model;
+                if (st.clipboardPreview !== undefined) {
+                    document.getElementById('home-clipboard-text').textContent = st.clipboardPreview || 'Kosong';
+                }
+                if (st.system) {
+                    const cpu = Math.max(0, Math.min(100, Number(st.system.cpuPercent || 0)));
+                    const ram = Math.max(0, Math.min(100, Number(st.system.ramPercent || 0)));
+                    document.getElementById('home-cpu-val').textContent = String(cpu);
+                    document.getElementById('home-ram-val').textContent = String(ram);
+                    document.getElementById('home-cpu-ring').style.strokeDashoffset = String(100.5 * (1 - cpu / 100));
+                    document.getElementById('home-ram-ring').style.strokeDashoffset = String(100.5 * (1 - ram / 100));
+                }
                 if (st.settings) notchSettings = { ...notchSettings, ...st.settings };
 
                 const m = st.media;

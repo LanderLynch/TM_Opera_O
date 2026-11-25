@@ -1,5 +1,6 @@
-import { app, BrowserWindow, desktopCapturer, ipcMain, screen, shell } from "electron";
+import { app, BrowserWindow, clipboard, desktopCapturer, ipcMain, screen, shell } from "electron";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import { execFile, spawn } from "child_process";
 import {
@@ -1636,6 +1637,9 @@ function createWindows(): void {
   radialWindow.loadFile(path.join(BASE, "web", "notch.html"));
 }
 
+let prevCpuIdle = 0;
+let prevCpuTotal = 0;
+
 ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
   switch (method) {
     case "sapaan_awal": {
@@ -1786,12 +1790,33 @@ ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
     }
     case "get_notch_status": {
       const media = await getMediaWithLyrics();
+      const totalMem = os.totalmem();
+      const ramPercent = totalMem > 0 ? Math.round(((totalMem - os.freemem()) / totalMem) * 100) : 0;
+      const cpus = os.cpus();
+      let idle = 0;
+      let total = 0;
+      for (const c of cpus) {
+        idle += c.times.idle;
+        total += c.times.user + c.times.nice + c.times.sys + c.times.idle + c.times.irq;
+      }
+      const cpuPercent =
+        prevCpuTotal > 0 && total > prevCpuTotal
+          ? Math.max(0, Math.min(100, Math.round(((total - prevCpuTotal - (idle - prevCpuIdle)) / (total - prevCpuTotal)) * 100)))
+          : 0;
+      prevCpuIdle = idle;
+      prevCpuTotal = total;
+      let clipboardPreview = "";
+      try {
+        clipboardPreview = (clipboard.readText() || "").trim().replace(/\s+/g, " ").slice(0, 40);
+      } catch {}
       return {
         activeWindow: currentActiveWindow || "TM Opera O — Standby",
         model: currentModel,
         taskProgress: currentTaskProgress || bgTaskProgress,
         settings: appSettings,
         media,
+        system: { cpuPercent, ramPercent },
+        clipboardPreview,
       };
     }
     case "seek_media": {
