@@ -1243,6 +1243,13 @@
 
         async function mediaCmd(action, e) {
             e.stopPropagation();
+            if (action === 'play_pause' && mediaState.hasMedia) {
+                const nextPlaying = mediaState.status !== 'Playing';
+                mediaState.status = nextPlaying ? 'Playing' : 'Paused';
+                mediaState.lastSyncMs = Date.now();
+                document.getElementById('icon-pause').classList.toggle('hidden', !nextPlaying);
+                document.getElementById('icon-play').classList.toggle('hidden', nextPlaying);
+            }
             await callApi('notch_media', action);
             setTimeout(pollNotchStatus, 180);
         }

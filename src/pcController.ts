@@ -219,6 +219,42 @@ export async function findInstalledAppMatches(
 // ---------------------------------------------------------
 export type MediaAction = "play_pause" | "next" | "prev" | "mute" | "vol_up" | "vol_down";
 
+const MEDIA_KEY_EXE = path.join(os.tmpdir(), "tm_opera_o_mediakey.exe");
+let mediaKeyReady = false;
+
+function ensureMediaKeyExe(): boolean {
+  if (mediaKeyReady && fs.existsSync(MEDIA_KEY_EXE)) return true;
+  if (fs.existsSync(MEDIA_KEY_EXE)) {
+    mediaKeyReady = true;
+    return true;
+  }
+  const csc = "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe";
+  if (!fs.existsSync(csc)) return false;
+  const csPath = path.join(os.tmpdir(), "tm_opera_o_mediakey.cs");
+  const csCode = `using System;
+using System.Runtime.InteropServices;
+class M {
+  [DllImport("user32.dll")] static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+  static void Main(string[] args) {
+    if (args.Length == 0) return;
+    byte vk = byte.Parse(args[0]);
+    keybd_event(vk, 0, 0, UIntPtr.Zero);
+    keybd_event(vk, 0, 2, UIntPtr.Zero);
+  }
+}`;
+  try {
+    fs.writeFileSync(csPath, csCode, "utf-8");
+    require("child_process").execFileSync(csc, ["/nologo", "/optimize+", `/out:${MEDIA_KEY_EXE}`, csPath], {
+      windowsHide: true,
+      timeout: 10000,
+    });
+    mediaKeyReady = fs.existsSync(MEDIA_KEY_EXE);
+    return mediaKeyReady;
+  } catch {
+    return false;
+  }
+}
+
 export async function triggerMediaKey(action: MediaAction): Promise<void> {
   const keyMap: Record<MediaAction, number> = {
     play_pause: 0xb3, // VK_MEDIA_PLAY_PAUSE
@@ -229,6 +265,12 @@ export async function triggerMediaKey(action: MediaAction): Promise<void> {
     vol_down: 0xae,   // VK_VOLUME_DOWN
   };
   const vk = keyMap[action];
+  if (ensureMediaKeyExe()) {
+    await new Promise<void>((resolve) => {
+      execFile(MEDIA_KEY_EXE, [String(vk)], { windowsHide: true, timeout: 3000 }, () => resolve());
+    });
+    return;
+  }
   const ps = `
 Add-Type @"
 using System;
