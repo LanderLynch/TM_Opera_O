@@ -19,7 +19,7 @@ function runPowerShell(script: string, timeoutMs = 20_000): Promise<string> {
     execFile(
       "powershell.exe",
       ["-NoProfile", "-WindowStyle", "Hidden", "-Command", script],
-      { timeout: timeoutMs, maxBuffer: 4 * 1024 * 1024 },
+      { timeout: timeoutMs, maxBuffer: 4 * 1024 * 1024, windowsHide: true },
       (err, stdout) => {
         if (err) resolve("");
         else resolve((stdout || "").trim());
@@ -114,7 +114,7 @@ export function launchTarget(item: InstalledApp): void {
   if (item.target.startsWith("steam://") || item.target.startsWith("shell:AppsFolder\\")) {
     execFile("explorer.exe", [item.target], () => {});
   } else {
-    execFile("cmd.exe", ["/c", "start", "", item.target], { cwd: path.dirname(item.target) }, () => {});
+    execFile("cmd.exe", ["/c", "start", "", item.target], { cwd: path.dirname(item.target), windowsHide: true }, () => {});
   }
 }
 
@@ -446,7 +446,7 @@ while ($true) {
 }
 `;
 
-  const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+  const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { windowsHide: true });
   let buffer = "";
   child.stdout?.on("data", (chunk: Buffer | string) => {
     buffer += String(chunk);
@@ -781,7 +781,7 @@ foreach ($p in $data.isi) {
 Write-Output "STEP:DONE"
 `;
   return new Promise((resolve) => {
-    const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+    const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { windowsHide: true });
     child.stdout?.on("data", (chunk: Buffer | string) => {
       const lines = String(chunk).split(/\r?\n/);
       for (const l of lines) {
@@ -1034,7 +1034,7 @@ Write-Output "STEP:DONE"
 `;
 
   return new Promise((resolve) => {
-    const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+    const child = execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { windowsHide: true });
     child.stdout?.on("data", (chunk: Buffer | string) => {
       const lines = String(chunk).split(/\r?\n/);
       for (const l of lines) {

@@ -391,7 +391,7 @@
                                 </div>
 
                                 <!-- Companion / AI & Screen Status Card -->
-                                <div class="col-span-5 ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(2, event)">
+                                <div class="col-span-5 ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(5, event)">
                                     <div class="flex items-center justify-between">
                                         <span class="text-[11px] font-semibold text-[#f5f5f7]">TM Opera O</span>
                                         <span class="text-[10px] text-[#30d158] font-medium">Ready</span>
@@ -402,24 +402,24 @@
                             </div>
 
                             <!-- Bottom Row: Ayasa Circular Quick Actions -->
-                            <div class="flex items-center justify-between px-4 shrink-0">
+                            <div class="flex items-center justify-between px-3 shrink-0">
                                 <button onclick="runQuick('buka_chat', event)" class="ayasa-quick-btn" title="Buka Chat">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                                 </button>
-                                <button onclick="goToSlide(2, event)" class="ayasa-quick-btn" title="Tanya AI Cepat">
+                                <button onclick="goToSlide(2, event)" class="ayasa-quick-btn" title="List Tasks">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                </button>
+                                <button onclick="goToSlide(3, event)" class="ayasa-quick-btn" title="Pomodoro Focus">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
+                                </button>
+                                <button onclick="goToSlide(4, event)" class="ayasa-quick-btn" title="Water Drink">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                                </button>
+                                <button onclick="goToSlide(5, event)" class="ayasa-quick-btn" title="Tanya AI Cepat">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
                                 </button>
                                 <button onclick="callApi('lihat_layar_radial')" class="ayasa-quick-btn" title="Analisis Layar">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                                </button>
-                                <button onclick="runQuick('open_spotify', event)" class="ayasa-quick-btn" title="Buka Spotify">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                                </button>
-                                <button onclick="callApi('tes_reminder')" class="ayasa-quick-btn" title="Uji Pengingat">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                                </button>
-                                <button onclick="runQuick('refresh_app', event)" class="ayasa-quick-btn" title="Muat Ulang">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                                 </button>
                                 <button onclick="callApi('open_settings')" class="ayasa-quick-btn" title="Pengaturan">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -471,8 +471,73 @@
                             </div>
                         </div>
 
-                        <!-- SLIDE 2: ASK AI + TRANSLATE -->
-                        <div id="slide-2" class="hidden w-full h-full flex flex-col justify-between gap-2 pg-anim">
+                        <!-- SLIDE 2: LIST TASKS (Ayasa Style) -->
+                        <div id="slide-2" class="hidden w-full h-full flex items-center gap-3 pg-anim">
+                            <div class="w-[146px] h-full ayasa-card p-3 flex flex-col items-center justify-between shrink-0">
+                                <div class="relative w-14 h-14 flex items-center justify-center">
+                                    <svg class="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                                        <circle cx="28" cy="28" r="23" stroke="#2c2c2e" stroke-width="5" fill="none"/>
+                                        <circle id="tasks-ring" cx="28" cy="28" r="23" stroke="#30d158" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="144.5"/>
+                                    </svg>
+                                    <span id="tasks-count" class="absolute text-[12px] font-bold text-white font-mono-num">0/0</span>
+                                </div>
+                                <div class="text-[11px] text-[#8e8e96]">Tasks done</div>
+                                <div class="flex gap-1.5 w-full">
+                                    <input id="task-new-input" type="text" placeholder="Add task..." onkeydown="if(event.key==='Enter') addAyasaTask(event)" class="w-full bg-[#2c2c2e] rounded-lg px-2 py-1 text-[11px] text-white placeholder-[#8e8e96] outline-none" />
+                                </div>
+                            </div>
+                            <div id="ayasa-tasks-list" class="flex-1 h-full overflow-y-auto hud-scroll space-y-1.5 pr-1"></div>
+                        </div>
+
+                        <!-- SLIDE 3: POMODORO FOCUS (Ayasa Style) -->
+                        <div id="slide-3" class="hidden w-full h-full flex flex-col justify-between py-0.5 pg-anim">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3 text-[11.5px] font-semibold">
+                                    <button onclick="setPomoMode(25, 'Focus', this)" class="pomo-tab text-[#ff9f0a] border-b-2 border-[#ff9f0a] pb-0.5">Pomodoro 25m</button>
+                                    <button onclick="setPomoMode(50, 'Deep Focus', this)" class="pomo-tab text-[#8e8e96] hover:text-white pb-0.5">Deep 50m</button>
+                                    <button onclick="setPomoMode(5, 'Break', this)" class="pomo-tab text-[#8e8e96] hover:text-white pb-0.5">Break 5m</button>
+                                </div>
+                                <span id="pomo-done-today" class="text-[11px] text-[#8e8e96] font-mono-num">Done today: 0</span>
+                            </div>
+                            <div class="ayasa-card px-4 py-3 flex items-center justify-between my-auto">
+                                <div>
+                                    <div id="pomo-timer-display" class="text-[30px] font-bold text-white leading-none font-mono-num">25:00</div>
+                                    <div id="pomo-mode-label" class="text-[11.5px] text-[#8e8e96] mt-1">Focus</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="pomo-start-btn" onclick="togglePomodoro(event)" class="px-4 py-1.5 rounded-full text-[12px] font-semibold bg-[#4a3008] text-[#ff9f0a] hover:bg-[#5c3c0c] transition-colors">Start</button>
+                                    <button onclick="resetPomodoro(event)" class="px-3 py-1.5 rounded-full text-[12px] bg-[#2c2c2e] text-[#d1d1d6] hover:bg-[#3a3a3e]">Reset</button>
+                                </div>
+                            </div>
+                            <div class="text-[10.5px] text-[#8e8e96]">Timer tetap berjalan di background saat notch ditutup.</div>
+                        </div>
+
+                        <!-- SLIDE 4: WATER DRINK TRACKER (Ayasa Style) -->
+                        <div id="slide-4" class="hidden w-full h-full flex items-center gap-4 pg-anim">
+                            <div class="w-12 h-[110px] rounded-full bg-[#1c1c1e] border border-[#2c2c2e] p-1 flex flex-col justify-end overflow-hidden shrink-0">
+                                <div id="water-bottle-fill" class="w-full rounded-full bg-[#3b82f6] transition-all duration-300" style="height: 0%;"></div>
+                            </div>
+                            <div class="flex-1 flex flex-col justify-between h-full py-1">
+                                <div>
+                                    <div class="flex items-baseline gap-2">
+                                        <span id="water-ml-text" class="text-[24px] font-bold text-white font-mono-num">0 ml</span>
+                                        <span class="text-[12px] text-[#8e8e96]">/ 2000 ml</span>
+                                    </div>
+                                    <div id="water-goal-pct" class="text-[11.5px] text-[#60a5fa] mt-0.5">Daily goal: 0%</div>
+                                </div>
+                                <div class="w-full h-1.5 bg-[#2c2c2e] rounded-full overflow-hidden">
+                                    <div id="water-bar-fill" class="h-full bg-[#3b82f6] rounded-full transition-all duration-300" style="width: 0%;"></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="addWater(150, event)" class="px-3 py-1.5 rounded-xl bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[12px] font-semibold text-white">+150 ml</button>
+                                    <button onclick="addWater(250, event)" class="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-[12px] font-semibold text-white">+250 ml</button>
+                                    <button onclick="resetWater(event)" class="px-2.5 py-1.5 rounded-xl bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[11px] text-[#8e8e96]">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 5: ASK AI + TRANSLATE -->
+                        <div id="slide-5" class="hidden w-full h-full flex flex-col justify-between gap-2 pg-anim">
                             <div class="flex items-center gap-1.5">
                                 <input id="hud-ask-input" type="text" placeholder="Tanya TM Opera O..."
                                     onkeydown="if(event.key==='Enter') sendHudAsk(event)"
@@ -505,8 +570,8 @@
                             </div>
                         </div>
 
-                        <!-- SLIDE 3: API USAGE -->
-                        <div id="slide-3" class="hidden w-full h-full flex items-center pg-anim">
+                        <!-- SLIDE 6: API USAGE -->
+                        <div id="slide-6" class="hidden w-full h-full flex items-center pg-anim">
                             <div class="grid grid-cols-2 gap-3 w-full">
                                 <div class="usage-card">
                                     <div class="flex items-center justify-between">
@@ -548,8 +613,11 @@
                         <div class="flex items-center gap-1.5">
                             <span class="ayasa-dot active" onclick="goToSlide(0, event)" title="Home"></span>
                             <span class="ayasa-dot" onclick="goToSlide(1, event)" title="Music"></span>
-                            <span class="ayasa-dot" onclick="goToSlide(2, event)" title="Ask AI"></span>
-                            <span class="ayasa-dot" onclick="goToSlide(3, event)" title="Usage"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(2, event)" title="Tasks"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(3, event)" title="Pomodoro"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(4, event)" title="Water"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(5, event)" title="Ask AI"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(6, event)" title="Usage"></span>
                         </div>
                         <button onclick="collapseNow(event)" class="ayasa-close absolute right-5" title="Tutup (Esc)">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -571,11 +639,11 @@
         }
 
         const island = document.getElementById('island');
-        const SLIDE_TITLES = ['Home', 'Music', 'Ask AI', 'Usage'];
+        const SLIDE_TITLES = ['Home', 'Music', 'List Tasks', 'Pomodoro', 'Water Drink', 'Ask AI', 'Usage'];
         let pinned = false;
         let collapseTimer = null;
         let currentSlide = 0;
-        const TOTAL_SLIDES = 4;
+        const TOTAL_SLIDES = 7;
         let lastHudReply = '';
         let showLyricsInline = false;
 
@@ -591,9 +659,127 @@
             }
             document.getElementById('header-title').textContent = SLIDE_TITLES[currentSlide] || 'Home';
             document.querySelectorAll('.ayasa-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
-            if (currentSlide === 2) setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 80);
-            if (currentSlide === 3) refreshUsageData(true);
+            if (currentSlide === 5) setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 80);
+            if (currentSlide === 6) refreshUsageData(true);
         }
+
+        // --- AYASA TASKS (persisted in localStorage) ---
+        let ayasaTasks = JSON.parse(localStorage.getItem('tm_opera_tasks') || '[{"text":"Cek tugas hari ini","done":false}]');
+        function saveTasks() { localStorage.setItem('tm_opera_tasks', JSON.stringify(ayasaTasks)); }
+        function renderTasks() {
+            const box = document.getElementById('ayasa-tasks-list');
+            const done = ayasaTasks.filter(t => t.done).length;
+            const total = ayasaTasks.length;
+            document.getElementById('tasks-count').textContent = `${done}/${total}`;
+            const circ = 144.5;
+            const pct = total > 0 ? done / total : 0;
+            document.getElementById('tasks-ring').style.strokeDashoffset = String(circ * (1 - pct));
+            box.innerHTML = '';
+            ayasaTasks.forEach((t, idx) => {
+                const row = document.createElement('div');
+                row.className = 'ayasa-card px-2.5 py-1.5 flex items-center justify-between gap-2 text-[11.5px]';
+                row.innerHTML = `
+                    <button class="flex items-center gap-2 min-w-0 flex-1 text-left">
+                        <span class="w-3.5 h-3.5 rounded-full border ${t.done ? 'bg-[#30d158] border-[#30d158]' : 'border-[#48484d]'} shrink-0"></span>
+                        <span class="truncate ${t.done ? 'line-through text-[#8e8e96]' : 'text-[#f5f5f7]'}">${t.text}</span>
+                    </button>
+                    <button class="text-[#8e8e96] hover:text-white px-1">×</button>
+                `;
+                row.children[0].onclick = (e) => { e.stopPropagation(); ayasaTasks[idx].done = !ayasaTasks[idx].done; saveTasks(); renderTasks(); };
+                row.children[1].onclick = (e) => { e.stopPropagation(); ayasaTasks.splice(idx, 1); saveTasks(); renderTasks(); };
+                box.appendChild(row);
+            });
+        }
+        function addAyasaTask(e) {
+            if (e) e.stopPropagation();
+            const inp = document.getElementById('task-new-input');
+            const v = (inp.value || '').trim();
+            if (!v) return;
+            ayasaTasks.unshift({ text: v, done: false });
+            inp.value = '';
+            saveTasks();
+            renderTasks();
+        }
+        renderTasks();
+
+        // --- AYASA POMODORO ---
+        let pomoMinutes = 25;
+        let pomoRemainingSec = 25 * 60;
+        let pomoRunning = false;
+        let pomoTimer = null;
+        let pomoDoneToday = Number(localStorage.getItem('tm_opera_pomo_done') || '0');
+        document.getElementById('pomo-done-today').textContent = `Done today: ${pomoDoneToday}`;
+        function renderPomodoro() {
+            const m = String(Math.floor(pomoRemainingSec / 60)).padStart(2, '0');
+            const s = String(pomoRemainingSec % 60).padStart(2, '0');
+            document.getElementById('pomo-timer-display').textContent = `${m}:${s}`;
+            document.getElementById('pomo-start-btn').textContent = pomoRunning ? 'Pause' : 'Start';
+        }
+        function setPomoMode(mins, label, btnEl) {
+            if (pomoTimer) { clearInterval(pomoTimer); pomoTimer = null; }
+            pomoRunning = false;
+            pomoMinutes = mins;
+            pomoRemainingSec = mins * 60;
+            document.getElementById('pomo-mode-label').textContent = label;
+            document.querySelectorAll('.pomo-tab').forEach(b => {
+                b.className = 'pomo-tab text-[#8e8e96] hover:text-white pb-0.5';
+            });
+            if (btnEl) btnEl.className = 'pomo-tab text-[#ff9f0a] border-b-2 border-[#ff9f0a] pb-0.5';
+            renderPomodoro();
+        }
+        function togglePomodoro(e) {
+            if (e) e.stopPropagation();
+            if (pomoRunning) {
+                clearInterval(pomoTimer); pomoTimer = null; pomoRunning = false;
+            } else {
+                pomoRunning = true;
+                pomoTimer = setInterval(() => {
+                    if (pomoRemainingSec > 0) {
+                        pomoRemainingSec--;
+                        renderPomodoro();
+                    } else {
+                        clearInterval(pomoTimer); pomoTimer = null; pomoRunning = false;
+                        pomoDoneToday++;
+                        localStorage.setItem('tm_opera_pomo_done', String(pomoDoneToday));
+                        document.getElementById('pomo-done-today').textContent = `Done today: ${pomoDoneToday}`;
+                        callApi('tes_reminder');
+                        renderPomodoro();
+                    }
+                }, 1000);
+            }
+            renderPomodoro();
+        }
+        function resetPomodoro(e) {
+            if (e) e.stopPropagation();
+            if (pomoTimer) { clearInterval(pomoTimer); pomoTimer = null; }
+            pomoRunning = false;
+            pomoRemainingSec = pomoMinutes * 60;
+            renderPomodoro();
+        }
+
+        // --- AYASA WATER DRINK ---
+        const WATER_KEY = 'tm_opera_water_' + new Date().toISOString().slice(0, 10);
+        let waterMl = Number(localStorage.getItem(WATER_KEY) || '0');
+        function renderWater() {
+            const pct = Math.min(100, Math.round((waterMl / 2000) * 100));
+            document.getElementById('water-ml-text').textContent = `${waterMl} ml`;
+            document.getElementById('water-goal-pct').textContent = `Daily goal: ${pct}%`;
+            document.getElementById('water-bar-fill').style.width = `${pct}%`;
+            document.getElementById('water-bottle-fill').style.height = `${pct}%`;
+        }
+        function addWater(ml, e) {
+            if (e) e.stopPropagation();
+            waterMl = Math.min(5000, waterMl + ml);
+            localStorage.setItem(WATER_KEY, String(waterMl));
+            renderWater();
+        }
+        function resetWater(e) {
+            if (e) e.stopPropagation();
+            waterMl = 0;
+            localStorage.setItem(WATER_KEY, '0');
+            renderWater();
+        }
+        renderWater();
 
         function nextSlide(e) { goToSlide(currentSlide + 1, e); }
         function prevSlide(e) { goToSlide(currentSlide - 1, e); }

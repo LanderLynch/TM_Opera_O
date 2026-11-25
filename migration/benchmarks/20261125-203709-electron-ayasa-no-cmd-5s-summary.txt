@@ -1,0 +1,11 @@
+﻿Label: electron-ayasa-no-cmd-5s
+Captured: 2026-11-25T20:37:10.0359795+07:00
+Verified Root PIDs: 23516
+App Tree Process Count: 7
+App Tree Working Set MB: 592.04
+App Tree Private Bytes MB: 382.19
+External Python Process Count: 0
+External Python Working Set MB: 0
+External Python Private Bytes MB: 0
+Combined Total Working Set MB: 592.04
+Combined Total Private Bytes MB: 382.19

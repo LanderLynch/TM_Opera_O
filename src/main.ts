@@ -1333,7 +1333,7 @@ for ($i = 0; $i -lt 160 -and $h -ne [IntPtr]::Zero; $i++) {
 }
 $found
 `;
-    execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], (err, stdout) => {
+    execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { windowsHide: true }, (err, stdout) => {
       if (err) {
         resolve("");
         return;
