@@ -1,0 +1,11 @@
+﻿Label: electron-floating-hud-5s
+Captured: 2026-11-25T20:08:33.1624720+07:00
+Verified Root PIDs: 22608
+App Tree Process Count: 7
+App Tree Working Set MB: 598.91
+App Tree Private Bytes MB: 383.4
+External Python Process Count: 0
+External Python Working Set MB: 0
+External Python Private Bytes MB: 0
+Combined Total Working Set MB: 598.91
+Combined Total Private Bytes MB: 383.4
