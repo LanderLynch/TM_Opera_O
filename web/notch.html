@@ -451,46 +451,56 @@
                             </div>
                         </div>
 
-                        <!-- SLIDE 1: MUSIC & SYNCED LYRICS (Ayasa Music Layout) -->
+                        <!-- SLIDE 1: MUSIC & SYNCED LYRICS (Exact Aya Notch Music Layout) -->
                         <div id="slide-1" class="hidden w-full h-full flex items-center gap-4 pg-anim">
                             <img id="album-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';"
-                                class="w-[106px] h-[106px] rounded-[18px] object-cover shrink-0 bg-[#1c1c1e]" draggable="false">
+                                class="w-[144px] h-[144px] -mt-5 rounded-[22px] object-cover shrink-0 bg-[#1c1c1e] shadow-lg" draggable="false">
                             <div class="flex-1 min-w-0 h-full flex flex-col justify-between py-0.5">
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="min-w-0">
-                                        <h3 id="now-playing-title" class="text-[15px] font-bold text-[#f5f5f7] truncate leading-tight">Belum ada musik</h3>
-                                        <p id="now-playing-artist" class="text-[12px] text-[#8e8e96] truncate mt-0.5">Spotify · TM Opera O</p>
+                                        <h3 id="now-playing-title" class="text-[18px] font-extrabold text-[#f5f5f7] truncate leading-tight">Belum ada musik</h3>
+                                        <p id="now-playing-artist" class="text-[12.5px] text-[#8e8e96] truncate mt-0.5">Spotify · TM Opera O</p>
                                     </div>
-                                    <button onclick="toggleLyricsMode(event)" id="btn-lyrics-toggle" class="w-7 h-7 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c2e] flex items-center justify-center text-[#d1d1d6] shrink-0" title="Tampilkan / Sembunyikan Lirik">
-                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    <button onclick="toggleLyricsMode(event)" id="btn-lyrics-toggle" class="w-7 h-7 rounded-full hover:bg-[#1c1c1e] flex items-center justify-center text-[#d1d1d6] shrink-0" title="Tampilkan / Sembunyikan Lirik">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                                     </button>
                                 </div>
 
-                                <div id="music-lyrics-box" class="hidden text-[11.5px] leading-snug space-y-0.5 overflow-hidden">
+                                <div id="music-lyrics-box" class="hidden text-[11px] leading-snug space-y-0.5 overflow-hidden">
                                     <p id="lyric-prev" onclick="seekToLyric(-1, event)" class="text-[#8e8e96] truncate cursor-pointer"></p>
                                     <p id="lyric-current" onclick="seekToLyric(0, event)" class="text-white font-semibold truncate cursor-pointer">♪ Putar lagu di Spotify...</p>
                                     <p id="lyric-next" onclick="seekToLyric(1, event)" class="text-[#8e8e96] truncate cursor-pointer"></p>
                                 </div>
 
                                 <div class="flex items-center gap-2.5">
-                                    <span id="media-time-cur" class="text-[11px] text-[#8e8e96] font-mono-num w-8">00:00</span>
-                                    <div id="media-progress-track" onclick="seekFromBar(event)" class="flex-1 h-[4px] bg-[#2c2c2e] rounded-full overflow-hidden cursor-pointer">
-                                        <div id="media-progress-bar" class="h-full bg-white rounded-full transition-all duration-150" style="width: 0%;"></div>
+                                    <span id="media-time-cur" class="text-[11px] text-[#f5f5f7] font-semibold font-mono-num w-8">00:00</span>
+                                    <div id="media-progress-track" onclick="seekFromBar(event)" class="relative flex-1 h-[4px] bg-[#2c2c2e] rounded-full cursor-pointer flex items-center">
+                                        <div id="media-progress-bar" class="h-full bg-white rounded-full transition-all duration-150 relative" style="width: 0%;">
+                                            <span class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white"></span>
+                                        </div>
                                     </div>
                                     <span id="media-time-rem" class="text-[11px] text-[#8e8e96] font-mono-num w-9 text-right">-00:00</span>
                                 </div>
 
-                                <div class="flex items-center justify-center gap-7 text-white">
-                                    <button onclick="mediaCmd('prev', event)" class="hover:opacity-75 transition-opacity" title="Sebelumnya">
-                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
-                                    </button>
-                                    <button id="btn-play-pause" onclick="mediaCmd('play_pause', event)" class="hover:opacity-75 transition-opacity" title="Play / Pause">
-                                        <svg id="icon-pause" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                        <svg id="icon-play" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                                    </button>
-                                    <button onclick="mediaCmd('next', event)" class="hover:opacity-75 transition-opacity" title="Berikutnya">
-                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-                                    </button>
+                                <div class="flex items-center justify-between text-white pt-0.5">
+                                    <div class="flex items-center gap-6">
+                                        <button onclick="mediaCmd('prev', event)" class="hover:opacity-75 transition-opacity" title="Sebelumnya">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                                        </button>
+                                        <button id="btn-play-pause" onclick="mediaCmd('play_pause', event)" class="hover:opacity-75 transition-opacity" title="Play / Pause">
+                                            <svg id="icon-pause" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                            <svg id="icon-play" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                        </button>
+                                        <button onclick="mediaCmd('next', event)" class="hover:opacity-75 transition-opacity" title="Berikutnya">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center gap-2 w-[112px]">
+                                        <button onclick="mediaCmd('mute', event)" class="text-[#d1d1d6] hover:text-white shrink-0" title="Mute / Unmute">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                                        </button>
+                                        <input id="music-vol-slider" type="range" min="0" max="100" value="65" oninput="stepMusicVolume(this.value, event)" class="w-full h-1 accent-white cursor-pointer" title="Volume">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -681,7 +691,7 @@
                 el.style.setProperty('--dx', dx);
                 el.classList.toggle('hidden', i !== currentSlide);
             }
-            document.getElementById('header-title').textContent = SLIDE_TITLES[currentSlide] || 'Home';
+            document.getElementById('header-title').textContent = currentSlide === 1 ? '' : (SLIDE_TITLES[currentSlide] || 'Home');
             document.querySelectorAll('.ayasa-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
             if (currentSlide === 5) setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 80);
             if (currentSlide === 6) refreshUsageData(true);
@@ -929,6 +939,15 @@
             document.getElementById('hud-ask-reply').textContent = 'Ketik pertanyaan singkat lalu tekan Enter.';
             document.getElementById('hud-translate-out').textContent = 'Pilih bahasa & klik Go.';
             document.getElementById('hud-ask-status').textContent = 'Siap';
+        }
+
+        let lastVolVal = 65;
+        function stepMusicVolume(val, e) {
+            if (e) e.stopPropagation();
+            const v = Number(val);
+            if (v > lastVolVal) callApi('notch_media', 'vol_up');
+            else if (v < lastVolVal) callApi('notch_media', 'vol_down');
+            lastVolVal = v;
         }
 
         async function mediaCmd(action, e) {
