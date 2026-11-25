@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TM Opera O — Tauri Preview</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111318; color: #f4f4f5; }
+    main { width: min(420px, calc(100% - 40px)); padding: 24px; border: 1px solid #343741; border-radius: 14px; background: #191c23; }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    p { color: #b7bac4; line-height: 1.5; }
+    code { color: #a7e0bd; }
+    .status { display: inline-block; padding: 5px 9px; border-radius: 6px; background: #183b2b; color: #a7e0bd; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="status">TAURI PREVIEW</span>
+    <h1>TM Opera O migration foundation</h1>
+    <p>Jika halaman ini tampil, Tauri berhasil memuat frontend statis melalui WebView2.</p>
+    <p>Ini hanya smoke test. UI chat, Notch, IPC, AI, dan integrasi Windows belum dipindahkan pada checkpoint ini.</p>
+    <p>Runtime: <code id="runtime">checking…</code></p>
+  </main>
+  <script>
+    const runtime = document.getElementById("runtime");
+    runtime.textContent = window.__TAURI_INTERNALS__ ? "Tauri v2 WebView" : "WebView loaded; Tauri bridge not exposed";
+  </script>
+</body>
+</html>
