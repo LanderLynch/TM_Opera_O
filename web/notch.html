@@ -1313,6 +1313,14 @@
             } catch {}
         }
 
+        let mediaState = {
+            hasMedia: false, title: '', artist: '', album: '', coverUrl: '',
+            status: 'Stopped', positionSec: 0, durationSec: 0,
+            syncedLines: [], prevLine: '', currentLine: '', nextLine: '', lastSyncMs: Date.now(),
+        };
+        let currentActiveLyricIdx = 0;
+        let notchSettings = { compactLyric: true, lyricOffsetSec: 0 };
+
         function updateClock() {
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
@@ -1321,7 +1329,7 @@
             document.getElementById('hud-date').textContent = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
             document.getElementById('tile-weekday').textContent = now.toLocaleDateString('en-US', { weekday: 'short' });
             document.getElementById('tile-day').textContent = String(now.getDate());
-            if (!mediaState.hasMedia) {
+            if (!mediaState?.hasMedia) {
                 document.getElementById('compact-clock').textContent = `${hh}:${mm}`;
             }
         }
@@ -1332,14 +1340,6 @@
             const s = Math.max(0, Math.floor(sec || 0));
             return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
         }
-
-        let mediaState = {
-            hasMedia: false, title: '', artist: '', album: '', coverUrl: '',
-            status: 'Stopped', positionSec: 0, durationSec: 0,
-            syncedLines: [], prevLine: '', currentLine: '', nextLine: '', lastSyncMs: Date.now(),
-        };
-        let currentActiveLyricIdx = 0;
-        let notchSettings = { compactLyric: true, lyricOffsetSec: 0 };
 
         async function seekToLyric(relativeOffset, e) {
             if (e) e.stopPropagation();
