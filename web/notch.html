@@ -90,6 +90,10 @@
             border-radius: 0 0 36px 36px;
             cursor: default;
         }
+        .island.expanded.phone-mode {
+            width: 676px;
+            height: 336px;
+        }
         .island.expanded::before,
         .island.expanded::after {
             width: 22px;
@@ -427,23 +431,23 @@
                                 <button onclick="runQuick('buka_chat', event)" class="ayasa-quick-btn" title="Buka Chat">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                                 </button>
-                                <button onclick="goToSlide(3, event)" class="ayasa-quick-btn" title="Pomodoro">
+                                <button onclick="goToSlide(4, event)" class="ayasa-quick-btn" title="Pomodoro">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
                                 </button>
-                                <button onclick="goToSlide(2, event)" class="ayasa-quick-btn" title="List Tasks">
+                                <button onclick="goToSlide(5, event)" class="ayasa-quick-btn" title="Shelf & Transfer">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
                                 </button>
-                                <button onclick="goToSlide(4, event)" class="ayasa-quick-btn" title="Water Drink">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                                <button onclick="goToSlide(3, event)" class="ayasa-quick-btn" title="Worship (Kab. Tangerang)">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                                 </button>
                                 <button onclick="callApi('lihat_layar_radial')" class="ayasa-quick-btn" title="Analisis Layar">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
                                 </button>
-                                <button onclick="goToSlide(5, event)" class="ayasa-quick-btn" title="Ask AI">
+                                <button onclick="goToSlide(6, event)" class="ayasa-quick-btn" title="Ask AI">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                                 </button>
-                                <button onclick="callApi('tes_reminder')" class="ayasa-quick-btn" title="Pengingat">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                <button onclick="goToSlide(8, event)" class="ayasa-quick-btn" title="Control Center">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
                                 </button>
                                 <button onclick="callApi('open_settings')" class="ayasa-quick-btn" title="Pengaturan">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -523,8 +527,55 @@
                             <div id="ayasa-tasks-list" class="flex-1 h-full overflow-y-auto hud-scroll space-y-1.5 pr-1"></div>
                         </div>
 
-                        <!-- SLIDE 3: POMODORO FOCUS (Ayasa Style) -->
-                        <div id="slide-3" class="hidden w-full h-full flex flex-col justify-between py-0.5 pg-anim">
+                        <!-- SLIDE 3: WORSHIP (AUTO-SET: KAB. TANGERANG, BANTEN) -->
+                        <div id="slide-3" class="hidden w-full h-full flex items-center gap-4 pg-anim">
+                            <div class="w-[44%] h-full flex flex-col justify-between py-0.5">
+                                <div class="flex items-center gap-1.5 text-[10.5px] font-semibold text-[#8e8e96]">
+                                    <span class="w-3 h-3 rounded-full border-2 border-[#3b82f6] flex items-center justify-center"><span class="w-1 h-1 rounded-full bg-[#3b82f6]"></span></span>
+                                    <span>NEXT</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-baseline justify-between">
+                                        <span id="worship-next-name" class="text-[22px] font-extrabold text-white leading-none">Fajr</span>
+                                        <span id="worship-next-time" class="text-[17px] font-bold text-[#3b82f6] font-mono-num">04:10</span>
+                                    </div>
+                                    <div class="flex items-baseline gap-1.5 mt-0.5">
+                                        <span id="worship-countdown" class="text-[18px] font-bold text-white font-mono-num">00:00:00</span>
+                                        <span class="text-[11px] text-[#8e8e96]">left</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="w-full h-1.5 bg-[#2c2c2e] rounded-full overflow-hidden">
+                                        <div id="worship-bar" class="h-full bg-[#6366f1] rounded-full" style="width: 45%;"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[10px] text-[#8e8e96] mt-1">
+                                        <span id="worship-prev-lbl">Isha</span>
+                                        <span id="worship-next-lbl">Fajr</span>
+                                    </div>
+                                </div>
+                                <div class="text-[10.5px] font-semibold text-[#60a5fa] truncate">Kab. Tangerang, Banten</div>
+                            </div>
+                            <div class="flex-1 h-full flex flex-col justify-between py-1">
+                                <svg class="w-full h-16" viewBox="0 0 260 64" fill="none">
+                                    <defs>
+                                        <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+                                            <stop offset="0%" stop-color="#3b82f6"/>
+                                            <stop offset="65%" stop-color="#93c5fd"/>
+                                            <stop offset="100%" stop-color="#f5d08a"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 10 52 Q 130 2 250 52" stroke="url(#arcGrad)" stroke-width="2.5" stroke-linecap="round"/>
+                                    <line x1="10" y1="52" x2="250" y2="52" stroke="#2c2c2e" stroke-width="1"/>
+                                    <circle cx="10" cy="52" r="4" fill="#ffffff"/>
+                                    <circle id="worship-arc-dot" cx="80" cy="24" r="4" fill="#3b82f6"/>
+                                    <circle cx="250" cy="52" r="5" fill="#e5e7eb"/>
+                                </svg>
+                                <div id="worship-times-row" class="grid grid-cols-5 gap-1 text-center text-[10px]"></div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 4: POMODORO FOCUS (Ayasa Style) -->
+                        <div id="slide-4" class="hidden w-full h-full flex flex-col justify-between py-0.5 pg-anim">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3 text-[11.5px] font-semibold">
                                     <button onclick="setPomoMode(25, 'Focus', this)" class="pomo-tab text-[#ff9f0a] border-b-2 border-[#ff9f0a] pb-0.5">Pomodoro 25m</button>
@@ -546,32 +597,36 @@
                             <div class="text-[10.5px] text-[#8e8e96]">Timer tetap berjalan di background saat notch ditutup.</div>
                         </div>
 
-                        <!-- SLIDE 4: WATER DRINK TRACKER (Ayasa Style) -->
-                        <div id="slide-4" class="hidden w-full h-full flex items-center gap-4 pg-anim">
-                            <div class="w-12 h-[110px] rounded-full bg-[#1c1c1e] border border-[#2c2c2e] p-1 flex flex-col justify-end overflow-hidden shrink-0">
-                                <div id="water-bottle-fill" class="w-full rounded-full bg-[#3b82f6] transition-all duration-300" style="height: 0%;"></div>
+                        <!-- SLIDE 5: SHELF + PHONE TRANSFER (Ayasa Style) -->
+                        <div id="slide-5" class="hidden w-full h-full flex items-center gap-2.5 pg-anim relative">
+                            <div class="flex flex-col items-center justify-center gap-1 shrink-0">
+                                <button onclick="openPhoneTransfer(event)" class="w-9 h-9 rounded-full bg-[#2c2c2e] hover:bg-[#5e5ce6] text-white flex items-center justify-center transition-colors" title="Transfer from phone (Local Wi-Fi)">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                                </button>
+                                <span class="text-[9.5px] text-[#8e8e96]">Transfer</span>
                             </div>
-                            <div class="flex-1 flex flex-col justify-between h-full py-1">
-                                <div>
-                                    <div class="flex items-baseline gap-2">
-                                        <span id="water-ml-text" class="text-[24px] font-bold text-white font-mono-num">0 ml</span>
-                                        <span class="text-[12px] text-[#8e8e96]">/ 2000 ml</span>
+
+                            <div class="flex-1 min-w-0 h-full flex flex-col justify-between">
+                                <div id="shelf-cards-grid" class="grid grid-cols-4 gap-2 flex-1 min-h-0"></div>
+                                <div id="shelf-clipboard-card" class="hidden flex-1 ayasa-card p-3 flex flex-col justify-between">
+                                    <div class="text-[11px] text-[#a78bfa] font-semibold">Clipboard Terbaru</div>
+                                    <div id="shelf-clip-val" class="text-[12px] text-white font-mono-num line-clamp-2">Kosong</div>
+                                </div>
+                                <div class="flex items-center justify-between text-[10.5px] text-[#8e8e96] pt-1">
+                                    <span id="shelf-count-lbl">0 files · click to open</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="addShelfFileDialog(event)" class="px-2 py-0.5 rounded-full bg-[#5e5ce6] text-white text-[10px] font-semibold">+ File</button>
+                                        <div class="flex rounded-full bg-[#1c1c1e] p-0.5">
+                                            <button id="shelf-tab-folder" onclick="setShelfView('folder', event)" class="px-2 py-0.5 rounded-full bg-[#5e5ce6] text-white text-[10px]">Folder</button>
+                                            <button id="shelf-tab-clip" onclick="setShelfView('clip', event)" class="px-2 py-0.5 rounded-full text-[#8e8e96] text-[10px]">Clip</button>
+                                        </div>
                                     </div>
-                                    <div id="water-goal-pct" class="text-[11.5px] text-[#60a5fa] mt-0.5">Daily goal: 0%</div>
-                                </div>
-                                <div class="w-full h-1.5 bg-[#2c2c2e] rounded-full overflow-hidden">
-                                    <div id="water-bar-fill" class="h-full bg-[#3b82f6] rounded-full transition-all duration-300" style="width: 0%;"></div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="addWater(150, event)" class="px-3 py-1.5 rounded-xl bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[12px] font-semibold text-white">+150 ml</button>
-                                    <button onclick="addWater(250, event)" class="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-[12px] font-semibold text-white">+250 ml</button>
-                                    <button onclick="resetWater(event)" class="px-2.5 py-1.5 rounded-xl bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[11px] text-[#8e8e96]">Reset</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- SLIDE 5: ASK AI + TRANSLATE -->
-                        <div id="slide-5" class="hidden w-full h-full flex flex-col justify-between gap-2 pg-anim">
+                        <!-- SLIDE 6: ASK AI + TRANSLATE -->
+                        <div id="slide-6" class="hidden w-full h-full flex flex-col justify-between gap-2 pg-anim">
                             <div class="flex items-center gap-1.5">
                                 <input id="hud-ask-input" type="text" placeholder="Tanya TM Opera O..."
                                     onkeydown="if(event.key==='Enter') sendHudAsk(event)"
@@ -604,8 +659,8 @@
                             </div>
                         </div>
 
-                        <!-- SLIDE 6: API USAGE -->
-                        <div id="slide-6" class="hidden w-full h-full flex items-center pg-anim">
+                        <!-- SLIDE 7: API USAGE -->
+                        <div id="slide-7" class="hidden w-full h-full flex items-center pg-anim">
                             <div class="grid grid-cols-2 gap-3 w-full">
                                 <div class="usage-card">
                                     <div class="flex items-center justify-between">
@@ -640,6 +695,107 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- SLIDE 8: CONTROL CENTER (Ayasa Style) -->
+                        <div id="slide-8" class="hidden w-full h-full flex items-stretch gap-2.5 pg-anim">
+                            <!-- 2x2 Connectivity Grid -->
+                            <div class="w-[120px] ayasa-card p-2 grid grid-cols-2 gap-1.5 shrink-0">
+                                <button onclick="toggleCcTile(this)" class="rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3e] flex items-center justify-center text-[#d1d1d6]" title="Focus / Airplane">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+                                </button>
+                                <button onclick="callApi('sys_control', 'wifi')" class="rounded-full bg-[#0a84ff] hover:bg-[#2563eb] flex items-center justify-center text-white" title="Wi-Fi Settings">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                </button>
+                                <button onclick="callApi('sys_control', 'bluetooth')" class="rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3e] flex items-center justify-center text-[#d1d1d6]" title="Bluetooth Settings">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/></svg>
+                                </button>
+                                <button onclick="mediaCmd('mute', event)" class="rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3e] flex items-center justify-center text-[#d1d1d6]" title="Mute Audio">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- 2 Vertical Pill Sliders (Brightness & Volume) -->
+                            <div class="flex gap-2 shrink-0">
+                                <div onclick="clickPillSlider('bright', event)" class="w-11 h-full rounded-[22px] bg-[#1c1c1e] relative overflow-hidden cursor-pointer flex items-end justify-center" title="Klik untuk atur Brightness">
+                                    <div id="cc-bright-fill" class="w-full bg-white transition-all duration-150" style="height: 60%;"></div>
+                                    <svg class="w-4 h-4 text-[#1c1c1e] absolute bottom-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
+                                </div>
+                                <div onclick="clickPillSlider('vol', event)" class="w-11 h-full rounded-[22px] bg-[#1c1c1e] relative overflow-hidden cursor-pointer flex items-end justify-center" title="Klik untuk atur Volume">
+                                    <div id="cc-vol-fill" class="w-full bg-white transition-all duration-150" style="height: 60%;"></div>
+                                    <svg class="w-4 h-4 text-[#1c1c1e] absolute bottom-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                </div>
+                            </div>
+
+                            <!-- System Shortcuts Card -->
+                            <div class="flex-1 ayasa-card p-3 flex flex-col justify-between">
+                                <div class="text-[10px] font-semibold tracking-wider text-[#8e8e96] text-center uppercase">System Shortcuts</div>
+                                <div class="flex items-center justify-around">
+                                    <button onclick="callApi('sys_control', 'lock')" class="flex flex-col items-center gap-1 group">
+                                        <span class="w-10 h-10 rounded-full bg-[#2c2c2e] group-hover:bg-[#3a3a3e] flex items-center justify-center text-white">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        </span>
+                                        <span class="text-[10px] text-[#8e8e96]">Lock</span>
+                                    </button>
+                                    <button onclick="callApi('lihat_layar_radial')" class="flex flex-col items-center gap-1 group">
+                                        <span class="w-10 h-10 rounded-full bg-[#2c2c2e] group-hover:bg-[#3a3a3e] flex items-center justify-center text-white">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+                                        </span>
+                                        <span class="text-[10px] text-[#8e8e96]">Capture</span>
+                                    </button>
+                                    <button onclick="callApi('sys_control', 'sleep')" class="flex flex-col items-center gap-1 group">
+                                        <span class="w-10 h-10 rounded-full bg-[#2c2c2e] group-hover:bg-[#3a3a3e] flex items-center justify-center text-white">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                                        </span>
+                                        <span class="text-[10px] text-[#8e8e96]">Sleep</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHONE TRANSFER OVERLAY (Ayasa Local Wi-Fi Transfer) -->
+                    <div id="phone-transfer-overlay" class="hidden absolute inset-0 bg-black z-30 p-5 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[15px] font-bold text-white">Transfer from phone</span>
+                            <span id="phone-timer-lbl" class="text-[12px] text-[#8e8e96] font-mono-num">Local Wi-Fi · Ready</span>
+                        </div>
+                        <div class="flex items-center gap-5 my-auto">
+                            <div class="flex flex-col items-center shrink-0">
+                                <div class="w-[144px] h-[144px] bg-white rounded-2xl p-2 flex items-center justify-center">
+                                    <img id="phone-qr-img" src="" alt="QR" class="w-full h-full object-contain" />
+                                </div>
+                                <span class="text-[10.5px] text-[#8e8e96] mt-1.5">Scan with your phone camera</span>
+                            </div>
+                            <div class="flex-1 flex flex-col gap-3">
+                                <div class="ayasa-card p-3.5 flex items-center gap-3">
+                                    <span class="w-9 h-9 rounded-full border border-[#5e5ce6] flex items-center justify-center text-[#5e5ce6] shrink-0">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <div id="phone-status-title" class="text-[13px] font-bold text-white">Waiting for a file from your phone</div>
+                                        <div id="phone-status-sub" class="text-[11px] text-[#8e8e96] truncate">Scan the QR, then pick a photo or file on your phone</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between px-4 text-[10px] text-[#8e8e96]">
+                                    <span id="step-detected" class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2c2c2e] inline-block"></span> Detected</span>
+                                    <span class="flex-1 h-[1px] bg-[#2c2c2e] mx-2"></span>
+                                    <span id="step-receiving" class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2c2c2e] inline-block"></span> Receiving</span>
+                                    <span class="flex-1 h-[1px] bg-[#2c2c2e] mx-2"></span>
+                                    <span id="step-saved" class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2c2c2e] inline-block"></span> Saved</span>
+                                </div>
+                                <div class="flex items-center gap-2 bg-[#1c1c1e] rounded-xl px-3 py-1.5">
+                                    <span id="phone-url-lbl" class="text-[11.5px] text-white font-mono-num truncate flex-1">http://...</span>
+                                    <button onclick="copyPhoneUrl(event)" class="px-2.5 py-1 rounded-lg bg-[#2c2c2e] hover:bg-[#3a3a3e] text-[11px] font-semibold text-white">Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span id="phone-last-saved" class="text-[11px] text-[#8e8e96]">Saves to Downloads\TM_Opera_O_Transfer</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="pickPhoneSendFile(event)" class="px-3 py-1.5 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[11.5px] font-semibold text-[#d1d1d6]">Pick File to Send</button>
+                                <button onclick="closePhoneTransfer(event)" class="px-4 py-1.5 rounded-full bg-[#3f1d24] hover:bg-[#52242d] text-[#fb7185] text-[12px] font-semibold">Done</button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Bottom Ayasa Pill Pagination + Circular Close Chevron -->
@@ -648,10 +804,12 @@
                             <span class="ayasa-dot active" onclick="goToSlide(0, event)" title="Home"></span>
                             <span class="ayasa-dot" onclick="goToSlide(1, event)" title="Music"></span>
                             <span class="ayasa-dot" onclick="goToSlide(2, event)" title="Tasks"></span>
-                            <span class="ayasa-dot" onclick="goToSlide(3, event)" title="Pomodoro"></span>
-                            <span class="ayasa-dot" onclick="goToSlide(4, event)" title="Water"></span>
-                            <span class="ayasa-dot" onclick="goToSlide(5, event)" title="Ask AI"></span>
-                            <span class="ayasa-dot" onclick="goToSlide(6, event)" title="Usage"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(3, event)" title="Worship"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(4, event)" title="Pomodoro"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(5, event)" title="Shelf"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(6, event)" title="Ask AI"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(7, event)" title="Usage"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(8, event)" title="Control Center"></span>
                         </div>
                         <button onclick="collapseNow(event)" class="ayasa-close absolute right-5" title="Tutup (Esc)">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -673,11 +831,11 @@
         }
 
         const island = document.getElementById('island');
-        const SLIDE_TITLES = ['Home', 'Music', 'List Tasks', 'Pomodoro', 'Water Drink', 'Ask AI', 'Usage'];
+        const SLIDE_TITLES = ['Home', 'Music', 'List Tasks', 'Worship', 'Pomodoro', 'Shelf', 'Ask AI', 'Usage', 'Control Center'];
         let pinned = false;
         let collapseTimer = null;
         let currentSlide = 0;
-        const TOTAL_SLIDES = 7;
+        const TOTAL_SLIDES = 9;
         let lastHudReply = '';
         let showLyricsInline = false;
 
@@ -693,8 +851,10 @@
             }
             document.getElementById('header-title').textContent = currentSlide === 1 ? '' : (SLIDE_TITLES[currentSlide] || 'Home');
             document.querySelectorAll('.ayasa-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
-            if (currentSlide === 5) setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 80);
-            if (currentSlide === 6) refreshUsageData(true);
+            if (currentSlide === 3) renderWorshipTick();
+            if (currentSlide === 5) loadShelfCards();
+            if (currentSlide === 6) setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 80);
+            if (currentSlide === 7) refreshUsageData(true);
         }
 
         // --- AYASA TASKS (persisted in localStorage) ---
@@ -791,29 +951,200 @@
             renderPomodoro();
         }
 
-        // --- AYASA WATER DRINK ---
-        const WATER_KEY = 'tm_opera_water_' + new Date().toISOString().slice(0, 10);
-        let waterMl = Number(localStorage.getItem(WATER_KEY) || '0');
-        function renderWater() {
-            const pct = Math.min(100, Math.round((waterMl / 2000) * 100));
-            document.getElementById('water-ml-text').textContent = `${waterMl} ml`;
-            document.getElementById('water-goal-pct').textContent = `Daily goal: ${pct}%`;
-            document.getElementById('water-bar-fill').style.width = `${pct}%`;
-            document.getElementById('water-bottle-fill').style.height = `${pct}%`;
+        // --- WORSHIP (AUTO-SET: KAB. TANGERANG, BANTEN, KEMENAG RI) ---
+        let worshipTimings = { Fajr: '04:08', Dhuhr: '11:44', Asr: '15:08', Maghrib: '17:55', Isha: '19:08' };
+        const WORSHIP_CACHE_KEY = 'tm_opera_worship_tangerang_' + new Date().toISOString().slice(0, 10);
+        (async () => {
+            try {
+                const cached = localStorage.getItem(WORSHIP_CACHE_KEY);
+                if (cached) {
+                    worshipTimings = JSON.parse(cached);
+                } else {
+                    const res = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Tangerang&country=Indonesia&method=20');
+                    const json = await res.json();
+                    const t = json?.data?.timings;
+                    if (t?.Fajr && t?.Dhuhr && t?.Asr && t?.Maghrib && t?.Isha) {
+                        worshipTimings = {
+                            Fajr: t.Fajr.slice(0, 5),
+                            Dhuhr: t.Dhuhr.slice(0, 5),
+                            Asr: t.Asr.slice(0, 5),
+                            Maghrib: t.Maghrib.slice(0, 5),
+                            Isha: t.Isha.slice(0, 5),
+                        };
+                        localStorage.setItem(WORSHIP_CACHE_KEY, JSON.stringify(worshipTimings));
+                    }
+                }
+            } catch {}
+            renderWorshipTick();
+        })();
+
+        function parsePrayerSec(hhmm) {
+            const [h, m] = (hhmm || '00:00').split(':').map(Number);
+            return h * 3600 + m * 60;
         }
-        function addWater(ml, e) {
+        function renderWorshipTick() {
+            const now = new Date();
+            const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const order = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            let nextIdx = order.findIndex(k => parsePrayerSec(worshipTimings[k]) > nowSec);
+            let nextIsTomorrow = false;
+            if (nextIdx === -1) { nextIdx = 0; nextIsTomorrow = true; }
+            const prevIdx = (nextIdx + order.length - 1) % order.length;
+            const nextName = order[nextIdx];
+            const prevName = order[prevIdx];
+            const nextSec = parsePrayerSec(worshipTimings[nextName]) + (nextIsTomorrow ? 86400 : 0);
+            const prevSec = parsePrayerSec(worshipTimings[prevName]) - (nextIdx === 0 && !nextIsTomorrow ? 86400 : 0);
+            const diff = Math.max(0, nextSec - nowSec);
+            const hh = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const mm = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const ss = String(diff % 60).padStart(2, '0');
+
+            document.getElementById('worship-next-name').textContent = nextName;
+            document.getElementById('worship-next-time').textContent = worshipTimings[nextName];
+            document.getElementById('worship-countdown').textContent = `${hh}:${mm}:${ss}`;
+            document.getElementById('worship-prev-lbl').textContent = prevName;
+            document.getElementById('worship-next-lbl').textContent = nextName;
+
+            const span = Math.max(1, nextSec - prevSec);
+            const pct = Math.max(2, Math.min(98, ((nowSec - prevSec) / span) * 100));
+            document.getElementById('worship-bar').style.width = `${pct.toFixed(1)}%`;
+
+            const t = pct / 100;
+            const dotX = (1 - t) * (1 - t) * 10 + 2 * (1 - t) * t * 130 + t * t * 250;
+            const dotY = (1 - t) * (1 - t) * 52 + 2 * (1 - t) * t * 2 + t * t * 52;
+            const arcDot = document.getElementById('worship-arc-dot');
+            if (arcDot) { arcDot.setAttribute('cx', dotX.toFixed(1)); arcDot.setAttribute('cy', dotY.toFixed(1)); }
+
+            const row = document.getElementById('worship-times-row');
+            if (row) {
+                row.innerHTML = order.map(k => `
+                    <div class="rounded-lg py-1 px-0.5 ${k === nextName ? 'bg-[#1c1c1e] text-white font-semibold' : 'text-[#8e8e96]'}">
+                        <div>${k}</div>
+                        <div class="font-mono-num mt-0.5">${worshipTimings[k]}</div>
+                    </div>
+                `).join('');
+            }
+        }
+        setInterval(() => { if (currentSlide === 3) renderWorshipTick(); }, 1000);
+
+        // --- SHELF & PHONE TRANSFER ---
+        let shelfViewMode = 'folder';
+        async function loadShelfCards() {
+            const grid = document.getElementById('shelf-cards-grid');
+            const items = (await callApi('shelf_list')) || [];
+            document.getElementById('shelf-count-lbl').textContent = `${items.length} files · click to open`;
+            grid.innerHTML = '';
+            const shown = items.slice(0, 4);
+            if (shown.length === 0) {
+                grid.innerHTML = '<div class="col-span-4 ayasa-card flex items-center justify-center text-[11.5px] text-[#8e8e96]">Belum ada file — klik + File atau Transfer</div>';
+                return;
+            }
+            for (const item of shown) {
+                const card = document.createElement('div');
+                card.className = 'ayasa-card p-2 flex flex-col justify-between cursor-pointer relative group border border-transparent hover:border-[#5e5ce6]';
+                card.innerHTML = `
+                    <div class="h-12 rounded-lg bg-[#2c2c2e] flex items-center justify-center text-[12px] font-bold text-[#60a5fa]">${item.ext}</div>
+                    <div class="mt-1.5 min-w-0">
+                        <div class="text-[11px] font-semibold text-white truncate">${item.name}</div>
+                        <div class="text-[9.5px] text-[#8e8e96]">${item.ext}</div>
+                    </div>
+                    <button class="hidden group-hover:flex absolute top-1 right-1 w-4 h-4 rounded-full bg-black/80 text-white text-[10px] items-center justify-center">×</button>
+                `;
+                card.onclick = (e) => { e.stopPropagation(); callApi('shelf_open', item.filePath); };
+                card.querySelector('button').onclick = async (e) => {
+                    e.stopPropagation();
+                    await callApi('shelf_delete', item.id);
+                    loadShelfCards();
+                };
+                grid.appendChild(card);
+            }
+        }
+        async function addShelfFileDialog(e) {
             if (e) e.stopPropagation();
-            waterMl = Math.min(5000, waterMl + ml);
-            localStorage.setItem(WATER_KEY, String(waterMl));
-            renderWater();
+            await callApi('shelf_add_dialog');
+            loadShelfCards();
         }
-        function resetWater(e) {
+        function setShelfView(mode, e) {
             if (e) e.stopPropagation();
-            waterMl = 0;
-            localStorage.setItem(WATER_KEY, '0');
-            renderWater();
+            shelfViewMode = mode;
+            document.getElementById('shelf-cards-grid').classList.toggle('hidden', mode !== 'folder');
+            document.getElementById('shelf-clipboard-card').classList.toggle('hidden', mode !== 'clip');
+            document.getElementById('shelf-tab-folder').className = mode === 'folder' ? 'px-2 py-0.5 rounded-full bg-[#5e5ce6] text-white text-[10px]' : 'px-2 py-0.5 rounded-full text-[#8e8e96] text-[10px]';
+            document.getElementById('shelf-tab-clip').className = mode === 'clip' ? 'px-2 py-0.5 rounded-full bg-[#5e5ce6] text-white text-[10px]' : 'px-2 py-0.5 rounded-full text-[#8e8e96] text-[10px]';
         }
-        renderWater();
+
+        let phonePollTimer = null;
+        let currentPhoneUrl = '';
+        async function openPhoneTransfer(e) {
+            if (e) e.stopPropagation();
+            pinned = true;
+            island.classList.add('phone-mode');
+            document.getElementById('phone-transfer-overlay').classList.remove('hidden');
+            const res = await callApi('phone_transfer_start');
+            if (res?.url) {
+                currentPhoneUrl = res.url;
+                document.getElementById('phone-url-lbl').textContent = res.url;
+                document.getElementById('phone-qr-img').src = res.qrUrl;
+            }
+            if (phonePollTimer) clearInterval(phonePollTimer);
+            phonePollTimer = setInterval(async () => {
+                const st = await callApi('phone_transfer_status');
+                if (!st) return;
+                const dDot = document.querySelector('#step-detected span');
+                const rDot = document.querySelector('#step-receiving span');
+                const sDot = document.querySelector('#step-saved span');
+                dDot.style.background = ['detected', 'receiving', 'saved'].includes(st.state) ? '#5e5ce6' : '#2c2c2e';
+                rDot.style.background = ['receiving', 'saved'].includes(st.state) ? '#5e5ce6' : '#2c2c2e';
+                sDot.style.background = st.state === 'saved' ? '#30d158' : '#2c2c2e';
+                if (st.state === 'saved' && st.lastFile) {
+                    document.getElementById('phone-status-title').textContent = `Saved: ${st.lastFile}`;
+                    document.getElementById('phone-last-saved').textContent = `Received: ${st.lastFile}`;
+                } else if (st.state === 'receiving') {
+                    document.getElementById('phone-status-title').textContent = 'Receiving file...';
+                } else if (st.state === 'detected') {
+                    document.getElementById('phone-status-title').textContent = 'Phone connected!';
+                }
+            }, 600);
+        }
+        async function pickPhoneSendFile(e) {
+            if (e) e.stopPropagation();
+            const name = await callApi('phone_transfer_pick_send');
+            if (name) document.getElementById('phone-last-saved').textContent = `Ready for phone download: ${name}`;
+        }
+        function copyPhoneUrl(e) {
+            if (e) e.stopPropagation();
+            if (currentPhoneUrl) navigator.clipboard?.writeText(currentPhoneUrl).catch(() => {});
+        }
+        async function closePhoneTransfer(e) {
+            if (e) e.stopPropagation();
+            if (phonePollTimer) { clearInterval(phonePollTimer); phonePollTimer = null; }
+            await callApi('phone_transfer_stop');
+            document.getElementById('phone-transfer-overlay').classList.add('hidden');
+            island.classList.remove('phone-mode');
+            pinned = false;
+            loadShelfCards();
+        }
+
+        // --- CONTROL CENTER ---
+        function toggleCcTile(btn) {
+            const on = btn.dataset.on === '1';
+            btn.dataset.on = on ? '0' : '1';
+            btn.style.background = on ? '#2c2c2e' : '#0a84ff';
+            btn.style.color = on ? '#d1d1d6' : '#ffffff';
+        }
+        function clickPillSlider(which, e) {
+            e.stopPropagation();
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct = Math.max(5, Math.min(100, Math.round(((rect.bottom - e.clientY) / rect.height) * 100)));
+            if (which === 'bright') {
+                document.getElementById('cc-bright-fill').style.height = `${pct}%`;
+                callApi('sys_control', 'brightness', pct);
+            } else {
+                const prev = parseInt(document.getElementById('cc-vol-fill').style.height || '60', 10);
+                document.getElementById('cc-vol-fill').style.height = `${pct}%`;
+                callApi('notch_media', pct >= prev ? 'vol_up' : 'vol_down');
+            }
+        }
 
         function nextSlide(e) { goToSlide(currentSlide + 1, e); }
         function prevSlide(e) { goToSlide(currentSlide - 1, e); }
@@ -1074,6 +1405,8 @@
                 document.getElementById('home-active-win').textContent = st.taskProgress || st.activeWindow || 'Standby';
                 if (st.clipboardPreview !== undefined) {
                     document.getElementById('home-clipboard-text').textContent = st.clipboardPreview || 'Kosong';
+                    const shelfClip = document.getElementById('shelf-clip-val');
+                    if (shelfClip) shelfClip.textContent = st.clipboardPreview || 'Kosong';
                 }
                 if (st.system) {
                     const cpu = Math.max(0, Math.min(100, Number(st.system.cpuPercent || 0)));

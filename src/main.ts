@@ -1,5 +1,7 @@
-import { app, BrowserWindow, clipboard, desktopCapturer, ipcMain, screen, shell } from "electron";
+import { app, BrowserWindow, clipboard, desktopCapturer, dialog, ipcMain, screen, shell } from "electron";
+import * as crypto from "crypto";
 import * as fs from "fs";
+import * as http from "http";
 import * as os from "os";
 import * as path from "path";
 import { execFile, spawn } from "child_process";
@@ -1604,8 +1606,8 @@ function createWindows(): void {
   chatWindow.loadFile(path.join(BASE, "web", "index.html"));
 
   // iOS Dynamic Island / Living Notch di Tengah Atas Layar
-  const NOTCH_W = 640;
-  const NOTCH_H = 250;
+  const NOTCH_W = 720;
+  const NOTCH_H = 380;
   const notchX = Math.floor((display.bounds.width - NOTCH_W) / 2);
 
   radialWindow = new BrowserWindow({
@@ -1639,6 +1641,152 @@ function createWindows(): void {
 
 let prevCpuIdle = 0;
 let prevCpuTotal = 0;
+
+interface ShelfEntry {
+  id: string;
+  name: string;
+  ext: string;
+  filePath: string;
+  addedAt: number;
+}
+const SHELF_FILE = path.join(BASE, "shelf.json");
+const TRANSFER_DIR = path.join(os.homedir(), "Downloads", "TM_Opera_O_Transfer");
+
+function loadShelfEntries(): ShelfEntry[] {
+  try {
+    if (fs.existsSync(SHELF_FILE)) {
+      const raw = JSON.parse(fs.readFileSync(SHELF_FILE, "utf-8"));
+      if (Array.isArray(raw)) return raw.filter((x) => x && x.filePath && fs.existsSync(x.filePath));
+    }
+  } catch {}
+  return [];
+}
+
+function saveShelfEntries(items: ShelfEntry[]): void {
+  try {
+    fs.writeFileSync(SHELF_FILE, JSON.stringify(items.slice(0, 30), null, 2), "utf-8");
+  } catch {}
+}
+
+function addShelfFile(filePath: string): ShelfEntry[] {
+  const clean = path.resolve(filePath);
+  const items = loadShelfEntries().filter((x) => x.filePath !== clean);
+  const ext = path.extname(clean).replace(".", "").toUpperCase() || "FILE";
+  items.unshift({
+    id: crypto.randomBytes(4).toString("hex"),
+    name: path.basename(clean),
+    ext,
+    filePath: clean,
+    addedAt: Date.now(),
+  });
+  saveShelfEntries(items);
+  return items;
+}
+
+function getLocalLanIp(): string {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] || []) {
+      if (net.family === "IPv4" && !net.internal) {
+        if (net.address.startsWith("192.168.") || net.address.startsWith("10.") || net.address.startsWith("172.")) {
+          return net.address;
+        }
+      }
+    }
+  }
+  return "127.0.0.1";
+}
+
+let phoneServer: http.Server | null = null;
+let phoneToken = "";
+let phonePort = 0;
+let phoneState: "idle" | "waiting" | "detected" | "receiving" | "saved" = "idle";
+let phoneLastFile = "";
+let phoneSendFile = "";
+let phoneExpiresAt = 0;
+
+function stopPhoneTransferServer(): void {
+  try {
+    phoneServer?.close();
+  } catch {}
+  phoneServer = null;
+  phoneState = "idle";
+}
+
+function startPhoneTransferServer(): Promise<{ url: string; qrUrl: string; expiresAt: number }> {
+  stopPhoneTransferServer();
+  fs.mkdirSync(TRANSFER_DIR, { recursive: true });
+  phoneToken = crypto.randomBytes(4).toString("hex");
+  phoneState = "waiting";
+  phoneLastFile = "";
+  phoneExpiresAt = Date.now() + 5 * 60 * 1000;
+
+  return new Promise((resolve, reject) => {
+    const srv = http.createServer((req, res) => {
+      const reqUrl = (req.url || "").split("?")[0];
+      if (!reqUrl.startsWith(`/u/${phoneToken}`)) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+
+      if (req.method === "GET" && reqUrl === `/u/${phoneToken}`) {
+        if (phoneState === "waiting") phoneState = "detected";
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+        const sendBlock = phoneSendFile && fs.existsSync(phoneSendFile)
+          ? `<div class="card"><h3>Download from PC</h3><p>${path.basename(phoneSendFile)}</p><a class="btn" href="/u/${phoneToken}/download">Download File</a></div>`
+          : "";
+        res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>TM Opera O Transfer</title><style>body{font-family:system-ui;background:#0a0a0c;color:#f5f5f7;margin:0;padding:24px;display:flex;flex-direction:column;gap:16px}.card{background:#1c1c1e;border-radius:16px;padding:18px}.btn{display:inline-block;background:#5e5ce6;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;border:none;font-size:15px;font-weight:600;width:100%;box-sizing:border-box;text-align:center}input[type=file]{width:100%;margin:12px 0;color:#d1d1d6}</style></head><body><h2>TM Opera O · Transfer</h2><div class="card"><h3>Send to PC</h3><input id="f" type="file" /><button class="btn" onclick="up()">Send File</button><p id="st"></p></div>${sendBlock}<script>async function up(){const f=document.getElementById('f').files[0];if(!f)return;const st=document.getElementById('st');st.textContent='Sending...';const r=await fetch('/u/${phoneToken}/upload',{method:'POST',headers:{'X-Filename':encodeURIComponent(f.name)},body:f});st.textContent=r.ok?'Saved to PC!':'Failed';}</script></body></html>`);
+        return;
+      }
+
+      if (req.method === "GET" && reqUrl === `/u/${phoneToken}/download` && phoneSendFile && fs.existsSync(phoneSendFile)) {
+        res.writeHead(200, {
+          "Content-Type": "application/octet-stream",
+          "Content-Disposition": `attachment; filename="${path.basename(phoneSendFile)}"`,
+        });
+        fs.createReadStream(phoneSendFile).pipe(res);
+        return;
+      }
+
+      if (req.method === "POST" && reqUrl === `/u/${phoneToken}/upload`) {
+        phoneState = "receiving";
+        const rawName = String(req.headers["x-filename"] || `upload_${Date.now()}.bin`);
+        const safeName = path.basename(decodeURIComponent(rawName)).replace(/[<>:"/\\|?*]/g, "_");
+        const dest = path.join(TRANSFER_DIR, safeName);
+        const ws = fs.createWriteStream(dest);
+        req.pipe(ws);
+        ws.on("finish", () => {
+          phoneState = "saved";
+          phoneLastFile = safeName;
+          addShelfFile(dest);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, name: safeName }));
+        });
+        ws.on("error", () => {
+          phoneState = "waiting";
+          res.writeHead(500);
+          res.end("Write error");
+        });
+        return;
+      }
+
+      res.writeHead(404);
+      res.end("Not found");
+    });
+
+    srv.on("error", reject);
+    srv.listen(0, "0.0.0.0", () => {
+      const addr = srv.address();
+      phonePort = typeof addr === "object" && addr ? addr.port : 8731;
+      phoneServer = srv;
+      const ip = getLocalLanIp();
+      const url = `http://${ip}:${phonePort}/u/${phoneToken}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+      resolve({ url, qrUrl, expiresAt: phoneExpiresAt });
+    });
+  });
+}
 
 ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
   switch (method) {
@@ -1863,6 +2011,67 @@ ipcMain.handle("api", async (_event, method: string, ...args: unknown[]) => {
       shell.openExternal(GDRIVE_MEMORY_FOLDER_URL).catch(() => {});
       return true;
     }
+    case "shelf_list": {
+      return loadShelfEntries();
+    }
+    case "shelf_add_dialog": {
+      const res = await dialog.showOpenDialog({ properties: ["openFile", "multiSelections"] });
+      if (!res.canceled) {
+        for (const fp of res.filePaths) addShelfFile(fp);
+      }
+      return loadShelfEntries();
+    }
+    case "shelf_open": {
+      const fp = String(args[0] || "");
+      if (fp && fs.existsSync(fp)) await shell.openPath(fp);
+      return true;
+    }
+    case "shelf_delete": {
+      const id = String(args[0] || "");
+      const next = loadShelfEntries().filter((x) => x.id !== id);
+      saveShelfEntries(next);
+      return next;
+    }
+    case "phone_transfer_start": {
+      return await startPhoneTransferServer();
+    }
+    case "phone_transfer_status": {
+      return {
+        state: phoneState,
+        lastFile: phoneLastFile,
+        sendFile: phoneSendFile ? path.basename(phoneSendFile) : "",
+        expiresAt: phoneExpiresAt,
+      };
+    }
+    case "phone_transfer_stop": {
+      stopPhoneTransferServer();
+      return true;
+    }
+    case "phone_transfer_pick_send": {
+      const res = await dialog.showOpenDialog({ properties: ["openFile"] });
+      if (!res.canceled && res.filePaths[0]) {
+        phoneSendFile = res.filePaths[0];
+        return path.basename(phoneSendFile);
+      }
+      return "";
+    }
+    case "sys_control": {
+      const cmd = String(args[0] || "");
+      const val = Number(args[1] ?? 50);
+      if (cmd === "wifi") {
+        shell.openExternal("ms-settings:network-wifi").catch(() => {});
+      } else if (cmd === "bluetooth") {
+        shell.openExternal("ms-settings:bluetooth").catch(() => {});
+      } else if (cmd === "brightness") {
+        const b = Math.max(5, Math.min(100, Math.round(val)));
+        execFile("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", `(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(1, ${b})`], { windowsHide: true }, () => {});
+      } else if (cmd === "lock") {
+        execFile("rundll32.exe", ["user32.dll,LockWorkStation"], { windowsHide: true }, () => {});
+      } else if (cmd === "sleep") {
+        execFile("rundll32.exe", ["powrprof.dll,SetSuspendState", "0,1,0"], { windowsHide: true }, () => {});
+      }
+      return true;
+    }
     case "get_task_progress": {
       return currentTaskProgress || bgTaskProgress;
     }
@@ -1945,6 +2154,10 @@ app.whenReady().then(() => {
   startBackgroundLoops();
   startMediaWatcher();
   scanInstalledApps().catch(() => {});
+});
+
+app.on("before-quit", () => {
+  stopPhoneTransferServer();
 });
 
 app.on("window-all-closed", () => {

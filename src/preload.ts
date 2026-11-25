@@ -44,6 +44,15 @@ const METHODS = [
   "delete_memory_item",
   "clear_all_memories",
   "open_drive_folder",
+  "shelf_list",
+  "shelf_add_dialog",
+  "shelf_open",
+  "shelf_delete",
+  "phone_transfer_start",
+  "phone_transfer_status",
+  "phone_transfer_stop",
+  "phone_transfer_pick_send",
+  "sys_control",
 ];
 
 const api: Record<string, (...args: unknown[]) => Promise<unknown>> = {};
