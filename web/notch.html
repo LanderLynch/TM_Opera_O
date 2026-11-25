@@ -51,9 +51,9 @@
             height: 38px;
             border-radius: 0 0 15px 15px;
             transition:
-                width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
-                height 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
-                border-radius 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                width 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                border-radius 0.26s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.2s ease;
         }
         .island::before,
@@ -65,10 +65,10 @@
             height: 9px;
             pointer-events: none;
             transition:
-                width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
-                height 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
-                left 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
-                right 0.5s cubic-bezier(0.3, 1.25, 0.4, 1);
+                width 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                left 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+                right 0.26s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .island::before {
             left: -9px;
@@ -89,10 +89,6 @@
             height: 212px;
             border-radius: 0 0 36px 36px;
             cursor: default;
-        }
-        .island.expanded.phone-mode {
-            width: 676px;
-            height: 336px;
         }
         .island.expanded::before,
         .island.expanded::after {
@@ -597,15 +593,8 @@
                             <div class="text-[10.5px] text-[#8e8e96]">Timer tetap berjalan di background saat notch ditutup.</div>
                         </div>
 
-                        <!-- SLIDE 5: SHELF + PHONE TRANSFER (Ayasa Style) -->
+                        <!-- SLIDE 5: SHELF (Ayasa Style) -->
                         <div id="slide-5" class="hidden w-full h-full flex items-center gap-2.5 pg-anim relative">
-                            <div class="flex flex-col items-center justify-center gap-1 shrink-0">
-                                <button onclick="openPhoneTransfer(event)" class="w-9 h-9 rounded-full bg-[#2c2c2e] hover:bg-[#5e5ce6] text-white flex items-center justify-center transition-colors" title="Transfer from phone (Local Wi-Fi)">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                                </button>
-                                <span class="text-[9.5px] text-[#8e8e96]">Transfer</span>
-                            </div>
-
                             <div class="flex-1 min-w-0 h-full flex flex-col justify-between">
                                 <div id="shelf-cards-grid" class="grid grid-cols-4 gap-2 flex-1 min-h-0"></div>
                                 <div id="shelf-clipboard-card" class="hidden flex-1 ayasa-card p-3 flex flex-col justify-between">
@@ -749,51 +738,6 @@
                                         <span class="text-[10px] text-[#8e8e96]">Sleep</span>
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- PHONE TRANSFER OVERLAY (Ayasa Local Wi-Fi Transfer) -->
-                    <div id="phone-transfer-overlay" class="hidden absolute inset-0 bg-black z-30 p-5 flex flex-col justify-between">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[15px] font-bold text-white">Transfer from phone</span>
-                            <span id="phone-timer-lbl" class="text-[12px] text-[#8e8e96] font-mono-num">Local Wi-Fi · Ready</span>
-                        </div>
-                        <div class="flex items-center gap-5 my-auto">
-                            <div class="flex flex-col items-center shrink-0">
-                                <div class="w-[144px] h-[144px] bg-white rounded-2xl p-2 flex items-center justify-center">
-                                    <img id="phone-qr-img" src="" alt="QR" class="w-full h-full object-contain" />
-                                </div>
-                                <span class="text-[10.5px] text-[#8e8e96] mt-1.5">Scan with your phone camera</span>
-                            </div>
-                            <div class="flex-1 flex flex-col gap-3">
-                                <div class="ayasa-card p-3.5 flex items-center gap-3">
-                                    <span class="w-9 h-9 rounded-full border border-[#5e5ce6] flex items-center justify-center text-[#5e5ce6] shrink-0">
-                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                                    </span>
-                                    <div class="min-w-0">
-                                        <div id="phone-status-title" class="text-[13px] font-bold text-white">Waiting for a file from your phone</div>
-                                        <div id="phone-status-sub" class="text-[11px] text-[#8e8e96] truncate">Scan the QR, then pick a photo or file on your phone</div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between px-4 text-[10px] text-[#8e8e96]">
-                                    <span id="step-detected" class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2c2c2e] inline-block"></span> Detected</span>
-                                    <span class="flex-1 h-[1px] bg-[#2c2c2e] mx-2"></span>
-                                    <span id="step-receiving" class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2c2c2e] inline-block"></span> Receiving</span>
-                                    <span class="flex-1 h-[1px] bg-[#2c2c2e] mx-2"></span>
-                                    <span id="step-saved" class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2c2c2e] inline-block"></span> Saved</span>
-                                </div>
-                                <div class="flex items-center gap-2 bg-[#1c1c1e] rounded-xl px-3 py-1.5">
-                                    <span id="phone-url-lbl" class="text-[11.5px] text-white font-mono-num truncate flex-1">http://...</span>
-                                    <button onclick="copyPhoneUrl(event)" class="px-2.5 py-1 rounded-lg bg-[#2c2c2e] hover:bg-[#3a3a3e] text-[11px] font-semibold text-white">Copy</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span id="phone-last-saved" class="text-[11px] text-[#8e8e96]">Saves to Downloads\TM_Opera_O_Transfer</span>
-                            <div class="flex items-center gap-2">
-                                <button onclick="pickPhoneSendFile(event)" class="px-3 py-1.5 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[11.5px] font-semibold text-[#d1d1d6]">Pick File to Send</button>
-                                <button onclick="closePhoneTransfer(event)" class="px-4 py-1.5 rounded-full bg-[#3f1d24] hover:bg-[#52242d] text-[#fb7185] text-[12px] font-semibold">Done</button>
                             </div>
                         </div>
                     </div>
@@ -1073,58 +1017,6 @@
             document.getElementById('shelf-tab-clip').className = mode === 'clip' ? 'px-2 py-0.5 rounded-full bg-[#5e5ce6] text-white text-[10px]' : 'px-2 py-0.5 rounded-full text-[#8e8e96] text-[10px]';
         }
 
-        let phonePollTimer = null;
-        let currentPhoneUrl = '';
-        async function openPhoneTransfer(e) {
-            if (e) e.stopPropagation();
-            pinned = true;
-            island.classList.add('phone-mode');
-            document.getElementById('phone-transfer-overlay').classList.remove('hidden');
-            const res = await callApi('phone_transfer_start');
-            if (res?.url) {
-                currentPhoneUrl = res.url;
-                document.getElementById('phone-url-lbl').textContent = res.url;
-                document.getElementById('phone-qr-img').src = res.qrUrl;
-            }
-            if (phonePollTimer) clearInterval(phonePollTimer);
-            phonePollTimer = setInterval(async () => {
-                const st = await callApi('phone_transfer_status');
-                if (!st) return;
-                const dDot = document.querySelector('#step-detected span');
-                const rDot = document.querySelector('#step-receiving span');
-                const sDot = document.querySelector('#step-saved span');
-                dDot.style.background = ['detected', 'receiving', 'saved'].includes(st.state) ? '#5e5ce6' : '#2c2c2e';
-                rDot.style.background = ['receiving', 'saved'].includes(st.state) ? '#5e5ce6' : '#2c2c2e';
-                sDot.style.background = st.state === 'saved' ? '#30d158' : '#2c2c2e';
-                if (st.state === 'saved' && st.lastFile) {
-                    document.getElementById('phone-status-title').textContent = `Saved: ${st.lastFile}`;
-                    document.getElementById('phone-last-saved').textContent = `Received: ${st.lastFile}`;
-                } else if (st.state === 'receiving') {
-                    document.getElementById('phone-status-title').textContent = 'Receiving file...';
-                } else if (st.state === 'detected') {
-                    document.getElementById('phone-status-title').textContent = 'Phone connected!';
-                }
-            }, 600);
-        }
-        async function pickPhoneSendFile(e) {
-            if (e) e.stopPropagation();
-            const name = await callApi('phone_transfer_pick_send');
-            if (name) document.getElementById('phone-last-saved').textContent = `Ready for phone download: ${name}`;
-        }
-        function copyPhoneUrl(e) {
-            if (e) e.stopPropagation();
-            if (currentPhoneUrl) navigator.clipboard?.writeText(currentPhoneUrl).catch(() => {});
-        }
-        async function closePhoneTransfer(e) {
-            if (e) e.stopPropagation();
-            if (phonePollTimer) { clearInterval(phonePollTimer); phonePollTimer = null; }
-            await callApi('phone_transfer_stop');
-            document.getElementById('phone-transfer-overlay').classList.add('hidden');
-            island.classList.remove('phone-mode');
-            pinned = false;
-            loadShelfCards();
-        }
-
         // --- CONTROL CENTER ---
         function toggleCcTile(btn) {
             const on = btn.dataset.on === '1';
@@ -1176,13 +1068,21 @@
             island.setAttribute('aria-expanded', 'false');
         }
 
+        let lastIgnoreMouse = null;
+        function syncIgnoreMouse(ignore) {
+            if (lastIgnoreMouse === ignore) return;
+            lastIgnoreMouse = ignore;
+            callApi('set_ignore_mouse', ignore);
+        }
+
         function scheduleCollapse() {
             if (pinned) return;
             if (collapseTimer) clearTimeout(collapseTimer);
             collapseTimer = setTimeout(() => {
                 island.classList.remove('expanded');
                 island.setAttribute('aria-expanded', 'false');
-            }, 260);
+                syncIgnoreMouse(true);
+            }, 220);
         }
 
         island.addEventListener('click', (e) => {
@@ -1191,7 +1091,10 @@
                 expandIsland();
             }
         });
-        island.addEventListener('mouseenter', expandIsland);
+        island.addEventListener('mouseenter', () => {
+            syncIgnoreMouse(false);
+            expandIsland();
+        });
         island.addEventListener('mouseleave', scheduleCollapse);
 
         window.addEventListener('keydown', (e) => {
@@ -1199,8 +1102,12 @@
         });
 
         window.addEventListener('mousemove', (e) => {
-            const hit = e.target && e.target.closest && e.target.closest('.notch-interactive');
-            callApi('set_ignore_mouse', !hit);
+            const hit = Boolean(e.target && e.target.closest && e.target.closest('.notch-interactive'));
+            if (island.classList.contains('expanded')) {
+                syncIgnoreMouse(!hit);
+            } else {
+                syncIgnoreMouse(!hit);
+            }
         });
 
         function togglePin(e) {
