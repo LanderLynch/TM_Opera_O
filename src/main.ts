@@ -1603,7 +1603,7 @@ function createWindows(): void {
   chatWindow.loadFile(path.join(BASE, "web", "index.html"));
 
   // iOS Dynamic Island / Living Notch di Tengah Atas Layar
-  const NOTCH_W = 560;
+  const NOTCH_W = 640;
   const NOTCH_H = 250;
   const notchX = Math.floor((display.bounds.width - NOTCH_W) / 2);
 

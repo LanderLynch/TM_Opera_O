@@ -1,0 +1,11 @@
+﻿Label: electron-ayasa-notch-5s
+Captured: 2026-11-25T20:28:26.0073427+07:00
+Verified Root PIDs: 4232
+App Tree Process Count: 9
+App Tree Working Set MB: 697.28
+App Tree Private Bytes MB: 436.09
+External Python Process Count: 0
+External Python Working Set MB: 0
+External Python Private Bytes MB: 0
+Combined Total Working Set MB: 697.28
+Combined Total Private Bytes MB: 436.09

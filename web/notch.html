@@ -2,21 +2,20 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>TM Opera O — Floating HUD</title>
+    <title>TM Opera O — Ayasa Notch</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --hud-bg: rgba(12, 14, 18, 0.84);
-            --hud-surface: rgba(255, 255, 255, 0.06);
-            --hud-surface-hover: rgba(255, 255, 255, 0.11);
-            --hud-border: rgba(255, 255, 255, 0.11);
-            --hud-text: #f3f4f6;
-            --hud-muted: #9ca3af;
-            --hud-accent: #3b82f6;
-            --hud-accent-soft: rgba(59, 130, 246, 0.18);
+            --notch-bg: #000000;
+            --card-bg: #1c1c1e;
+            --card-hover: #242428;
+            --ctrl-bg: #2c2c2e;
+            --ctrl-hover: #3a3a3e;
+            --ring: rgba(255, 255, 255, 0.16);
+            --text-primary: #f5f5f7;
+            --text-muted: #8e8e96;
+            --accent-green: #30d158;
+            --accent-blue: #3b82f6;
         }
         html, body {
             margin: 0;
@@ -24,12 +23,11 @@
             overflow: hidden;
             background: transparent;
             user-select: none;
-            font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: "Segoe UI", system-ui, -apple-system, "Segoe UI Variable", sans-serif;
             -webkit-font-smoothing: antialiased;
-            color: var(--hud-text);
+            color: var(--text-primary);
         }
         .font-mono-num {
-            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
             font-variant-numeric: tabular-nums;
         }
         .notch-wrapper {
@@ -38,369 +36,525 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 6px;
+            padding-top: 0;
             background: transparent;
         }
         .island {
             position: relative;
-            background: var(--hud-bg);
-            backdrop-filter: blur(24px) saturate(160%);
-            -webkit-backdrop-filter: blur(24px) saturate(160%);
-            border: 1px solid var(--hud-border);
+            background: var(--notch-bg);
             box-shadow:
-                0 16px 40px rgba(0, 0, 0, 0.55),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
-            color: var(--hud-text);
+                0 0 0 1px var(--ring),
+                0 24px 60px -20px rgba(0, 0, 0, 0.55);
+            color: var(--text-primary);
             cursor: pointer;
-            width: 248px;
-            height: 36px;
-            border-radius: 999px;
+            width: 216px;
+            height: 38px;
+            border-radius: 0 0 15px 15px;
             transition:
-                width 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-                height 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-                border-radius 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.22s ease;
+                width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                height 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                border-radius 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                box-shadow 0.2s ease;
         }
-        .island.expanded {
-            width: 536px;
-            height: 198px;
-            border-radius: 24px;
-            cursor: default;
-        }
-        .island.dismissed {
-            width: 88px;
-            height: 6px;
-            border-radius: 999px;
-            opacity: 0.55;
-            overflow: hidden;
-        }
-        .island.dismissed:hover {
-            opacity: 0.95;
-        }
-        .island.dismissed .compact-view,
-        .island.dismissed .expanded-view {
-            opacity: 0;
+        .island::before,
+        .island::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 9px;
+            height: 9px;
             pointer-events: none;
+            transition:
+                width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                height 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                left 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+                right 0.5s cubic-bezier(0.3, 1.25, 0.4, 1);
+        }
+        .island::before {
+            left: -9px;
+            background: radial-gradient(circle at 0 100%, transparent 8.5px, #000 9px);
+        }
+        .island::after {
+            right: -9px;
+            background: radial-gradient(circle at 100% 100%, transparent 8.5px, #000 9px);
+        }
+        .island:not(.expanded):hover {
+            box-shadow:
+                0 0 0 2px rgba(138, 155, 255, 0.5),
+                0 24px 60px -20px rgba(0, 0, 0, 0.55);
         }
 
+        .island.expanded {
+            width: 580px;
+            height: 212px;
+            border-radius: 0 0 36px 36px;
+            cursor: default;
+        }
+        .island.expanded::before,
+        .island.expanded::after {
+            width: 22px;
+            height: 22px;
+        }
+        .island.expanded::before {
+            left: -22px;
+            background: radial-gradient(circle at 0 100%, transparent 21.5px, #000 22px);
+        }
+        .island.expanded::after {
+            right: -22px;
+            background: radial-gradient(circle at 100% 100%, transparent 21.5px, #000 22px);
+        }
+
+        .clip-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: inherit;
+        }
+
+        /* CLOSED STATE */
         .compact-view {
             position: absolute;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 12px;
-            gap: 8px;
+            padding: 0 14px;
             opacity: 1;
-            transition: opacity 0.16s ease;
+            transition: opacity 0.25s ease;
         }
         .island.expanded .compact-view {
             opacity: 0;
             pointer-events: none;
         }
 
+        /* Ayasa idle clock <-> blinking eyes loop */
+        .closed-center {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+        }
+        .clk-wrap {
+            animation: clkCycle 9s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+        }
+        .eyes-wrap {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: eyeCycle 9s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .eye-pill {
+            width: 7px;
+            height: 13px;
+            border-radius: 5px;
+            background: #ffffff;
+            animation: eyeBlink 4.5s ease-in-out infinite;
+        }
+        @keyframes clkCycle {
+            0%, 58%, 92%, 100% { opacity: 1; }
+            62%, 88% { opacity: 0; }
+        }
+        @keyframes eyeCycle {
+            0%, 58%, 92%, 100% { opacity: 0; }
+            62%, 88% { opacity: 1; }
+        }
+        @keyframes eyeBlink {
+            0%, 92%, 100% { transform: scaleY(1); }
+            96% { transform: scaleY(0.1); }
+        }
+
+        /* OPEN STATE */
         .expanded-view {
             position: absolute;
             inset: 0;
-            padding: 12px 18px 10px 18px;
+            padding: 10px 44px 28px 44px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             opacity: 0;
             pointer-events: none;
-            transform: translateY(-4px) scale(0.98);
-            transition:
-                opacity 0.2s ease 0.04s,
-                transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: opacity 0.2s ease;
         }
         .island.expanded .expanded-view {
             opacity: 1;
             pointer-events: auto;
-            transform: translateY(0) scale(1);
+            transition: opacity 0.3s ease 0.12s;
         }
 
-        .eq-bar {
-            width: 2px;
-            border-radius: 2px;
-            background: var(--hud-accent);
-            animation: eqPulse 1.1s ease-in-out infinite;
-        }
-        .eq-bar.paused {
-            animation-play-state: paused;
-            height: 4px !important;
-            opacity: 0.5;
-        }
-        .eq-bar:nth-child(2) { animation-delay: 0.2s; }
-        .eq-bar:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes eqPulse {
-            0%, 100% { height: 4px; }
-            50% { height: 12px; }
-        }
-
-        .icon-btn {
-            color: rgba(243, 244, 246, 0.82);
-            transition: transform 0.14s ease, color 0.14s ease, background-color 0.14s ease;
-        }
-        .icon-btn:hover {
-            color: #ffffff;
-            background: var(--hud-surface-hover);
-        }
-        .icon-btn:active {
-            transform: scale(0.93);
-        }
-
-        .dock-btn {
-            width: 28px;
-            height: 24px;
-            border-radius: 8px;
+        /* Ayasa circular edge arrows */
+        .ayasa-arrow {
+            position: absolute;
+            top: 96px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--ctrl-bg);
+            color: #e5e5ea;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--hud-muted);
-            transition: background-color 0.15s ease, color 0.15s ease;
             cursor: pointer;
+            z-index: 20;
+            transition: background-color 0.15s ease, transform 0.12s ease;
         }
-        .dock-btn:hover {
-            color: var(--hud-text);
-            background: var(--hud-surface);
+        .ayasa-arrow:hover {
+            background: var(--ctrl-hover);
+            color: #ffffff;
         }
-        .dock-btn.active {
-            color: #60a5fa;
-            background: var(--hud-accent-soft);
+        .ayasa-arrow:active {
+            transform: scale(0.92);
         }
 
-        .hud-scroll::-webkit-scrollbar {
-            width: 4px;
+        /* Bottom pagination pills + close chevron */
+        .ayasa-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: #48484d;
+            cursor: pointer;
+            transition: width 0.25s ease, background-color 0.25s ease;
         }
-        .hud-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.16);
-            border-radius: 999px;
+        .ayasa-dot.active {
+            width: 28px;
+            background: #ffffff;
         }
+        .ayasa-close {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--ctrl-bg);
+            color: #e5e5ea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        .ayasa-close:hover {
+            background: var(--ctrl-hover);
+            color: #ffffff;
+        }
+
+        /* Slide transition */
+        @keyframes pgFade {
+            from { opacity: 0; transform: translateX(var(--dx, 18px)); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .pg-anim {
+            animation: pgFade 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Ayasa #1c1c1e widget cards */
+        .ayasa-card {
+            background: var(--card-bg);
+            border-radius: 13px;
+            transition: background-color 0.16s ease;
+        }
+        .ayasa-card:hover {
+            background: var(--card-hover);
+        }
+        .ayasa-quick-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            color: #d1d1d6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+        }
+        .ayasa-quick-btn:hover {
+            background: var(--ctrl-hover);
+            color: #ffffff;
+        }
+        .ayasa-quick-btn:active {
+            transform: scale(0.93);
+        }
+
+        .hud-scroll::-webkit-scrollbar { width: 4px; }
+        .hud-scroll::-webkit-scrollbar-thumb { background: #3a3a3e; border-radius: 999px; }
 
         .usage-card {
             position: relative;
-            background: var(--hud-surface);
-            border: 1px solid var(--hud-border);
-            border-radius: 14px;
-            padding: 10px 12px;
-            transition: background-color 0.18s ease, border-color 0.18s ease;
+            background: var(--card-bg);
+            border-radius: 13px;
+            padding: 12px 14px;
+            transition: background-color 0.18s ease;
         }
-        .usage-card:hover {
-            background: var(--hud-surface-hover);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+        .usage-card:hover { background: var(--card-hover); }
         .usage-card .hover-detail {
             opacity: 0;
             pointer-events: none;
             position: absolute;
             inset: 0;
-            background: rgba(12, 14, 18, 0.94);
-            backdrop-filter: blur(8px);
+            background: #141416;
             border-radius: 13px;
-            padding: 8px 12px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             transition: opacity 0.16s ease;
         }
-        .usage-card:hover .hover-detail {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .usage-card:hover .hover-detail { opacity: 1; pointer-events: auto; }
     </style>
 </head>
 <body>
     <div class="notch-wrapper">
-        <div id="island" class="island notch-interactive" onclick="restoreIfDismissed(event)">
-            <!-- COMPACT PILL VIEW -->
-            <div class="compact-view">
-                <div class="flex items-center gap-2 shrink-0">
-                    <img id="compact-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';" class="w-5 h-5 rounded-full object-cover border border-white/10" draggable="false">
-                    <div class="flex items-center gap-0.5 h-3">
-                        <span class="eq-bar paused"></span>
-                        <span class="eq-bar paused"></span>
-                        <span class="eq-bar paused"></span>
+        <div id="island" class="island notch-interactive" aria-expanded="false">
+            <div class="clip-inner">
+                <!-- COLLAPSED AYASA SILHOUETTE -->
+                <div class="compact-view">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span id="closed-ring" class="w-3 h-3 rounded-full border-2 border-[#30d158]"></span>
+                        <img id="compact-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';" class="w-4 h-4 rounded-full object-cover" draggable="false">
                     </div>
-                </div>
-                <span id="compact-title" class="text-[11.5px] text-gray-200 truncate flex-1 text-center font-medium">TM Opera O</span>
-                <span id="compact-clock" class="text-[11px] font-medium text-gray-400 font-mono-num shrink-0">00:00</span>
-            </div>
 
-            <!-- EXPANDED FLOATING GLASS VIEW -->
-            <div class="expanded-view">
-                <!-- Top Micro Status Bar -->
-                <div class="flex items-center justify-between text-[11px] text-gray-400 pb-1.5 border-b border-white/[0.07] shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
-                        <span id="hud-datetime" class="font-mono-num">TM Opera O</span>
+                    <div class="closed-center px-2">
+                        <div class="clk-wrap">
+                            <span id="compact-clock" class="text-[13px] font-bold text-white font-mono-num truncate">00:00</span>
+                        </div>
+                        <div class="eyes-wrap" aria-hidden="true">
+                            <span class="eye-pill"></span>
+                            <span class="eye-pill"></span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <button id="pin-btn" onclick="togglePin(event)" class="px-2 py-0.5 rounded-md text-[10.5px] bg-white/[0.06] hover:bg-white/[0.12] text-gray-300 transition-colors" title="Sematkan panel">Pin</button>
-                        <button onclick="dismissIsland(event)" class="w-5 h-5 rounded-md flex items-center justify-center hover:bg-white/[0.12] text-gray-400 hover:text-white transition-colors" title="Minimize ke bar tipis">
-                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+
+                    <span id="closed-dot" class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+                </div>
+
+                <!-- EXPANDED AYASA VIEW -->
+                <div class="expanded-view">
+                    <!-- Edge Circular Carousel Arrows -->
+                    <button class="ayasa-arrow left-2.5" onclick="prevSlide(event)" title="Sebelumnya">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="ayasa-arrow right-2.5" onclick="nextSlide(event)" title="Berikutnya">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+
+                    <!-- 3-Zone Top Header: Title | Date & Time | Pin + Mascot -->
+                    <div class="flex items-center justify-between h-6 shrink-0 mb-2">
+                        <span id="header-title" class="text-[13px] font-semibold text-[#f5f5f7]">Home</span>
+                        <div class="flex items-center gap-2 text-[12px]">
+                            <span class="w-3.5 h-3.5 rounded-full border border-[#30d158] flex items-center justify-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#30d158]"></span>
+                            </span>
+                            <span id="hud-date" class="text-[#8e8e96] font-medium">Wed 25 Nov</span>
+                            <span id="hud-time" class="text-[#f5f5f7] font-bold font-mono-num">00:00</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button id="pin-btn" onclick="togglePin(event)" class="px-2 py-0.5 rounded-md text-[10.5px] bg-[#2c2c2e] hover:bg-[#3a3a3e] text-[#d1d1d6] transition-colors" title="Pin Notch">Pin</button>
+                            <img src="opera_profile.jpg?v=2" class="w-5 h-5 rounded-md object-cover border border-white/10" alt="TM Opera O" draggable="false">
+                        </div>
+                    </div>
+
+                    <!-- BODY SLIDES -->
+                    <div id="slides-body" class="flex-1 min-h-0 flex items-center">
+                        <!-- SLIDE 0: HOME DASHBOARD (Ayasa 4-Widget + Quick Action Row) -->
+                        <div id="slide-0" class="w-full h-full flex flex-col justify-between gap-2 pg-anim">
+                            <div class="grid grid-cols-12 gap-2 flex-1 min-h-0">
+                                <!-- Mini Music Card -->
+                                <div class="col-span-5 ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(1, event)">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <img id="home-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';" class="w-9 h-9 rounded-lg object-cover shrink-0 bg-[#2c2c2e]" draggable="false">
+                                        <div class="min-w-0 flex-1">
+                                            <div id="home-music-title" class="text-[12px] font-semibold text-[#f5f5f7] truncate">Belum ada lagu</div>
+                                            <div id="home-music-artist" class="text-[10.5px] text-[#8e8e96] truncate">Spotify · Standby</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-1">
+                                        <div class="flex-1 h-1 bg-[#2c2c2e] rounded-full overflow-hidden mr-2">
+                                            <div id="home-music-bar" class="h-full bg-white rounded-full" style="width: 0%;"></div>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[#f5f5f7]">
+                                            <button onclick="mediaCmd('prev', event)" class="hover:text-white text-[#a1a1a6]"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+                                            <button onclick="mediaCmd('play_pause', event)" class="hover:text-white"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                                            <button onclick="mediaCmd('next', event)" class="hover:text-white text-[#a1a1a6]"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Blue Date Tile -->
+                                <div class="col-span-2 rounded-[13px] bg-[#2563eb] flex flex-col items-center justify-center text-white">
+                                    <span id="tile-weekday" class="text-[10px] font-semibold uppercase tracking-wide opacity-85">Wed</span>
+                                    <span id="tile-day" class="text-[24px] font-bold leading-none mt-0.5 font-mono-num">25</span>
+                                </div>
+
+                                <!-- Companion / AI & Screen Status Card -->
+                                <div class="col-span-5 ayasa-card p-2.5 flex flex-col justify-between cursor-pointer" onclick="goToSlide(2, event)">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-semibold text-[#f5f5f7]">TM Opera O</span>
+                                        <span class="text-[10px] text-[#30d158] font-medium">Ready</span>
+                                    </div>
+                                    <div id="home-active-win" class="text-[11px] text-[#8e8e96] truncate">Standby</div>
+                                    <div id="home-model-label" class="text-[10.5px] text-[#a1a1a6] truncate font-mono-num">Tanya AI / Layar →</div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Row: Ayasa Circular Quick Actions -->
+                            <div class="flex items-center justify-between px-4 shrink-0">
+                                <button onclick="runQuick('buka_chat', event)" class="ayasa-quick-btn" title="Buka Chat">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                </button>
+                                <button onclick="goToSlide(2, event)" class="ayasa-quick-btn" title="Tanya AI Cepat">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
+                                </button>
+                                <button onclick="callApi('lihat_layar_radial')" class="ayasa-quick-btn" title="Analisis Layar">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                                </button>
+                                <button onclick="runQuick('open_spotify', event)" class="ayasa-quick-btn" title="Buka Spotify">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                </button>
+                                <button onclick="callApi('tes_reminder')" class="ayasa-quick-btn" title="Uji Pengingat">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                </button>
+                                <button onclick="runQuick('refresh_app', event)" class="ayasa-quick-btn" title="Muat Ulang">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                </button>
+                                <button onclick="callApi('open_settings')" class="ayasa-quick-btn" title="Pengaturan">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 1: MUSIC & SYNCED LYRICS (Ayasa Music Layout) -->
+                        <div id="slide-1" class="hidden w-full h-full flex items-center gap-4 pg-anim">
+                            <img id="album-cover" src="opera_profile.jpg?v=2" onerror="this.onerror=null;this.src='opera_profile.jpg?v=2';"
+                                class="w-[106px] h-[106px] rounded-[18px] object-cover shrink-0 bg-[#1c1c1e]" draggable="false">
+                            <div class="flex-1 min-w-0 h-full flex flex-col justify-between py-0.5">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <h3 id="now-playing-title" class="text-[15px] font-bold text-[#f5f5f7] truncate leading-tight">Belum ada musik</h3>
+                                        <p id="now-playing-artist" class="text-[12px] text-[#8e8e96] truncate mt-0.5">Spotify · TM Opera O</p>
+                                    </div>
+                                    <button onclick="toggleLyricsMode(event)" id="btn-lyrics-toggle" class="w-7 h-7 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c2e] flex items-center justify-center text-[#d1d1d6] shrink-0" title="Tampilkan / Sembunyikan Lirik">
+                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    </button>
+                                </div>
+
+                                <div id="music-lyrics-box" class="hidden text-[11.5px] leading-snug space-y-0.5 overflow-hidden">
+                                    <p id="lyric-prev" onclick="seekToLyric(-1, event)" class="text-[#8e8e96] truncate cursor-pointer"></p>
+                                    <p id="lyric-current" onclick="seekToLyric(0, event)" class="text-white font-semibold truncate cursor-pointer">♪ Putar lagu di Spotify...</p>
+                                    <p id="lyric-next" onclick="seekToLyric(1, event)" class="text-[#8e8e96] truncate cursor-pointer"></p>
+                                </div>
+
+                                <div class="flex items-center gap-2.5">
+                                    <span id="media-time-cur" class="text-[11px] text-[#8e8e96] font-mono-num w-8">00:00</span>
+                                    <div id="media-progress-track" onclick="seekFromBar(event)" class="flex-1 h-[4px] bg-[#2c2c2e] rounded-full overflow-hidden cursor-pointer">
+                                        <div id="media-progress-bar" class="h-full bg-white rounded-full transition-all duration-150" style="width: 0%;"></div>
+                                    </div>
+                                    <span id="media-time-rem" class="text-[11px] text-[#8e8e96] font-mono-num w-9 text-right">-00:00</span>
+                                </div>
+
+                                <div class="flex items-center justify-center gap-7 text-white">
+                                    <button onclick="mediaCmd('prev', event)" class="hover:opacity-75 transition-opacity" title="Sebelumnya">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+                                    </button>
+                                    <button id="btn-play-pause" onclick="mediaCmd('play_pause', event)" class="hover:opacity-75 transition-opacity" title="Play / Pause">
+                                        <svg id="icon-pause" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                        <svg id="icon-play" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                    </button>
+                                    <button onclick="mediaCmd('next', event)" class="hover:opacity-75 transition-opacity" title="Berikutnya">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 2: ASK AI + TRANSLATE -->
+                        <div id="slide-2" class="hidden w-full h-full flex flex-col justify-between gap-2 pg-anim">
+                            <div class="flex items-center gap-1.5">
+                                <input id="hud-ask-input" type="text" placeholder="Tanya TM Opera O..."
+                                    onkeydown="if(event.key==='Enter') sendHudAsk(event)"
+                                    class="flex-1 bg-[#1c1c1e] border border-[#2c2c2e] rounded-lg px-2.5 py-1 text-[12px] text-white placeholder-[#8e8e96] outline-none focus:border-[#3b82f6]" />
+                                <button onclick="toggleTranslatePanel(event)" class="px-2 py-1 rounded-lg text-[11px] bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[#d1d1d6]" title="Terjemahkan">文A</button>
+                                <button onclick="sendHudAsk(event)" class="px-3 py-1 rounded-lg text-[11.5px] font-semibold bg-[#3b82f6] hover:bg-[#2563eb] text-white">Kirim</button>
+                            </div>
+                            <div class="flex-1 min-h-0 flex gap-2">
+                                <div id="hud-ask-reply" class="flex-1 overflow-y-auto hud-scroll text-[12px] text-[#f5f5f7] leading-relaxed ayasa-card p-2.5">
+                                    Ketik pertanyaan singkat lalu tekan Enter.
+                                </div>
+                                <div id="hud-translate-box" class="hidden w-[44%] flex flex-col gap-1 ayasa-card p-2">
+                                    <div class="flex items-center justify-between">
+                                        <select id="hud-translate-lang" onchange="translateCurrentReply()" class="bg-transparent text-[11px] text-[#60a5fa] outline-none">
+                                            <option value="English" class="bg-[#1c1c1e]">English</option>
+                                            <option value="Japanese" class="bg-[#1c1c1e]">Japanese</option>
+                                            <option value="Korean" class="bg-[#1c1c1e]">Korean</option>
+                                        </select>
+                                        <button onclick="translateCurrentReply()" class="text-[10.5px] text-[#d1d1d6] px-1.5 rounded bg-[#2c2c2e]">Go</button>
+                                    </div>
+                                    <div id="hud-translate-out" class="flex-1 overflow-y-auto hud-scroll text-[11px] text-[#a1a1a6]">Pilih bahasa & klik Go.</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10.5px] text-[#8e8e96]">
+                                <span id="hud-ask-status">Siap</span>
+                                <div class="flex gap-1.5">
+                                    <button onclick="copyHudReply(event)" class="px-2 py-0.5 rounded bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[#d1d1d6]">Copy</button>
+                                    <button onclick="clearHudReply(event)" class="px-2 py-0.5 rounded bg-[#1c1c1e] hover:bg-[#2c2c2e] text-[#d1d1d6]">New</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 3: API USAGE -->
+                        <div id="slide-3" class="hidden w-full h-full flex items-center pg-anim">
+                            <div class="grid grid-cols-2 gap-3 w-full">
+                                <div class="usage-card">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[12.5px] font-medium text-[#8e8e96]">Pecut Opus</span>
+                                        <span id="pecut-pct" class="text-[13.5px] font-bold text-[#f5f5f7] font-mono-num">0.00%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-[#2c2c2e] rounded-full overflow-hidden mt-2.5">
+                                        <div id="pecut-bar" class="h-full bg-[#30d158] rounded-full transition-all duration-300" style="width: 2%;"></div>
+                                    </div>
+                                    <div id="pecut-short" class="text-[11px] text-[#8e8e96] mt-2 truncate font-mono-num">0 token</div>
+                                    <div class="hover-detail">
+                                        <div class="text-[11px] text-[#8e8e96]">Pecut Opus · DeepSeek & Vision</div>
+                                        <div id="pecut-hover-million" class="text-[13px] font-semibold text-white font-mono-num mt-0.5">0.0000 Juta token</div>
+                                        <div id="pecut-hover-sub" class="text-[10.5px] text-[#8e8e96] font-mono-num mt-0.5">Sisa token</div>
+                                    </div>
+                                </div>
+
+                                <div class="usage-card">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[12.5px] font-medium text-[#8e8e96]">ElevenLabs</span>
+                                        <span id="el-pct" class="text-[13.5px] font-bold text-[#f5f5f7] font-mono-num">0.0%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-[#2c2c2e] rounded-full overflow-hidden mt-2.5">
+                                        <div id="el-bar" class="h-full bg-[#3b82f6] rounded-full transition-all duration-300" style="width: 2%;"></div>
+                                    </div>
+                                    <div id="el-short" class="text-[11px] text-[#8e8e96] mt-2 truncate font-mono-num">0 / 10.000 kar</div>
+                                    <div class="hover-detail">
+                                        <div class="text-[11px] text-[#8e8e96]">ElevenLabs · Voice API</div>
+                                        <div id="el-hover-main" class="text-[13px] font-semibold text-white font-mono-num mt-0.5">0 / 10.000</div>
+                                        <div id="el-hover-sub" class="text-[10.5px] text-[#8e8e96] font-mono-num mt-0.5">Sisa karakter</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Ayasa Pill Pagination + Circular Close Chevron -->
+                    <div class="absolute bottom-2 left-0 right-0 px-11 flex items-center justify-center pointer-events-auto">
+                        <div class="flex items-center gap-1.5">
+                            <span class="ayasa-dot active" onclick="goToSlide(0, event)" title="Home"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(1, event)" title="Music"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(2, event)" title="Ask AI"></span>
+                            <span class="ayasa-dot" onclick="goToSlide(3, event)" title="Usage"></span>
+                        </div>
+                        <button onclick="collapseNow(event)" class="ayasa-close absolute right-5" title="Tutup (Esc)">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
                         </button>
                     </div>
-                </div>
-
-                <!-- MAIN CONTENT SLIDES -->
-                <div class="flex-1 min-h-0 py-1.5 flex items-center">
-                    <!-- SLIDE 0: MEDIA & SYNCED LYRICS -->
-                    <div id="slide-0" class="w-full h-full flex items-center">
-                        <div class="w-[48%] h-full flex flex-col justify-between pr-3">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <img id="album-cover" src="opera_profile.jpg?v=2"
-                                    class="w-11 h-11 rounded-xl object-cover border border-white/10 shrink-0 bg-white/5"
-                                    draggable="false">
-                                <div class="min-w-0 flex-1">
-                                    <h3 id="now-playing-title" class="text-[13.5px] font-semibold text-white truncate leading-tight">Belum ada musik</h3>
-                                    <p id="now-playing-artist" class="text-[11px] text-gray-400 truncate mt-0.5">Spotify · TM Opera O</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <span id="media-time-cur" class="text-[10.5px] text-gray-400 font-mono-num w-8">00:00</span>
-                                <div id="media-progress-track" onclick="seekFromBar(event)" class="flex-1 h-[5px] bg-white/15 rounded-full overflow-hidden cursor-pointer" title="Klik untuk loncat ke detik lagu">
-                                    <div id="media-progress-bar" class="h-full bg-[#3b82f6] rounded-full transition-all duration-150" style="width: 0%;"></div>
-                                </div>
-                                <span id="media-time-rem" class="text-[10.5px] text-gray-400 font-mono-num w-9 text-right">-00:00</span>
-                            </div>
-
-                            <div class="flex items-center justify-between px-1 gap-1">
-                                <button onclick="callApi('open_settings')" class="icon-btn w-7 h-7 rounded-lg flex items-center justify-center" title="Pengaturan">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                </button>
-                                <button onclick="mediaCmd('prev', event)" class="icon-btn w-7 h-7 rounded-lg flex items-center justify-center" title="Sebelumnya">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
-                                </button>
-                                <button id="btn-play-pause" onclick="mediaCmd('play_pause', event)" class="icon-btn w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center" title="Play / Pause">
-                                    <svg id="icon-pause" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                    <svg id="icon-play" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                                </button>
-                                <button onclick="mediaCmd('next', event)" class="icon-btn w-7 h-7 rounded-lg flex items-center justify-center" title="Berikutnya">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="w-[1px] h-[86%] bg-white/10 shrink-0"></div>
-
-                        <div class="w-[52%] h-full flex flex-col justify-center pl-3.5 pr-1 gap-1 overflow-hidden">
-                            <p id="lyric-prev" onclick="seekToLyric(-1, event)" class="text-[11.5px] font-medium text-white/35 hover:text-white/75 cursor-pointer truncate transition-colors"></p>
-                            <p id="lyric-current" onclick="seekToLyric(0, event)" class="text-[14px] font-semibold text-white cursor-pointer leading-snug line-clamp-2 transition-colors">♪ Putar lagu di Spotify...</p>
-                            <p id="lyric-next" onclick="seekToLyric(1, event)" class="text-[11.5px] font-medium text-white/35 hover:text-white/75 cursor-pointer truncate transition-colors"></p>
-                        </div>
-                    </div>
-
-                    <!-- SLIDE 1: QUICK ASK AI + INLINE TRANSLATE -->
-                    <div id="slide-1" class="hidden w-full h-full flex flex-col justify-between gap-1.5">
-                        <div class="flex items-center gap-1.5">
-                            <input id="hud-ask-input" type="text" placeholder="Tanya TM Opera O..."
-                                onkeydown="if(event.key==='Enter') sendHudAsk(event)"
-                                class="flex-1 bg-white/[0.06] border border-white/[0.1] rounded-lg px-2.5 py-1 text-[12px] text-white placeholder-gray-400 outline-none focus:border-[#3b82f6]" />
-                            <button onclick="toggleTranslatePanel(event)" id="btn-translate-toggle" class="px-2 py-1 rounded-lg text-[11px] bg-white/[0.06] hover:bg-white/[0.12] text-gray-300 border border-white/[0.08]" title="Terjemahkan balasan">文A</button>
-                            <button onclick="sendHudAsk(event)" class="px-2.5 py-1 rounded-lg text-[11.5px] font-medium bg-[#3b82f6] hover:bg-[#2563eb] text-white">Kirim</button>
-                        </div>
-                        <div id="hud-ask-body" class="flex-1 min-h-0 flex gap-2">
-                            <div id="hud-ask-reply" class="flex-1 overflow-y-auto hud-scroll text-[12px] text-gray-200 leading-relaxed bg-white/[0.04] border border-white/[0.07] rounded-lg p-2">
-                                Ketik pertanyaan singkat lalu tekan Enter.
-                            </div>
-                            <div id="hud-translate-box" class="hidden w-[46%] flex flex-col gap-1 bg-white/[0.04] border border-white/[0.07] rounded-lg p-1.5">
-                                <div class="flex items-center justify-between gap-1">
-                                    <select id="hud-translate-lang" onchange="translateCurrentReply()" class="bg-transparent text-[11px] text-[#60a5fa] outline-none">
-                                        <option value="English" class="bg-[#121418]">English</option>
-                                        <option value="Japanese" class="bg-[#121418]">Japanese</option>
-                                        <option value="Korean" class="bg-[#121418]">Korean</option>
-                                        <option value="Arabic" class="bg-[#121418]">Arabic</option>
-                                    </select>
-                                    <button onclick="translateCurrentReply()" class="text-[10.5px] text-gray-300 hover:text-white px-1.5 py-0.5 rounded bg-white/[0.06]">Go</button>
-                                </div>
-                                <div id="hud-translate-out" class="flex-1 overflow-y-auto hud-scroll text-[11px] text-gray-300 leading-snug">Pilih bahasa lalu klik Go.</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between text-[10.5px] text-gray-400">
-                            <span id="hud-ask-status">Siap</span>
-                            <div class="flex gap-1.5">
-                                <button onclick="copyHudReply(event)" class="px-2 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-gray-300">Copy</button>
-                                <button onclick="clearHudReply(event)" class="px-2 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-gray-300">New</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SLIDE 2: API & TOKEN USAGE -->
-                    <div id="slide-2" class="hidden w-full h-full flex flex-col justify-center">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="usage-card">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[12px] font-medium text-gray-300">Pecut Opus</span>
-                                    <span id="pecut-pct" class="text-[13px] font-medium text-white font-mono-num">0.00%</span>
-                                </div>
-                                <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
-                                    <div id="pecut-bar" class="h-full bg-[#3b82f6] rounded-full transition-all duration-300" style="width: 1%;"></div>
-                                </div>
-                                <div id="pecut-short" class="text-[11px] text-gray-400 mt-1.5 truncate font-mono-num">0 token</div>
-                                <div class="hover-detail">
-                                    <div class="text-[11px] font-medium text-gray-400">Pecut Opus · DeepSeek & Vision</div>
-                                    <div id="pecut-hover-million" class="text-[12.5px] font-medium text-white font-mono-num mt-0.5">0.0000 Juta token</div>
-                                    <div id="pecut-hover-sub" class="text-[10.5px] text-gray-400 font-mono-num mt-0.5">Sisa token</div>
-                                </div>
-                            </div>
-
-                            <div class="usage-card">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[12px] font-medium text-gray-300">ElevenLabs</span>
-                                    <span id="el-pct" class="text-[13px] font-medium text-white font-mono-num">0.0%</span>
-                                </div>
-                                <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
-                                    <div id="el-bar" class="h-full bg-gray-200 rounded-full transition-all duration-300" style="width: 1%;"></div>
-                                </div>
-                                <div id="el-short" class="text-[11px] text-gray-400 mt-1.5 truncate font-mono-num">0 / 10.000 karakter</div>
-                                <div class="hover-detail">
-                                    <div class="text-[11px] font-medium text-gray-400">ElevenLabs · Voice API</div>
-                                    <div id="el-hover-main" class="text-[12.5px] font-medium text-white font-mono-num mt-0.5">0 / 10.000 karakter</div>
-                                    <div id="el-hover-sub" class="text-[10.5px] text-gray-400 font-mono-num mt-0.5">Sisa karakter</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SLIDE 3: QUICK CONTROL -->
-                    <div id="slide-3" class="hidden w-full h-full flex flex-col justify-between py-0.5">
-                        <div class="grid grid-cols-4 gap-2 my-auto">
-                            <button onclick="runQuick('buka_chat', event)" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-left transition-colors">
-                                <svg class="w-4 h-4 text-[#60a5fa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                <div class="text-[12px] font-medium text-gray-100 mt-1.5">Buka chat</div>
-                            </button>
-                            <button onclick="callApi('open_settings')" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-left transition-colors">
-                                <svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                <div class="text-[12px] font-medium text-gray-100 mt-1.5">Pengaturan</div>
-                            </button>
-                            <button onclick="runQuick('open_spotify', event)" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-left transition-colors">
-                                <svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                                <div class="text-[12px] font-medium text-gray-100 mt-1.5">Spotify</div>
-                            </button>
-                            <button onclick="runQuick('refresh_app', event)" class="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-left transition-colors">
-                                <svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                                <div class="text-[12px] font-medium text-gray-100 mt-1.5">Muat ulang</div>
-                            </button>
-                        </div>
-                        <div id="footer-status" class="text-[11px] text-gray-400 truncate">Standby</div>
-                    </div>
-                </div>
-
-                <!-- Bottom Dock Navigation (Nusa-style compact module switcher) -->
-                <div class="flex items-center justify-center gap-2 pt-1 border-t border-white/[0.07] shrink-0">
-                    <button class="dock-btn active" onclick="goToSlide(0, event)" title="Musik & Lirik">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                    </button>
-                    <button class="dock-btn" onclick="goToSlide(1, event)" title="Tanya AI & Terjemahkan">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </button>
-                    <button class="dock-btn" onclick="goToSlide(2, event)" title="Kuota Token API">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                    </button>
-                    <button class="dock-btn" onclick="goToSlide(3, event)" title="Kontrol Cepat">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    </button>
                 </div>
             </div>
         </div>
@@ -417,25 +571,32 @@
         }
 
         const island = document.getElementById('island');
+        const SLIDE_TITLES = ['Home', 'Music', 'Ask AI', 'Usage'];
         let pinned = false;
-        let dismissed = false;
         let collapseTimer = null;
         let currentSlide = 0;
         const TOTAL_SLIDES = 4;
         let lastHudReply = '';
+        let showLyricsInline = false;
 
         function goToSlide(idx, e) {
             if (e) e.stopPropagation();
+            const prev = currentSlide;
             currentSlide = (idx + TOTAL_SLIDES) % TOTAL_SLIDES;
+            const dx = currentSlide >= prev ? '18px' : '-18px';
             for (let i = 0; i < TOTAL_SLIDES; i++) {
-                document.getElementById(`slide-${i}`).classList.toggle('hidden', i !== currentSlide);
+                const el = document.getElementById(`slide-${i}`);
+                el.style.setProperty('--dx', dx);
+                el.classList.toggle('hidden', i !== currentSlide);
             }
-            document.querySelectorAll('.dock-btn').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
-            if (currentSlide === 1) {
-                setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 60);
-            }
-            if (currentSlide === 2) refreshUsageData(true);
+            document.getElementById('header-title').textContent = SLIDE_TITLES[currentSlide] || 'Home';
+            document.querySelectorAll('.ayasa-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+            if (currentSlide === 2) setTimeout(() => document.getElementById('hud-ask-input')?.focus(), 80);
+            if (currentSlide === 3) refreshUsageData(true);
         }
+
+        function nextSlide(e) { goToSlide(currentSlide + 1, e); }
+        function prevSlide(e) { goToSlide(currentSlide - 1, e); }
 
         let wheelCooldown = 0;
         island.addEventListener('wheel', (e) => {
@@ -449,40 +610,42 @@
         });
 
         function expandIsland() {
-            if (dismissed) return;
             if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null; }
             island.classList.add('expanded');
+            island.setAttribute('aria-expanded', 'true');
             callApi('set_ignore_mouse', false);
-            if (currentSlide === 2) refreshUsageData(false);
+            if (currentSlide === 3) refreshUsageData(false);
         }
 
-        function scheduleCollapse() {
-            if (pinned || dismissed) return;
-            if (collapseTimer) clearTimeout(collapseTimer);
-            collapseTimer = setTimeout(() => {
-                island.classList.remove('expanded');
-            }, 240);
-        }
-
-        function dismissIsland(e) {
-            e.stopPropagation();
-            dismissed = true;
+        function collapseNow(e) {
+            if (e) e.stopPropagation();
             pinned = false;
             document.getElementById('pin-btn').textContent = 'Pin';
             island.classList.remove('expanded');
-            island.classList.add('dismissed');
+            island.setAttribute('aria-expanded', 'false');
         }
 
-        function restoreIfDismissed(e) {
-            if (!dismissed) return;
-            e.stopPropagation();
-            dismissed = false;
-            island.classList.remove('dismissed');
-            expandIsland();
+        function scheduleCollapse() {
+            if (pinned) return;
+            if (collapseTimer) clearTimeout(collapseTimer);
+            collapseTimer = setTimeout(() => {
+                island.classList.remove('expanded');
+                island.setAttribute('aria-expanded', 'false');
+            }, 260);
         }
 
+        island.addEventListener('click', (e) => {
+            if (!island.classList.contains('expanded')) {
+                e.stopPropagation();
+                expandIsland();
+            }
+        });
         island.addEventListener('mouseenter', expandIsland);
         island.addEventListener('mouseleave', scheduleCollapse);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && island.classList.contains('expanded')) collapseNow(e);
+        });
 
         window.addEventListener('mousemove', (e) => {
             const hit = e.target && e.target.closest && e.target.closest('.notch-interactive');
@@ -494,8 +657,17 @@
             pinned = !pinned;
             const btn = document.getElementById('pin-btn');
             btn.textContent = pinned ? 'Pinned' : 'Pin';
-            btn.style.background = pinned ? 'rgba(59, 130, 246, 0.28)' : 'rgba(255, 255, 255, 0.06)';
-            btn.style.color = pinned ? '#93c5fd' : '#d1d5db';
+            btn.style.background = pinned ? '#3b82f6' : '#2c2c2e';
+            btn.style.color = pinned ? '#ffffff' : '#d1d1d6';
+        }
+
+        function toggleLyricsMode(e) {
+            e.stopPropagation();
+            showLyricsInline = !showLyricsInline;
+            document.getElementById('music-lyrics-box').classList.toggle('hidden', !showLyricsInline);
+            const btn = document.getElementById('btn-lyrics-toggle');
+            btn.style.background = showLyricsInline ? '#3b82f6' : '#1c1c1e';
+            btn.style.color = showLyricsInline ? '#ffffff' : '#d1d1d6';
         }
 
         async function sendHudAsk(e) {
@@ -505,7 +677,7 @@
             if (!q) return;
             const replyEl = document.getElementById('hud-ask-reply');
             const statusEl = document.getElementById('hud-ask-status');
-            statusEl.textContent = 'TM Opera O sedang berpikir...';
+            statusEl.textContent = 'Berpikir...';
             replyEl.textContent = '...';
             try {
                 const reply = await callApi('tanya_dari_radial', q);
@@ -528,7 +700,7 @@
             const out = document.getElementById('hud-translate-out');
             out.textContent = 'Menerjemahkan...';
             try {
-                const res = await callApi('tanya_dari_radial', `Terjemahkan teks berikut ke bahasa ${lang} secara natural saja tanpa penjelasan:\n${lastHudReply}`);
+                const res = await callApi('tanya_dari_radial', `Terjemahkan teks berikut ke bahasa ${lang} secara natural saja:\n${lastHudReply}`);
                 out.textContent = String(res || '');
             } catch {
                 out.textContent = 'Gagal menerjemahkan.';
@@ -547,7 +719,7 @@
             lastHudReply = '';
             document.getElementById('hud-ask-input').value = '';
             document.getElementById('hud-ask-reply').textContent = 'Ketik pertanyaan singkat lalu tekan Enter.';
-            document.getElementById('hud-translate-out').textContent = 'Pilih bahasa lalu klik Go.';
+            document.getElementById('hud-translate-out').textContent = 'Pilih bahasa & klik Go.';
             document.getElementById('hud-ask-status').textContent = 'Siap';
         }
 
@@ -559,35 +731,27 @@
 
         async function runQuick(action, e) {
             e.stopPropagation();
-            if (action === 'open_spotify') {
-                await callApi('tanya_dari_radial', 'buka spotify');
-            } else {
-                await callApi(action);
-            }
+            if (action === 'open_spotify') await callApi('tanya_dari_radial', 'buka spotify');
+            else await callApi(action);
         }
 
         async function refreshUsageData(force = false) {
             try {
                 const u = await callApi('get_api_usage', force);
                 if (!u) return;
-
                 const p = u.pecut;
-                const usedM = (p.usedTokens / 1_000_000).toFixed(4);
-                const quotaM = (p.quotaTokens / 1_000_000).toFixed(2);
-                const remM = Math.max(0, (p.quotaTokens - p.usedTokens) / 1_000_000).toFixed(4);
                 document.getElementById('pecut-pct').textContent = `${p.percent.toFixed(2)}%`;
-                document.getElementById('pecut-bar').style.width = `${Math.max(1.5, p.percent)}%`;
+                document.getElementById('pecut-bar').style.width = `${Math.max(2, p.percent)}%`;
                 document.getElementById('pecut-short').textContent = `${p.usedTokens.toLocaleString('id-ID')} token (${p.requests} chat)`;
-                document.getElementById('pecut-hover-million').textContent = `${usedM} Juta Token`;
-                document.getElementById('pecut-hover-sub').textContent = `Sisa: ${remM} / ${quotaM} Juta`;
+                document.getElementById('pecut-hover-million').textContent = `${(p.usedTokens / 1_000_000).toFixed(4)} Juta token`;
+                document.getElementById('pecut-hover-sub').textContent = `Sisa: ${Math.max(0, (p.quotaTokens - p.usedTokens) / 1_000_000).toFixed(4)} / ${(p.quotaTokens / 1_000_000).toFixed(2)} Juta`;
 
                 const el = u.elevenlabs;
-                const remChars = Math.max(0, el.limitChars - el.usedChars);
                 document.getElementById('el-pct').textContent = `${el.percent.toFixed(1)}%`;
-                document.getElementById('el-bar').style.width = `${Math.max(1.5, el.percent)}%`;
+                document.getElementById('el-bar').style.width = `${Math.max(2, el.percent)}%`;
                 document.getElementById('el-short').textContent = `${el.usedChars.toLocaleString('id-ID')} / ${el.limitChars.toLocaleString('id-ID')} kar`;
                 document.getElementById('el-hover-main').textContent = `${el.usedChars.toLocaleString('id-ID')} / ${el.limitChars.toLocaleString('id-ID')}`;
-                document.getElementById('el-hover-sub').textContent = `Sisa: ${remChars.toLocaleString('id-ID')} (${el.tier})`;
+                document.getElementById('el-hover-sub').textContent = `Sisa: ${Math.max(0, el.limitChars - el.usedChars).toLocaleString('id-ID')} (${el.tier})`;
             } catch {}
         }
 
@@ -595,50 +759,35 @@
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('compact-clock').textContent = `${hh}:${mm}`;
-            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
-            document.getElementById('hud-datetime').textContent = `${dateStr} · ${hh}:${mm}`;
+            document.getElementById('hud-time').textContent = `${hh}:${mm}`;
+            document.getElementById('hud-date').textContent = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('tile-weekday').textContent = now.toLocaleDateString('en-US', { weekday: 'short' });
+            document.getElementById('tile-day').textContent = String(now.getDate());
+            if (!mediaState.hasMedia) {
+                document.getElementById('compact-clock').textContent = `${hh}:${mm}`;
+            }
         }
         updateClock();
         setInterval(updateClock, 5000);
 
         function fmtSec(sec) {
             const s = Math.max(0, Math.floor(sec || 0));
-            const m = String(Math.floor(s / 60)).padStart(2, '0');
-            const r = String(s % 60).padStart(2, '0');
-            return `${m}:${r}`;
+            return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
         }
 
         let mediaState = {
-            hasMedia: false,
-            title: '',
-            artist: '',
-            album: '',
-            coverUrl: '',
-            status: 'Stopped',
-            positionSec: 0,
-            durationSec: 0,
-            syncedLines: [],
-            prevLine: '',
-            currentLine: '',
-            nextLine: '',
-            lastSyncMs: Date.now(),
+            hasMedia: false, title: '', artist: '', album: '', coverUrl: '',
+            status: 'Stopped', positionSec: 0, durationSec: 0,
+            syncedLines: [], prevLine: '', currentLine: '', nextLine: '', lastSyncMs: Date.now(),
         };
-
         let currentActiveLyricIdx = 0;
-        let notchSettings = {
-            colorAlbumFocus: true,
-            customAccentColor: '#3b82f6',
-            compactLyric: true,
-            lyricOffsetSec: 0,
-        };
+        let notchSettings = { compactLyric: true, lyricOffsetSec: 0 };
 
         async function seekToLyric(relativeOffset, e) {
             if (e) e.stopPropagation();
             const lines = mediaState.syncedLines;
             if (!lines || lines.length === 0) return;
-            const targetIdx = Math.max(0, Math.min(lines.length - 1, currentActiveLyricIdx + relativeOffset));
-            const targetSec = lines[targetIdx].timeSec;
+            const targetSec = lines[Math.max(0, Math.min(lines.length - 1, currentActiveLyricIdx + relativeOffset))].timeSec;
             mediaState.positionSec = targetSec;
             mediaState.lastSyncMs = Date.now();
             renderLiveMediaTick();
@@ -649,31 +798,22 @@
             e.stopPropagation();
             if (!mediaState.hasMedia || mediaState.durationSec <= 0) return;
             const rect = e.currentTarget.getBoundingClientRect();
-            const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            const targetSec = ratio * mediaState.durationSec;
+            const targetSec = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * mediaState.durationSec;
             mediaState.positionSec = targetSec;
             mediaState.lastSyncMs = Date.now();
             renderLiveMediaTick();
             await callApi('seek_media', targetSec);
         }
 
-        function applyNotchAccent(color) {
-            const bar = document.getElementById('media-progress-bar');
-            if (bar) bar.style.background = color || '#3b82f6';
-        }
-
         function renderLiveMediaTick() {
             if (!mediaState.hasMedia) return;
             let pos = mediaState.positionSec + Number(notchSettings.lyricOffsetSec || 0);
-            if (mediaState.status === 'Playing') {
-                pos += (Date.now() - mediaState.lastSyncMs) / 1000;
-            }
-            if (mediaState.durationSec > 0 && pos > mediaState.durationSec) {
-                pos = mediaState.durationSec;
-            }
+            if (mediaState.status === 'Playing') pos += (Date.now() - mediaState.lastSyncMs) / 1000;
+            if (mediaState.durationSec > 0 && pos > mediaState.durationSec) pos = mediaState.durationSec;
 
             const pct = mediaState.durationSec > 0 ? Math.min(100, Math.max(0, (pos / mediaState.durationSec) * 100)) : 0;
             document.getElementById('media-progress-bar').style.width = `${pct.toFixed(2)}%`;
+            document.getElementById('home-music-bar').style.width = `${pct.toFixed(2)}%`;
             document.getElementById('media-time-cur').textContent = fmtSec(pos);
             document.getElementById('media-time-rem').textContent = '-' + fmtSec(Math.max(0, mediaState.durationSec - pos));
 
@@ -681,24 +821,20 @@
             if (lines && lines.length > 0) {
                 let activeIdx = 0;
                 for (let i = 0; i < lines.length; i++) {
-                    if (pos + 0.2 >= lines[i].timeSec) activeIdx = i;
-                    else break;
+                    if (pos + 0.2 >= lines[i].timeSec) activeIdx = i; else break;
                 }
                 currentActiveLyricIdx = activeIdx;
-                const prev = lines[activeIdx - 1]?.text || '';
                 const cur = lines[activeIdx]?.text || '♪ ...';
-                const next = lines[activeIdx + 1]?.text || '';
-
-                document.getElementById('lyric-prev').textContent = prev;
+                document.getElementById('lyric-prev').textContent = lines[activeIdx - 1]?.text || '';
                 document.getElementById('lyric-current').textContent = cur;
-                document.getElementById('lyric-next').textContent = next;
-                document.getElementById('compact-title').textContent =
+                document.getElementById('lyric-next').textContent = lines[activeIdx + 1]?.text || '';
+                document.getElementById('compact-clock').textContent =
                     (notchSettings.compactLyric !== false && cur && !cur.startsWith('♪')) ? cur : mediaState.title;
             } else {
                 document.getElementById('lyric-prev').textContent = mediaState.prevLine || '';
                 document.getElementById('lyric-current').textContent = mediaState.currentLine || '♪ ...';
                 document.getElementById('lyric-next').textContent = mediaState.nextLine || '';
-                document.getElementById('compact-title').textContent = mediaState.title;
+                document.getElementById('compact-clock').textContent = mediaState.title;
             }
         }
         setInterval(renderLiveMediaTick, 100);
@@ -708,53 +844,36 @@
             try {
                 const st = await callApi('get_notch_status');
                 if (!st) return;
-
-                if (st.taskProgress) {
-                    document.getElementById('footer-status').textContent = st.taskProgress;
-                } else {
-                    document.getElementById('footer-status').textContent = 'Layar: ' + (st.activeWindow || 'Standby');
-                }
-
-                if (st.settings) {
-                    notchSettings = { ...notchSettings, ...st.settings };
-                }
+                document.getElementById('home-active-win').textContent = st.taskProgress || st.activeWindow || 'Standby';
+                if (st.model) document.getElementById('home-model-label').textContent = st.model;
+                if (st.settings) notchSettings = { ...notchSettings, ...st.settings };
 
                 const m = st.media;
-                const eqBars = document.querySelectorAll('.eq-bar');
                 if (m && m.hasMedia) {
                     mediaState = { ...m, lastSyncMs: Date.now() };
+                    const sub = m.album ? `${m.artist} · ${m.album}` : (m.artist || 'Spotify');
                     document.getElementById('now-playing-title').textContent = m.title;
-                    const sub = m.album ? `${m.artist} - ${m.album}` : (m.artist || 'Spotify');
                     document.getElementById('now-playing-artist').textContent = sub;
+                    document.getElementById('home-music-title').textContent = m.title;
+                    document.getElementById('home-music-artist').textContent = m.artist || 'Spotify';
 
                     const isPlaying = m.status === 'Playing';
                     document.getElementById('icon-pause').classList.toggle('hidden', !isPlaying);
                     document.getElementById('icon-play').classList.toggle('hidden', isPlaying);
-                    eqBars.forEach(b => b.classList.toggle('paused', !isPlaying));
 
                     const cover = m.coverUrl || 'opera_profile.jpg?v=2';
                     if (cover !== lastCoverUrl) {
                         lastCoverUrl = cover;
-                        const imgEl = document.getElementById('album-cover');
-                        const compactEl = document.getElementById('compact-cover');
-                        compactEl.onerror = () => {
-                            if (!compactEl.src.includes('opera_profile.jpg')) compactEl.src = 'opera_profile.jpg?v=2';
-                        };
-                        imgEl.onerror = () => {
-                            if (!imgEl.src.includes('opera_profile.jpg')) imgEl.src = 'opera_profile.jpg?v=2';
-                        };
-                        imgEl.src = cover;
-                        compactEl.src = cover;
-                    }
-                    if (!notchSettings.colorAlbumFocus) {
-                        applyNotchAccent(notchSettings.customAccentColor || '#3b82f6');
+                        ['album-cover', 'compact-cover', 'home-cover'].forEach((id) => {
+                            const el = document.getElementById(id);
+                            el.onerror = () => { if (!el.src.includes('opera_profile.jpg')) el.src = 'opera_profile.jpg?v=2'; };
+                            el.src = cover;
+                        });
                     }
                     renderLiveMediaTick();
                 } else {
-                    eqBars.forEach(b => b.classList.add('paused'));
-                    if (st.activeWindow) {
-                        document.getElementById('compact-title').textContent = st.activeWindow;
-                    }
+                    mediaState.hasMedia = false;
+                    updateClock();
                 }
             } catch {}
         }
