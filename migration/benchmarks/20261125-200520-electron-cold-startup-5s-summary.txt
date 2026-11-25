@@ -1,0 +1,11 @@
+﻿Label: electron-cold-startup-5s
+Captured: 2026-11-25T20:05:21.1767265+07:00
+Verified Root PIDs: 22560
+App Tree Process Count: 7
+App Tree Working Set MB: 602.21
+App Tree Private Bytes MB: 383.4
+External Python Process Count: 0
+External Python Working Set MB: 0
+External Python Private Bytes MB: 0
+Combined Total Working Set MB: 602.21
+Combined Total Private Bytes MB: 383.4
